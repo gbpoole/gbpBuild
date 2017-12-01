@@ -1,0 +1,10 @@
+# Place a file with this name in any directory you want to add a submodule
+# to.  In it, add a macro with name 'local_extern' as follows:
+macro(local_extern cur_dir )
+    # For every submodule you want to add, Place a function call as follows:
+    #
+    # add_external_submodule( ${cur_dir} "SubmoduleName" ${cur_dir}"/SubmoduleName/file_to_check" )
+    # 
+    # where 'SubmoduleName' is the name of the Github repository to add and 'file_to_check'
+    # is a file in that repository that is guaranteed to be in the repository.
+endmacro()

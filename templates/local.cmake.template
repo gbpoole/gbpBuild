@@ -1,29 +1,36 @@
-# Set empty defaults
+# In every directory in which C/C++ source code is located,
+# place a file called 'local.cmake' following the format 
+# given here.
+
+#=======================================
+# First, set empty defaults.  Don't
+# touch the lines in this section.
+#=======================================
 set(LIBDIRS    "" )
 set(SRCDIRS    "" )
 set(INCFILES   "" )
 set(SRCFILES   "" )
 set(EXEFILES   "" )
 set(DATAFILES  "" )
-set(PASSDIRS   "" )
 set(DATASUBDIR "" )
+set(PASSDIRS   "" )
 
+#=======================================
+# Then, populate each list given below
+# with the information relevant to this
+# directory.
+#=======================================
 # Add subdirectories that are roots to libraries
 # eg. list(APPEND LIBDIRS "dir" )
 # -- NONE FOR THIS DIR --
 
 # Add directories that contribute source files 
 # eg. list(APPEND SRCDIRS "dir" )
-list(APPEND SRCDIRS "src" )
+# -- NONE FOR THIS DIR --
 
 # Add header files
 # eg. list(APPEND INCFILES "file" )
-# Clara is a 3rd party header-only library, by Phil Nash and is
-#    used by the Catch2 project: https://github.com/catchorg/Catch2
-#    It is a "simple to use, composable, command line parser for
-#    C++ 11 and beyond".  See the following talk for more info:
-#    https://www.youtube.com/watch?v=Od4bjLfwI-A
-list(APPEND INCFILES   "extern/Clara/include/clara.hpp" )
+# -- NONE FOR THIS DIR --
 
 # Add source files
 # eg. list(APPEND SRCFILES "file" )
@@ -45,4 +52,3 @@ list(APPEND INCFILES   "extern/Clara/include/clara.hpp" )
 #   but which we won't scan for sources, etc
 # eg. list(APPEND PASSDIRS "dir" )
 # -- NONE FOR THIS DIR --
-
