@@ -39,7 +39,7 @@ function( add_external_submodule cur_dir submodule_name filename_check )
         message(STATUS "  -> Checking out submodule: ${submodule_name}")
         execute_process(COMMAND git submodule update --init WORKING_DIRECTORY ${cur_dir})
     else()
-        message(STATUS "  -> ${submodule_name} submodule has already been checked out")
+        message(STATUS "   -> ${submodule_name} submodule has already been checked out")
     endif()
 endfunction()
 
