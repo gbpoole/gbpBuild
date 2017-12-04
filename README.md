@@ -5,7 +5,7 @@ gbpBuild takes care of all the [boilerplate][1] involved in setting-up and confi
 
 It provides support for the following:
 
-* An out-of-source build system using [Cmake][2]
+* A modern out-of-source build system using [Cmake][2]
 * Continuous integration using [Travis CI][3], [kcov][4], etc.
 * Automated documentation generation using [Doxygen][5] and [Sphynx][6]
 

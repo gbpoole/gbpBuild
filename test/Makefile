@@ -1,5 +1,4 @@
 # This makefile deals with all CI processing 
-# of the gbpHome repository
 
 .PHONY: test clean
 
