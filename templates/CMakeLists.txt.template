@@ -15,7 +15,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 set(CMAKE_CXX_STANDARD 11)
 
 # Add the 'cmake' directory in the project directory to the module path
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR}/gbpBuild/cmake;${CMAKE_SOURCE_DIR}")
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR};${CMAKE_SOURCE_DIR}/%GBPBUILD_REL_PATH%/gbpBuild/cmake")
 
 # Load all macros and functions
 message(STATUS "Loading macros & functions...")
