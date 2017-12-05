@@ -9,15 +9,16 @@ message(STATUS "Initializing 3rd-party libraries...")
 # The following three macros have been set-up for automating 
 # 3rd-party library configuration  The folling libraries are
 # supported at the moment:
-#    - GBP_DOCS_BUILD
-#    - MPI
-#    - MPI_IO
+#    - CFITSIO
 #    - CUDA
 #    - CUFFT
-#    - GD
-#    - CFITSIO
-#    - HDF5
 #    - FFTW
+#    - GBP_DOCS_BUILD
+#    - GD
+#    - GSL
+#    - HDF5
+#    - MPI
+#    - MPI_IO
 #    - OpenMP
 #
 # List the following (one-per line):

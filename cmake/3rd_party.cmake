@@ -111,9 +111,25 @@ endmacro()
 
 
 # ============== Library-specific stuff follows ==============
+# If items are added to this list, don't forget to update the
+# list in the 'project.cmake' template file.
 
 # Initialize documentation build
 function(init_3rd_party_GBP_DOCS_BUILD lib_name required_in)
+    set_required_variables(${required_in})
+    if(USE_${lib_name})
+        find_package(${lib_name} ${required})
+
+        # Check status and print message    
+        check_3rd_party_status( ${GBP_DOCS_BUILD_FOUND} )
+
+    else()
+        skip_3rd_party_status(required_in)
+    endif()
+endfunction()
+
+# Initialize the Gnu Scientific Library
+function(init_3rd_party_GSL lib_name required_in)
     set_required_variables(${required_in})
     if(USE_${lib_name})
         find_package(${lib_name} ${required})
