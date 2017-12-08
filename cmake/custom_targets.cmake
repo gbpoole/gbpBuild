@@ -39,11 +39,19 @@ endmacro()
 # Add the targets used to generate documentation
 macro(add_custom_docs)
     if(GBP_DOCS_BUILD_FOUND)
-        # Generate Doxygen documentation for C/C++ code
+        # Tell Doxygen to only configure XML.  Sphynx will do the rest.
         set(DOXYGEN_GENERATE_XML   YES)
         set(DOXYGEN_GENERATE_LATEX  NO)
         set(DOXYGEN_GENERATE_HTML   NO)
         set(DOXYGEN_GENERATE_MAN    NO)
+
+        # List the file patterns to ignore when running Doxygen
+        list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/extern/*" )
+        list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/test/*" )
+        list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/build-*/*" )
+        list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/README.md" )
+
+        # Finish Doxygen configuration
         set(DOXYGEN_OUTPUT_DIRECTORY ${Sphinx_BUILD_DIR}/doxygen )
         doxygen_add_docs(docs-doxygen ${ALL_FILES_PROJECT} )
     
