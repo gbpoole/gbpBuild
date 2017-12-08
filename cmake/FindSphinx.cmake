@@ -41,6 +41,17 @@ configure_file(
     "${Sphinx_BUILD_DIR}/conf.py"
     @ONLY)
 
+# Copy .rst files to build directory
+file( GLOB rst_file_list ${PRJ_DOCS_DIR}/*.rst )
+foreach(rst_file_i ${rst_file_list})
+    get_filename_component( rst_file_i_base ${rst_file_i} NAME )
+    message(STATUS "test2: " ${rst_file_i} " -> " ${Sphinx_BUILD_DIR}/${rst_file_i_base})
+    configure_file(
+        ${rst_file_i}
+        ${Sphinx_BUILD_DIR}/${rst_file_i_base}
+        COPYONLY)
+endforeach()
+
 SET(Sphinx_EXECUTABLE  "${Sphinx_EXECUTABLE}"   CACHE INTERNAL "Sphinx executable")
 SET(Sphinx_BUILD_DIR   "${Sphinx_BUILD_DIR}"    CACHE INTERNAL "Sphinx build directory")
 SET(Sphinx_LATEX_DIR   "${Sphinx_LATEX_DIR}"    CACHE INTERNAL "Sphinx latex build directory")

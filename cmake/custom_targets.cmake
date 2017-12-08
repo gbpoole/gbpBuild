@@ -58,7 +58,7 @@ macro(add_custom_docs)
         # Convert Doxygen xml to rst for Sphinx
         add_custom_target(
             docs-breathe
-            COMMAND mkdir -p ${Sphinx_BUILD_DIR}/breathe
+            COMMAND echo skip#COMMAND mkdir -p ${Sphinx_BUILD_DIR}/breathe
             COMMENT "Perform initialization for Breathe")
     
         # Perform Spinx HTML build
@@ -68,7 +68,7 @@ macro(add_custom_docs)
                 -q -b html 
                 -c "${Sphinx_BUILD_DIR}"
                 -d "${Sphinx_CACHE_DIR}"
-                "${CMAKE_CURRENT_SOURCE_DIR}"
+                "${Sphinx_BUILD_DIR}"
                 "${Sphinx_RESULTS_DIR}/html"
             COMMENT "Building HTML documentation with Sphinx")
     
@@ -79,7 +79,7 @@ macro(add_custom_docs)
                 -q -b latex
                 -c "${Sphinx_BUILD_DIR}"
                 -d "${Sphinx_CACHE_DIR}"
-                "${CMAKE_CURRENT_SOURCE_DIR}"
+                "${Sphinx_BUILD_DIR}"
                 "${Sphinx_LATEX_DIR}"
             COMMAND mkdir -p ${Sphinx_RESULTS_DIR}
             COMMAND cd ${Sphinx_LATEX_DIR} && pdflatex ${CMAKE_PROJECT_NAME}
