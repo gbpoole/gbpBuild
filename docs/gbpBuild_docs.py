@@ -1,7 +1,7 @@
 import os
 import sys
 import re
-from   subprocess import call
+import subprocess 
 
 def parse_cmake_local(cur_dir,search_string,result_list,active_API_module="undefined",module_select=None,module_list=None,prepend_path=True,strip_ext=False):
     # TODO: Remove external directories from files and paths
