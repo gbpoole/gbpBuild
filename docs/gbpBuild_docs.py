@@ -201,7 +201,7 @@ def generate_execs_rst(input_dir,output_dir,project_name,project_dir,filename_ro
             # Send output of executable to the output file
             outFile.write(exec_i+'\n')
             outFile.write('-'*len(exec_i)+'\n')
-            out = check_output(["/Users/gpoole/gbpSID/build-dev/"+exec_i, "-h"]).decode("utf-8")
+            out = subprocess.check_output(["/Users/gpoole/gbpSID/build-dev/"+exec_i, "-h"]).decode("utf-8")
             outFile.write(reformat_Clara_help_to_rst(out))
 
         # Add the footer if there is material for this module
