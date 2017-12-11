@@ -45,7 +45,6 @@ configure_file(
 file( GLOB rst_file_list ${PRJ_DOCS_DIR}/*.rst )
 foreach(rst_file_i ${rst_file_list})
     get_filename_component( rst_file_i_base ${rst_file_i} NAME )
-    message(STATUS "test2: " ${rst_file_i} " -> " ${Sphinx_BUILD_DIR}/${rst_file_i_base})
     configure_file(
         ${rst_file_i}
         ${Sphinx_BUILD_DIR}/${rst_file_i_base}
