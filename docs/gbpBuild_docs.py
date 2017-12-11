@@ -78,7 +78,7 @@ def add_project_file(input_dir,filename_root,filename_modifier,outFile):
             for line in inFile :
                 outFile.write(line)
 
-def generate_rst_file(input_dir,output_dir,project_name,project_dir,filename_root="API"):
+def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root="API"):
     # Open the output file for writing
     outFile = open(output_dir + "/" + filename_root + '.rst', "w")
 
