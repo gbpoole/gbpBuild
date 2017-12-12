@@ -3,7 +3,7 @@ import sys
 import re
 import subprocess 
 
-def parse_cmake_local(cur_dir,search_string,result_list,active_API_module="undefined",module_select=None,module_list=None,prepend_path=True,strip_ext=False):
+def parse_cmake_local(cur_dir,search_string,result_list,active_API_module,module_select=None,module_list=None,prepend_path=True,strip_ext=False):
     # TODO: Remove external directories from files and paths
     # TODO: Remove submodules from files and paths
     with open( cur_dir + "/" + "local.cmake", 'r') as infile:
@@ -14,9 +14,9 @@ def parse_cmake_local(cur_dir,search_string,result_list,active_API_module="undef
                     # Remove '()'s and '"'s and split into words
                     words = line.replace('('," ").replace(')'," ").replace('"'," ").split()
                     # If this is an append line, then we have an item to keep
-                    if(words[1] == "APPEND" and len(words)==4):
-                        if(words[2]==search_string):
-                            item = words[3]
+                    if(words[1].strip() == "APPEND" and len(words)==4):
+                        if(words[2].strip()==search_string):
+                            item = words[3].strip()
                             # If we've asked to strip extensions, do so
                             if(strip_ext):
                                 item=os.path.splitext(item)[0]
@@ -24,30 +24,32 @@ def parse_cmake_local(cur_dir,search_string,result_list,active_API_module="undef
                             if(prepend_path):
                                 item=cur_dir + '/' + item
                             # Append to the result
-                            if(module_select == None or (module_select != None and active_API_module==module_select)):
+                            if(module_select == None or (module_select != None and active_API_module[0]==module_select)):
                                 result_list.append(item)
                                 if(module_list != None):
-                                    module_list.append(active_API_module)
+                                    module_list.append(active_API_module.copy())
                 # Else we may have a Doxygen module directive.  Check for it
                 else:
-                    words = line[1:].split()
-                    if(len(words)==2):
-                        if(words[0] == 'set_active_API_module'):
-                            active_API_module = words[1]
+                    words = line[1:].strip().split()
+                    if(len(words)>2):
+                        words = line[1:].strip().split(None,2)
+                        if(words[0].strip() == 'set_active_API_module'):
+                            active_API_module[0] = words[1].strip()
+                            active_API_module[1] = words[2].strip()
 
-def parse_cmake_project(cur_dir,search_string,result_list,module_list=None,module_select=None,prepend_path=True,strip_ext=False):
+def parse_cmake_project(cur_dir,search_string,result_list,active_API_module=["undefined","undefined"],module_list=None,module_select=None,prepend_path=True,strip_ext=False):
     # Add local entries to list
-    parse_cmake_local(cur_dir,search_string,result_list,module_list=module_list,module_select=module_select,prepend_path=prepend_path,strip_ext=strip_ext)
+    parse_cmake_local(cur_dir,search_string,result_list,active_API_module,module_list=module_list,module_select=module_select,prepend_path=prepend_path,strip_ext=strip_ext)
 
     # Build list of local project directories
     local_dirs = []
-    parse_cmake_local(cur_dir,"SRCDIRS",local_dirs)
-    parse_cmake_local(cur_dir,"PASSDIRS",local_dirs)
+    parse_cmake_local(cur_dir,"SRCDIRS",local_dirs,active_API_module)
+    parse_cmake_local(cur_dir,"PASSDIRS",local_dirs,active_API_module)
 
     # Recurse over local project directories
     for local_dir in local_dirs:
         if (os.path.isdir(local_dir) == True):
-            parse_cmake_project(local_dir,search_string,result_list,module_list=module_list,module_select=module_select,prepend_path=prepend_path,strip_ext=strip_ext)
+            parse_cmake_project(local_dir,search_string,result_list,active_API_module=active_API_module,module_list=module_list,module_select=module_select,prepend_path=prepend_path,strip_ext=strip_ext)
 
 def harvest_doxygen_groups(file_list,group_list):
     # Loop over header files
@@ -62,7 +64,7 @@ def harvest_doxygen_groups(file_list,group_list):
                     group_start=line.find("\\defgroup",comment_start+3)
                     if(group_start>0):
                         # Add the definition name to the list
-                        words=line[group_start:].strip().split(' ',2)
+                        words=line[group_start:].strip().split(None,2)
                         group_list.append([words[1],words[2]])
 
 def write_group_to_file(outFile,group_to_write,project_name):
@@ -71,12 +73,32 @@ def write_group_to_file(outFile,group_to_write,project_name):
     outFile.write("   :content-only:\n")
     outFile.write("   :members:\n\n")
 
-def add_project_file(input_dir,filename_root,filename_modifier,outFile):
+def add_project_file(input_dir,filename_root,filename_modifier,outFile,default_text=None):
     filename_in = input_dir+"/"+filename_root+'.rst'+filename_modifier
     if(os.path.isfile(filename_in)):
         with open(filename_in,'r') as inFile:
             for line in inFile :
                 outFile.write(line)
+    elif(default_text!=None):
+        outFile.write(default_text)
+
+def underlined_text(text_to_underline,underline_character):
+    return(text_to_underline+"\n"+underline_character*len(text_to_underline)+"\n")
+
+def make_module_list_unique(modules_in):
+    modules_out = modules_in[:]
+    # This is a dumb n^2 algorithm.  Fix it!
+    del_list = []
+    for [i_module,module_i] in enumerate(modules_in):
+        for [j_module,module_j] in enumerate(modules_in[i_module+1:]):
+            if(module_i[0]==module_j[0]):
+                i_del=i_module+1+j_module
+                if(i_del not in del_list):
+                    del_list.append(i_del)
+    del_list.sort(reverse=True)
+    for i_del in del_list:
+        del(modules_out[i_del])
+    return(modules_out)
 
 def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root="API"):
     # Open the output file for writing
@@ -85,14 +107,15 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
     # Generate a list of the project's header files (and their modules)
     header_file_list = []
     module_list      = []
-    parse_cmake_project(project_dir,"INCFILES", header_file_list,module_list,prepend_path=True,strip_ext=False)
+    parse_cmake_project(project_dir,"INCFILES", header_file_list,module_list=module_list,prepend_path=True,strip_ext=False)
+    module_list=make_module_list_unique(module_list)
 
     # Generate a list of doxygen groups in those header files
     group_list = []
     harvest_doxygen_groups(header_file_list,group_list)
 
     # copy header to output file
-    add_project_file(input_dir,filename_root,".header",outFile)
+    add_project_file(input_dir,filename_root,".header",outFile,default_text=underlined_text("API Documentation",'='))
 
     # ----------- Output logic for this file starts here -----------
 
@@ -101,12 +124,12 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
         flag_write_header = True
 
         # 1) ... add this module's classes group ...
-        module_group = module_i+"_classes"
+        module_group = module_i[0]+"_classes"
         group_found = group_list[group_list[:][0].index(module_group)] if module_group in group_list[:][0] else None
         if(group_found != None):
             # Add the header if there is material for this module
             if(flag_write_header):
-                add_project_file(input_dir,filename_root,'.'+module_i+".header",outFile)
+                add_project_file(input_dir,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
                 outFile.write("\n")
                 flag_write_header=False
             outFile.write(group_found[1]+"\n")
@@ -115,12 +138,12 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
 
         # 2) ... add this module's functions ...
         function_list=[]
-        parse_cmake_project(project_dir,"SRCFILES", function_list, module_select=module_i,prepend_path=False,strip_ext=True)
+        parse_cmake_project(project_dir,"SRCFILES", function_list, module_select=module_i[0],prepend_path=False,strip_ext=True)
         flag_write_header_group=True
         for fctn in function_list:
             # Add the header if there is material for this module
             if(flag_write_header):
-                add_project_file(input_dir,filename_root,'.'+module_i+".header",outFile)
+                add_project_file(input_dir,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
                 outFile.write("\n")
                 flag_write_header=False
             if(flag_write_header_group):
@@ -136,10 +159,10 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
             group_words=group_i.split("_",1)
             if(len(group_words)==2):
                 module_group=group_words[1]
-                if(group_words[0]==module_i and module_group!="classes"):
+                if(group_words[0]==module_i[0] and module_group!="classes"):
                     # Add the header if there is material for this module
                     if(flag_write_header):
-                        add_project_file(input_dir,filename_root,'.'+module_i+".header",outFile)
+                        add_project_file(input_dir,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
                         outFile.write("\n")
                         flag_write_header=False
                     outFile.write(group_i_desc+"\n")
@@ -148,7 +171,7 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
 
         # Add the footer if there is material for this module
         if(not flag_write_header):
-            add_project_file(input_dir,filename_root,'.'+module_i+".footer",outFile)
+            add_project_file(input_dir,filename_root,'.'+module_i[0]+".footer",outFile)
 
     # ---------------------------------------------------------------
 
@@ -174,39 +197,39 @@ def generate_execs_rst(input_dir,output_dir,project_name,project_dir,filename_ro
     # Generate a list of the project's header files (and their modules)
     header_file_list   = []
     header_module_list = []
-    parse_cmake_project(project_dir,"INCFILES", header_file_list,header_module_list,prepend_path=True,strip_ext=False)
-    module_list=list(set(header_module_list))
+    parse_cmake_project(project_dir,"INCFILES", header_file_list,module_list=header_module_list,prepend_path=True,strip_ext=False)
+    module_list=make_module_list_unique(header_module_list)
 
     # Generate a list of doxygen groups in those header files
     group_list = []
     harvest_doxygen_groups(header_file_list,group_list)
 
     # copy header to output file
-    add_project_file(input_dir,filename_root,".header",outFile)
+    add_project_file(input_dir,filename_root,".header",outFile,default_text=underlined_text("Executables",'='))
 
     # ----------- Output logic for this file starts here -----------
 
     # Loop over the modules, adding each in turn to the API docs
     for module_i in module_list:
         exe_list=[]
-        parse_cmake_project(project_dir,"EXEFILES", exe_list, module_select=module_i,prepend_path=False,strip_ext=True)
+        parse_cmake_project(project_dir,"EXEFILES", exe_list, module_select=module_i[0],prepend_path=False,strip_ext=True)
         flag_write_header=True
         for exec_i in exe_list:
             # Add the header if there is material for this module
             if(flag_write_header):
-                add_project_file(input_dir,filename_root,'.'+module_i+".header",outFile)
+                add_project_file(input_dir,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
                 outFile.write("\n")
                 flag_write_header=False
 
             # Send output of executable to the output file
             outFile.write(exec_i+'\n')
             outFile.write('-'*len(exec_i)+'\n')
-            out = check_output(["/Users/gpoole/gbpSID/build-dev/"+exec_i, "-h"]).decode("utf-8")
+            out = subprocess.check_output(["/Users/gpoole/gbpSID/build-dev/"+exec_i, "-h"]).decode("utf-8")
             outFile.write(reformat_Clara_help_to_rst(out))
 
         # Add the footer if there is material for this module
         if(not flag_write_header):
-            add_project_file(input_dir,filename_root,'.'+module_i+".footer",outFile)
+            add_project_file(input_dir,filename_root,'.'+module_i[0]+".footer",outFile)
 
     # ---------------------------------------------------------------
 
