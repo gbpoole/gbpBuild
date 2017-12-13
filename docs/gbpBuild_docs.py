@@ -83,7 +83,10 @@ def add_project_file(input_dir,filename_root,filename_modifier,outFile,default_t
         outFile.write(default_text)
 
 def underlined_text(text_to_underline,underline_character):
-    return(text_to_underline+"\n"+underline_character*len(text_to_underline)+"\n")
+    if(text_to_underline != None):
+        return(text_to_underline+"\n"+underline_character*len(text_to_underline)+"\n")
+    else:
+        return("")
 
 def make_module_list_unique(modules_in):
     modules_out = modules_in[:]
@@ -289,3 +292,54 @@ def generate_execs_rst(input_dir,output_dir,project_name,project_dir,filename_ro
 
     # Close output file
     outFile.close()
+
+def generate_default_rst(input_dir,output_dir,project_name,project_dir,filename_root="header",default_title=None):
+    # Open the output file for writing
+    outFile = open(output_dir + "/" + filename_root + '.rst', "w")
+
+    # copy header to output file
+    add_project_file(input_dir,filename_root,"",outFile,default_text=underlined_text(default_title,'='))
+
+    # Close output file
+    outFile.close()
+
+def generate_index_rst(input_dir,output_dir,project_name,project_dir,filename_root="index"):
+    # Open the output file for writing
+    outFile = open(output_dir + "/" + filename_root + '.rst', "w")
+
+    outFile.write(".. "+project_name+" documentation master file\n")
+    outFile.write("\n")
+    outFile.write(".. toctree::\n")
+    outFile.write("   :maxdepth: 2\n")
+    outFile.write("   :caption: Contents:\n")
+    outFile.write("\n")
+
+    # Set the default document order
+    doc_order = ['header.rst',
+                'install.rst',
+                'execs.rst',
+                'API.rst',
+                'footer.rst']
+
+    # Check if there is a 'doc_order.txt' file and over-write the defaults with it if so
+    filename_in = input_dir+"/doc_order.txt"
+    if(os.path.isfile(filename_in)):
+        with open(filename_in,"r") as inFile:
+            doc_order = []
+            for line in inFile:
+                doc_order.append(line)
+
+    for doc_i in doc_order:
+        outFile.write(".. include:: "+doc_i+"\n")
+
+    outFile.write("Indices and tables\n")
+    outFile.write("==================\n")
+    outFile.write("\n")
+    outFile.write("* :ref:`genindex`\n")
+    outFile.write("* :ref:`search`\n")
+
+    # Close output file
+    outFile.close()
+
+
+

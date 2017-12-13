@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# gbpSID documentation build configuration file, created by
+# @PROJECT_NAME@ documentation build configuration file, created by
 # sphinx-quickstart on Mon Nov  6 11:17:11 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -16,10 +16,13 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
+
+import os
 import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+# Add gbpBuild python code to path and import it
+sys.path.append("@GBP_BUILD_DIR@/docs/")
+import gbpBuild_docs as gbpDocs
 
 # Add it to the project path
 breathe_directory = "@Sphinx_BUILD_DIR@/breathe/"
@@ -45,11 +48,11 @@ extensions = ['sphinx.ext.autodoc',
     'breathe']
 
 # Some things that Breathe needs
-breathe_projects        = { "gbpSID": "@Sphinx_BUILD_DIR@/doxygen/xml/" }
-breathe_default_project =   "gbpSID"
+breathe_projects        = { "@PROJECT_NAME@": "@Sphinx_BUILD_DIR@/doxygen/xml/" }
+breathe_default_project =   "@PROJECT_NAME@"
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['docs/templates']
+templates_path = ['@PRJ_DOCS_DIR@/templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -57,11 +60,18 @@ templates_path = ['docs/templates']
 # source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
 
+# Generate project .rst files
+gbpDocs.generate_index_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@')
+gbpDocs.generate_API_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@')
+gbpDocs.generate_execs_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@')
+gbpDocs.generate_default_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@',filename_root="header",default_title='@PROJECT_NAME@')
+gbpDocs.generate_default_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@',filename_root="footer")
+
 # The master toctree document.
-master_doc = 'docs/index'
+master_doc = 'index'
 
 # General information about the project.
-project = 'gbpSID'
+project = '@PROJECT_NAME@'
 copyright = '2017, Gregory B. Poole'
 author = 'Gregory B. Poole'
 
@@ -84,7 +94,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['build-*']
+exclude_patterns = ['build-*','**/extern']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -115,7 +125,7 @@ html_static_path = ['@PRJ_DOCS_DIR@/static']
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'gbpSIDdoc'
+htmlhelp_basename = '@PROJECT_NAME@doc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -142,7 +152,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'gbpSID.tex', 'gbpSID Documentation',
+    (master_doc, '@PROJECT_NAME@.tex', '@PROJECT_NAME@ Documentation',
      'Gregory B. Poole', 'manual'),
 ]
 
@@ -152,7 +162,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'gbpsid', 'gbpSID Documentation',
+    (master_doc, 'gbpsid', '@PROJECT_NAME@ Documentation',
      [author], 1)
 ]
 
@@ -163,8 +173,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'gbpSID', 'gbpSID Documentation',
-     author, 'gbpSID', 'One line description of project.',
+    (master_doc, '@PROJECT_NAME@', '@PROJECT_NAME@ Documentation',
+     author, '@PROJECT_NAME@', 'One line description of project.',
      'Miscellaneous'),
 ]
 
