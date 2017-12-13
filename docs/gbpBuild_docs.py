@@ -184,9 +184,60 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
 def reformat_Clara_help_to_rst(lines_in):
     lines_out = []
     flag_remove_top_blank_lines=True
-    for line in lines_in:
+    process_phase=0
+    lines_in_split=lines_in.split('\n')
+    i_opt=0
+    for line in lines_in_split:
         if(len(line)>0 or not flag_remove_top_blank_lines):
-            lines_out.append(line)
+            # Process usage line
+            if(process_phase==0):
+                words=line.split(' ')
+                if(len(words)>0):
+                    if(words[0]=="usage:"):
+                        process_phase=1
+                lines_out.append(line+'\n\n')
+            # Process execution example line
+            elif(process_phase==1):
+                words=line.split()
+                if(len(words)>0):
+                    line='``'+line.strip()+'``'
+                    process_phase=2
+                lines_out.append(line+'\n')
+            # Process "where options ..." line
+            elif(process_phase==2):
+                words=line.split()
+                if(len(words)>0):
+                    if(line=="where options are:"):
+                        process_phase=3
+                lines_out.append(line+'\n')
+            # Process options
+            elif(process_phase==3):
+                words=line.split(' ')
+                if(len(words)<2):
+                    process_phase=4
+                else:
+                    n_opts=0
+                    opt_searching=True
+                    for i_word,word in enumerate(words):
+                        if(len(word)>1):
+                            if(word[0:1]=='--'):
+                                if(opt_searching):
+                                    words[i_word]='**'+word+'**'
+                                    n_opts+=1
+                            elif(word[0]=='-'):
+                                if(opt_searching):
+                                    words[i_word]='**'+word+'**'
+                                    n_opts+=1
+                            else:
+                                if(word != ' '):
+                                    if(opt_searching):
+                                        words[i_word]='\n\t'+words[i_word]
+                                    opt_searching=False
+                    line=' '.join(words)
+                lines_out.append(line+'\n')
+            # Process everything else
+            else:
+                lines_out.append(line+'\n')
             flag_remove_top_blank_lines=False
     return(''.join(lines_out))
 
@@ -223,7 +274,7 @@ def generate_execs_rst(input_dir,output_dir,project_name,project_dir,filename_ro
 
             # Send output of executable to the output file
             outFile.write(exec_i+'\n')
-            outFile.write('-'*len(exec_i)+'\n')
+            outFile.write('`'*len(exec_i)+'\n')
             out = subprocess.check_output(["/Users/gpoole/gbpSID/build-dev/"+exec_i, "-h"]).decode("utf-8")
             outFile.write(reformat_Clara_help_to_rst(out))
 
