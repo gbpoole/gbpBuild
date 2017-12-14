@@ -1,36 +1,35 @@
-# In every directory in which C/C++ source code is located,
-# place a file called 'local.cmake' following the format 
-# given here.
+# The following directive is used to organise
+# how the Doxygen groups defined by this project
+# will be organised in the documentation:
+#
+# set_active_API_module root Project root
 
-#=======================================
-# First, set empty defaults.  Don't
-# touch the lines in this section.
-#=======================================
+# Set empty defaults
 set(LIBDIRS    "" )
 set(SRCDIRS    "" )
 set(INCFILES   "" )
 set(SRCFILES   "" )
 set(EXEFILES   "" )
 set(DATAFILES  "" )
-set(DATASUBDIR "" )
 set(PASSDIRS   "" )
+set(DATASUBDIR "" )
 
-#=======================================
-# Then, populate each list given below
-# with the information relevant to this
-# directory.
-#=======================================
 # Add subdirectories that are roots to libraries
 # eg. list(APPEND LIBDIRS "dir" )
 # -- NONE FOR THIS DIR --
 
 # Add directories that contribute source files 
 # eg. list(APPEND SRCDIRS "dir" )
-# -- NONE FOR THIS DIR --
+list(APPEND SRCDIRS "src" )
 
 # Add header files
 # eg. list(APPEND INCFILES "file" )
-# -- NONE FOR THIS DIR --
+# Clara is a 3rd party header-only library, by Phil Nash and is
+#    used by the Catch2 project: https://github.com/catchorg/Catch2
+#    It is a "simple to use, composable, command line parser for
+#    C++ 11 and beyond".  See the following talk for more info:
+#    https://www.youtube.com/watch?v=Od4bjLfwI-A
+list(APPEND INCFILES   "extern/Clara/include/clara.hpp" )
 
 # Add source files
 # eg. list(APPEND SRCFILES "file" )
@@ -52,3 +51,4 @@ set(PASSDIRS   "" )
 #   but which we won't scan for sources, etc
 # eg. list(APPEND PASSDIRS "dir" )
 # -- NONE FOR THIS DIR --
+
