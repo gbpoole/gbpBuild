@@ -27,7 +27,7 @@ project (${GBP_PROJECT_NAME})
 
 # Clear default install directory (user should use
 # DESTDIR with make to set installation directory)
-set( CMAKE_INSTALL_PREFIX "" )
+set( CMAKE_INSTALL_PREFIX "./" )
 
 # Set default compilers(must come before project line)
 set(CMAKE_C_COMPILER   "gcc")
