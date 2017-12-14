@@ -20,9 +20,6 @@ build
 # Used for testing
 mpich
 
-# Ignore Sphynx themes (for now)
-docs/themes/*
-
 #Miscillaneous
 .idea
 .install*
