@@ -322,7 +322,7 @@ def generate_index_rst(input_dir,output_dir,project_name,project_dir,filename_ro
                 'footer.rst']
 
     # Check if there is a 'doc_order.txt' file and over-write the defaults with it if so
-    filename_in = input_dir+"/doc_order.txt"
+    filename_in = input_dir+"/index_order.txt"
     if(os.path.isfile(filename_in)):
         with open(filename_in,"r") as inFile:
             doc_order = []
