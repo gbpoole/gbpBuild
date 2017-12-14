@@ -14,11 +14,13 @@
 
 # Common names for out-of-source build directories
 cmake-build-*
-build-*
-build
+build*
 
 # Used for testing
 mpich
+
+# Ignore Sphynx themes (for now)
+docs/themes/*
 
 #Miscillaneous
 .idea
