@@ -199,6 +199,7 @@ macro(build_executables cur_dir )
         else()
             add_executable(${_exe_name} ${_exe_file} ${EXEFILES_GLOBAL_WITH_PATH} ${INC_FILES_PROJECT})
         endif()
+        add_dependencies(all_executables ${_exe_name})
         target_compile_options(${_exe_name} PRIVATE -DGBP_DATA_DIR=\"${DATADIR}\" )
         install(TARGETS ${_exe_name} DESTINATION bin )
 
@@ -282,6 +283,12 @@ macro(process_targets cur_dir )
     # Perform some initialization on the first call
     if( ${cur_dir} STREQUAL ${CMAKE_SOURCE_DIR} )
         set(SRC_FILES_PROJECT "" )
+        # Create an executables target.  This will allow us to
+        # create a dependency on all the executables being done
+        # ... needed by the documentation targets for example
+        add_custom_target(
+            all_executables
+            COMMENT "Check executable targets") 
     endif()
 
     # Build all targets associated with library directories

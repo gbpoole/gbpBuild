@@ -58,7 +58,6 @@ macro(add_custom_docs)
         # Convert Doxygen xml to rst for Sphinx
         add_custom_target(
             docs-breathe
-            COMMAND echo skip#COMMAND mkdir -p ${Sphinx_BUILD_DIR}/breathe
             COMMENT "Perform initialization for Breathe")
     
         # Perform Spinx HTML build
@@ -97,6 +96,11 @@ macro(add_custom_docs)
         add_dependencies(docs-pdf docs-doxygen )
         add_dependencies(docs-doxygen docs-breathe )
         add_dependencies(docs docs-pdf docs-html )
+
+        # We need the executables so that we can call them
+        # with '-h' to get the command-line syntax
+        add_dependencies(docs-html all_executables)
+        add_dependencies(docs-pdf all_executables)
     else()
         message(STATUS "   -> docs *NOT* added (needed libraries not found)")
     endif()
