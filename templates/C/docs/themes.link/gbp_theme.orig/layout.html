@@ -1,0 +1,34 @@
+<!-- 
+#
+# -->
+
+{#
+    gbp_theme/layout.html
+    ~~~~~~~~~~~~~~~~~~~~~
+
+    layout template for gbp_theme.
+
+#}
+
+{% extends "cloud/layout.html" %}
+
+{%- set reldelim1 = '<i class="fa fa-angle-double-right" style="color: #a2a7b3; text-shadow: none;"></i>' %}
+
+{# add font stylesheets #}
+{% set css_files = css_files + [theme_facssurl] %}
+
+{% block rootrellink %}
+    <li><a href="{{ theme_barlink_home }}"><i class="fa fa-home fa-lg"></i></a></li>
+    <li><a href="{{ theme_barlink_github }}"><i class="fa fa-github fa-lg"></i></a></li>
+    <li><a href="{{ theme_barlink_help }}"><i class="fa fa-comments-o fa-lg"></i></a></li>
+    <li><a href="{{ theme_barlink_github }}/edit/master/{{ theme_barlink_docsrc }}/{{ pagename }}.rst"><i class="fa fa-pencil fa-lg"></i></a></li>
+    <li style="color: {{ theme_headlinkcolor }}">&nbsp;&middot;&nbsp;</li>
+    <li><a href="{{ theme_barlink_github }}/tree/{{ release }}">{{ version }}</a></li>
+    <li style="color: {{ theme_headlinkcolor }}">&nbsp;&middot;&nbsp;</li>
+    <li class="nav-item nav-item-0"><a href="{{ pathto(theme_roottarget) }}">
+        {{ theme_barlink_pkgnamehtml }}
+        </a>{{ reldelim1 }}</li>
+{% endblock %}
+{%- for parent in parents %}
+    <li class="nav-item nav-item-{{ loop.index }}"><a href="{{ parent.link|e }}" {% if loop.last %}{{ accesskey("U") }}{% endif %}>{{ parent.title }}</a>{{ reldelim1 }}</li>
+{%- endfor %}
