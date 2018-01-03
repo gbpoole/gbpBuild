@@ -259,7 +259,7 @@ def generate_execs_rst(input_dir,output_dir,project_name,project_dir,filename_ro
     harvest_doxygen_groups(header_file_list,group_list)
 
     # copy header to output file
-    add_project_file(input_dir,filename_root,".header",outFile,default_text=underlined_text("Executables",'='))
+    add_project_file(input_dir,filename_root,".header",outFile,default_text=underlined_text("Applications",'='))
 
     # ----------- Output logic for this file starts here -----------
 
@@ -307,19 +307,26 @@ def generate_index_rst(input_dir,output_dir,project_name,project_dir,filename_ro
     # Open the output file for writing
     outFile = open(output_dir + "/" + filename_root + '.rst', "w")
 
+    # copy header to output file
+    add_project_file(input_dir,filename_root,".header",outFile)
+
+    # Add a table of contents title
+    outFile.write("\n")
+    outFile.write("Table of Contents\n")
+    outFile.write("-----------------\n")
+    outFile.write("\n")
+
     outFile.write(".. "+project_name+" documentation master file\n")
     outFile.write("\n")
     outFile.write(".. toctree::\n")
+#    outFile.write("   :hidden:\n")
     outFile.write("   :maxdepth: 2\n")
-    outFile.write("   :caption: Contents:\n")
     outFile.write("\n")
 
     # Set the default document order
-    doc_order = ['header.rst',
-                'install.rst',
-                'execs.rst',
-                'API.rst',
-                'footer.rst']
+    doc_order = ['install.rst',
+                 'execs.rst',
+                 'API.rst']
 
     # Check if there is a 'doc_order.txt' file and over-write the defaults with it if so
     filename_in = input_dir+"/index_order.txt"
@@ -330,16 +337,14 @@ def generate_index_rst(input_dir,output_dir,project_name,project_dir,filename_ro
                 doc_order.append(line)
 
     for doc_i in doc_order:
-        outFile.write(".. include:: "+doc_i+"\n")
+        outFile.write("   "+doc_i+"\n")
 
-    outFile.write("Indices and tables\n")
-    outFile.write("==================\n")
     outFile.write("\n")
     outFile.write("* :ref:`genindex`\n")
-    outFile.write("* :ref:`search`\n")
+
+    # copy header to output file
+    add_project_file(input_dir,filename_root,".footer",outFile)
 
     # Close output file
     outFile.close()
-
-
 

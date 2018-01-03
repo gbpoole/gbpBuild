@@ -1,18 +1,13 @@
 {#
-    cloud/layout.html
-    ~~~~~~~~~~~~~~~~~
+ This is the default Sphinx theme used by gbpBuild.
 
-    Sphinx layout template for the cloud theme.
+ It is a modified version of the 'Cloud' Sphinx theme with
+ some additions inspired by the 'psi' theme.  Please see:
 
-    :copyright: Copyright 2009-2011 Assurance Technologies LLC
-    :license: BSD
+   http://cloud-sptheme.readthedocs.io/en/latest/cloud_theme.html
+   https://github.com/psi4/sphinx-psi-theme
 
-    roottarget - optional target for root link (default to toc)
-    logotarget - optional target for logo link (defaults to root target)
-    googleanalytics_id - if set, enabled google analytics snippet & footer
-    googleanalytics_path - optional subpatch for GA cookie
-    collapsiblesidebar - enable collapsible sidebar support
-
+ for more details.
 #}
 
 {% extends "basic/layout.html" %}
@@ -21,6 +16,7 @@
 
 {# add script file to instrument collapsable sections  and other features #}
 {% set script_files = script_files + ['_static/jquery.cookie.js',
+                                      '_static/cloud.base.js',
                                       '_static/cloud.js'] %}
 
 {# add font stylesheets #}
@@ -29,14 +25,6 @@
 {# make root link redirectable #}
 {%- set theme_roottarget = (theme_roottarget == "<toc>" and master_doc or theme_roottarget) %}
 {% block rootrellink %}
-    <li><a href="{{ theme_barlink_github }}"><i class="fa fa-github fa-lg"></i></a></li>
-    <li><a href="{{ theme_barlink_github }}/edit/master/{{ theme_barlink_docsrc }}/{{ pagename }}.rst"><i class="fa fa-pencil fa-lg"></i></a></li>
-    <li style="color: {{ theme_headlinkcolor }}">&nbsp;&middot;&nbsp;</li>
-    <li><a href="{{ theme_barlink_github }}/tree/{{ release }}">{{ version }}</a></li>
-    <li style="color: {{ theme_headlinkcolor }}">&nbsp;&middot;&nbsp;</li>
-    <li class="nav-item nav-item-0"><a href="{{ pathto(theme_roottarget) }}">
-        {{ theme_barlink_pkgnamehtml }}
-        </a>{{ reldelim1 }}</li>
     <li><a href="{{ pathto(theme_roottarget) }}">{{shorttitle|e}}</a>{{reldelim1}}</li>
 {% endblock %}
 
@@ -101,9 +89,3 @@ if(ga_enabled){
     {%- endif %}
     <!-- cloud_sptheme 1.4 -->
 {%- endblock %}
-
-# Expand table of contents
-{%- for parent in parents %}
-    <li class="nav-item nav-item-{{ loop.index }}"><a href="{{ parent.link|e }}" {% if loop.last %}{{ accesskey("U") }}{% endif %}>{{ parent.title }}</a>{{ reldelim1 }}</li>
-{%- endfor %}
-

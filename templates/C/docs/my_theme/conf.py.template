@@ -1,5 +1,0 @@
-[theme]
-inherit = gbp_theme
-
-barlink_home          = %PROJECT_HOMEPAGE_URL%
-barlink_github        = %PROJECT_GITHUB_URL%
