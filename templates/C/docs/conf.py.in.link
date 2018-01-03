@@ -42,7 +42,6 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'breathe']
@@ -64,8 +63,6 @@ source_suffix = '.rst'
 gbpDocs.generate_index_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@')
 gbpDocs.generate_API_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@')
 gbpDocs.generate_execs_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@')
-gbpDocs.generate_default_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@',filename_root="header",default_title='@PROJECT_NAME@')
-gbpDocs.generate_default_rst('@PRJ_DOCS_DIR@','@Sphinx_BUILD_DIR@','@PROJECT_NAME@','@CMAKE_SOURCE_DIR@',filename_root="footer")
 
 # The master toctree document.
 master_doc = 'index'
@@ -114,11 +111,14 @@ html_show_sourcelink = False
 html_favicon = '@PRJ_DOCS_DIR@/static/favicon.ico'
 html_logo = '@PRJ_DOCS_DIR@/static/logo.gif'
 
+html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'], }
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'stickysidebar':True}
+html_theme_options = {'gbp_project_name':'gbpSID'}
+
+extra_nav_links = {'Index' : 'genindex.html'}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -201,8 +201,6 @@ epub_copyright = copyright
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
-
-
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
