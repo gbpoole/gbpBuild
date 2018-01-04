@@ -34,11 +34,10 @@ if os.path.exists(os.path.join(PROJECT_DIRECTORY, '.git')):
     if not git_version_string in tags:
         # ... then add that tag to the HEAD commit
         cmd = 'git tag -a %s %s -m "tagged by setup.py"' % (git_version_string, git_hash)        
-        print('Quitting before I run cmd:',cmd)
-        exit(1)
+        print('Adding a verion tag to the repository:',git_version_string)
         subprocess.check_output(cmd, shell=True, universal_newlines=True)
     # Add the git hash to the version we will use in setup.py
-    version_string += ', git hash: %s' % git_hash
+    #version_string += ', git hash: %s' % git_hash
 else:
     raise RuntimeError("Unable to find the project's git repository at %s." % (PROJECT_DIRECTORY,))
 
