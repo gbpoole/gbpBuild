@@ -79,7 +79,7 @@ class parser:
                 opt_dtype    =option_argument_i[2]
                 opt_default  =option_argument_i[3]
                 opt_dest     =option_argument_i[4]
-                option_action='store'
+                opt_action   ='store'
                 if(opt_dtype=='bool'):
                     if(opt_default==True):
                         opt_action='store_false'
@@ -87,7 +87,9 @@ class parser:
                         opt_action='store_true'
                     else:
                         parser.error('Invalid default (%s) for boolean option (%s).'%(opt_default,opt_dest))
-                parser.add_option(*opt_strings,action=option_action,help=opt_help_txt,type=opt_dtype,dest=opt_dest)
+                    parser.add_option(*opt_strings,action=opt_action,help=opt_help_txt,dest=opt_dest)
+                else:
+                    parser.add_option(*opt_strings,action=opt_action,help=opt_help_txt,type=opt_dtype,dest=opt_dest)
                 if(option_argument_i[0]=="-h"):
                     flag_help_added=True
 
