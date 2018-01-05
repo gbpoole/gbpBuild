@@ -8,7 +8,7 @@ Developed with the following library versions:
 import time
 import sys
 
-class gbpPy_stream(object):
+class stream(object):
     """This class  manages the formatting of log output."""
 
     def __init__(self):
@@ -85,4 +85,4 @@ class gbpPy_stream(object):
         exit(error_code)
 
 # Initialize the log stream
-log=gbpPy_stream()
+log=stream()

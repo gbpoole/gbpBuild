@@ -48,6 +48,6 @@ setup(name='gbpPy',
       description="Common code used by Gregory B. Poole's Python projects",
       author='Gregory B. Poole',
       author_email='gbpoole@gmail.com',
-      packages=['args','log'],
+      packages=find_packages(),
      )
 
