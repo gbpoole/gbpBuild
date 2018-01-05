@@ -44,6 +44,52 @@ def parse_template_filename(filename_in):
 
     return filename_out,flag_is_template,flag_is_link
 
+# Process directories
+def process_template_directories(template_directories,uninstall=False):
+    if(uninstall):
+        SID.log.open("Removing directories...")
+    else:
+        SID.log.open("Processing directories...")
+    for dir_i in template_directories:
+        SID.log.open("Processing directory {%s}..."%(dir_i['name_out']))
+        try:
+            os.stat(dir_i['name_out'])
+            if(uninstall):
+                os.rmdir(dir_i['full_path_out'])
+                SID.log.close("removed.")
+            else:
+                SID.log.close("exists.")
+        except:
+            if(uninstall):
+                SID.log.close("not found.")
+            else:
+                os.mkdir(dir_i['name_out'])
+                SID.log.close("created.")
+    SID.log.close("Done")
+    
+# Process files
+def process_template_files(template_files,uninstall=False):
+    if(uninstall):
+        SID.log.open("Removing files...")
+    else:
+        SID.log.open("Processing files...")
+    for file_i in template_files:
+        SID.log.open("Processing file {%s}->{%s}..."%(file_i['name_out'],file_i['full_path_out']))
+        try:
+            os.stat(file_i['full_path_out'])
+            if(uninstall):
+                os.remove(file_i['full_path_out'])
+                SID.log.close("removed.")
+            else:
+                SID.log.close("exists.")
+        except:
+            if(uninstall):
+                SID.log.close("not found.")
+            else:
+                shutil.copy2(file_i['full_path_in'],file_i['full_path_out'])
+                SID.log.close("created.")
+    SID.log.close("Done")
+
 # Main function
 def main(argv=None):
 
@@ -69,17 +115,19 @@ def main(argv=None):
     ##      element[1]: help text
     ##      element[2]: storage type
     ##      element[3]: default value
-    ##      element[4]: storage destination
+    ##      element[4]: storage key
     ## - Set storage type to 'bool' if you just want a switch.
     ##   The default value will be used to decide its sense.
     optional_arguments = []
+    optional_arguments.append([['-r'],'Uninstall template','bool',False,'flag_uninstall'])
 
     ## Create argument parser and check syntax
     cmdl_parser = cmdl.parser(argv,positional_arguments,optional_arguments)
 
     ## For readability, create variables to express content of cmd-line
-    project_dir_in = cmdl_parser.extract('project_dir')
+    project_dir_in  = cmdl_parser.extract('project_dir')
     template_dir_in = cmdl_parser.extract('template_dir')
+    flag_uninstall  = cmdl_parser.extract('flag_uninstall')
 
     ## Validate inputs
     if(not os.path.isdir(project_dir_in)):
@@ -127,32 +175,16 @@ def main(argv=None):
     SID.log.comment("n_files      =%d"%(len(template_files)))
     SID.log.close("Done")
 
-    # Create needed directories
-    SID.log.open("Processing directories...")
-    for dir_i in template_directories:
-        SID.log.open("Processing directory %s..."%(dir_i['name_out']))
-        try:
-            os.stat(dir_i['name_out'])
-            SID.log.close("exists.")
-        except:
-            os.mkdir(dir_i['name_out'])
-            SID.log.close("created.")
-    SID.log.close("Done")
-
-    # Create needed files
-    SID.log.open("Processing files...")
-    for file_i in template_files:
-        SID.log.open("Processing file {%s}->{%s}..."%(file_i['name_out'],file_i['full_path_out']))
-        try:
-            os.stat(file_i['full_path_out'])
-            SID.log.close("exists.")
-        except:
-            shutil.copy2(file_i['full_path_in'],file_i['full_path_out'])
-            SID.log.close("created.")
-
-    SID.log.close("Done")
-
-    SID.log.close("Done")
+    if(not flag_uninstall):
+        SID.log.open("Installing template {%s}..."%(template_name))
+        process_template_directories(template_directories)
+        process_template_files(template_files)
+        SID.log.close("Done")
+    else:
+        SID.log.open("Removing template {%s}..."%(template_name))
+        process_template_files(template_files,uninstall=True)
+        process_template_directories(template_directories,uninstall=True)
+        SID.log.close("Done")
 
 # Allow script execution
 if __name__ == '__main__':
