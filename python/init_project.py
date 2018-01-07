@@ -48,14 +48,18 @@ def parse_template_filename(filename_in):
 def process_template_directories(template_directories,uninstall=False):
     if(uninstall):
         SID.log.open("Removing directories...")
+        flag_reverse_sort=True
     else:
         SID.log.open("Processing directories...")
-    for dir_i in template_directories:
+        flag_reverse_sort=False
+    # Process in sorted order to make
+    for dir_i in sorted(template_directories,key=lambda k: len(k['name_out']),reverse=flag_reverse_sort):
         SID.log.open("Processing directory {%s}..."%(dir_i['name_out']))
         try:
-            os.stat(dir_i['name_out'])
+            if( not os.path.isdir(dir_i['name_out'])):
+                raise IsADirectoryError()
             if(uninstall):
-                os.rmdir(dir_i['full_path_out'])
+                os.rmdir(dir_i['name_out'])
                 SID.log.close("removed.")
             else:
                 SID.log.close("exists.")
