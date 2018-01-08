@@ -8,7 +8,7 @@ Developed with the following library versions:
 import time
 import sys
 
-class stream(object):
+class log_stream(object):
     """This class  manages the formatting of log output."""
 
     def __init__(self):
@@ -78,11 +78,11 @@ class stream(object):
         print (msg+msg_time, end='\n',flush=True, file=self.fp)
         self.hanging=False
     
-    def throw_error(self,string,error_code):
+    def error(self,err_msg,code=1):
         """Emit an error message and exit."""
         self.unhang()
-        print (('\nERROR %d: '+string+'\n')%(error_code), file=self.fp)
-        exit(error_code)
+        print (('\nERROR %d: %s\n')%(code,err_msg), file=self.fp)
+        exit(code)
 
 # Initialize the log stream
-log=stream()
+log=log_stream()

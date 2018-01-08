@@ -9,6 +9,7 @@ Developed with the following library versions:
 import sys
 import os
 import optparse
+import gbpPy.log as SID
 
 class parser:
     """
@@ -156,12 +157,12 @@ class parser:
             # Finally, add positional argument
             self.settings[arg_key]=arg_val
 
-    def extract(self,name,default=None):
+    def extract(self,name):
         """Extract an entry from the settings list and provide a default value."""
         try:
             rval=self.settings[name]
         except KeyError:
-            SID.log.error('"%s" is not a valid option.' % name)
+            SID.log.error('"%s" is not a valid command-line option.' % name)
         return rval
 
 def df_option(string):
