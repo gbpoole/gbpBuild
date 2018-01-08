@@ -78,10 +78,14 @@ class log_stream(object):
         print (msg+msg_time, end='\n',flush=True, file=self.fp)
         self.hanging=False
     
-    def error(self,err_msg,code=1):
+    def error(self,err_msg,code=None):
         """Emit an error message and exit."""
         self.unhang()
-        print (('\nERROR %d: %s\n')%(code,err_msg), file=self.fp)
+        if(code):
+            print (('\nERROR %d: %s\n')%(code,err_msg), file=self.fp)
+        else:
+            print (('\nERROR: %s\n') % (err_msg), file=self.fp)
+            code=1
         exit(code)
 
 # Initialize the log stream

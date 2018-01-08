@@ -222,14 +222,23 @@ class template:
                         SID.log.close("created silently.")
         SID.log.close("Done")
 
-    # Write template
-    def write(self,dir_out,parameters=None,silent=False):
+    # Install template
+    def install(self,dir_out,parameters=None,silent=False):
+        # Check that all the needed template parameters are in the given dictionary
+        for param_i in self.parameters:
+            if not param_i in parameters:
+                SID.log.error("Required parameter {%s} is not present in template installation dictionary."%(param_i))
+
         # Note that the order needs to be such that directories are created *before* files
+        SID.log.open("Installing template {%s}..."%(self.name))
         self.process_directories(dir_out,parameters=parameters,silent=silent)
         self.process_files(dir_out,parameters=parameters,silent=silent)
+        SID.log.close("Done")
 
-    # Write template
-    def delete(self,dir_out,silent=False):
+    # Uninstall template
+    def uninstall(self,dir_out,silent=False):
         # Note that the order needs to be such that directories are removed *after* files
+        SID.log.open("Removing template {%s}..."%(self.name))
         self.process_files(dir_out,uninstall=True,silent=silent)
         self.process_directories(dir_out, uninstall=True, silent=silent)
+        SID.log.close("Done")
