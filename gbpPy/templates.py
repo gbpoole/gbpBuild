@@ -1,6 +1,7 @@
 import gbpPy.log as SID
 import shutil
 import os
+import re
 
 # Helper functions
 # ----------------
@@ -41,6 +42,38 @@ def get_base_name(project_dir_abs):
         head, tail = os.path.split(head)
     return (tail)
 
+# This function locates all annotated parameter references in a line
+def find_parameter_references(line):
+    regex = re.compile("%\w*%")
+    matches = []
+    for match in regex.finditer(line):
+        param = {}
+        param['name']=match.group().strip('%')
+        param['span']=match.span()
+        matches.append(param)
+    return matches
+
+def perform_parameter_substitution(line,parameters):
+    regex = re.compile("%\w*%")
+    line_new = line
+    match = regex.search(line_new)
+    while(match):
+        line_new = line_new[0:match.start()]+str(parameters[match.group().strip('%')])+line_new[match.end():]
+        match = regex.search(line_new)
+    return line_new
+
+# Process files
+def process_file(file_i,full_path_out,parameters=None):
+    if(file_i['is_link']):
+        os.symlink(file_i['full_path_in'], full_path_out)
+    elif(file_i['is_template']):
+        with open(file_i['full_path_in'],"r") as file_in:
+            with open(full_path_out,"w") as file_out:
+                for line in file_in:
+                    file_out.write(perform_parameter_substitution(line,parameters))
+    else:
+        shutil.copy2(file_i['full_path_in'], full_path_out)
+
 # Define main class
 # -----------------
 
@@ -77,6 +110,7 @@ class template:
         self.name = template_name
         self.directories = []
         self.files = []
+        self.n_template_files = 0
 
         # Parse the template directory
         SID.log.open( "Loading template {'%s' from %s}..." %(self.name,self.path))
@@ -98,15 +132,34 @@ class template:
                 file_dict['full_path_in']=os.path.join(dir_dict['full_path_in'],file_i )
                 file_dict['name_in']= file_i
                 file_dict['name_out']= name_out
-                file_dict['is_template_file']= flag_is_template
+                file_dict['is_template']= flag_is_template
                 file_dict['is_link']= flag_is_link
+                if(file_dict['is_template']):
+                    self.n_template_files+=1
                 self.files.append(file_dict)
+
+        # Search all files to generate a list of needed parameters
+        if(self.n_template_files>0):
+            SID.log.open("Scanning template files for parameters...")
+            self.parameters = set()
+            for file_i in [f for f in self.files if(f['is_template'])]:
+                with open(file_i['full_path_in'],'r') as file_in:
+                    for line in file_in:
+                        param_refs = find_parameter_references(line)
+                        for param_ref_i in param_refs:
+                            self.parameters.add(param_ref_i['name'])
+            SID.log.close("Done")
+
         SID.log.comment("n_directories=%d"%(len( self.directories)))
         SID.log.comment("n_files      =%d"%(len( self.files)))
+        SID.log.comment("n_parameters =%d"%(len( self.parameters)))
+        for param_ref_i in self.parameters:
+            SID.log.comment("   -> %s" % (param_ref_i))
+
         SID.log.close("Done")
 
     # Process directories
-    def process_directories(self, dir_install, uninstall=False,silent=False):
+    def process_directories(self, dir_install, parameters=None, uninstall=False,silent=False):
         if (uninstall):
             SID.log.open("Removing directories...")
             flag_reverse_sort = True
@@ -119,7 +172,7 @@ class template:
             SID.log.open("Processing directory {%s}..." % (dir_i['name']))
             try:
                 if (not os.path.isdir(name_out)):
-                    raise IsADirectoryError()
+                    raise IsADirectoryError
                 if (uninstall):
                     if(not silent):
                         os.rmdir(name_out)
@@ -140,7 +193,7 @@ class template:
         SID.log.close("Done")
 
     # Process files
-    def process_files(self,dir_install,uninstall=False,silent=False):
+    def process_files(self,dir_install,parameters=None,uninstall=False,silent=False):
         if (uninstall):
             SID.log.open("Removing files...")
         else:
@@ -163,17 +216,17 @@ class template:
                     SID.log.close("not found.")
                 else:
                     if(not silent):
-                        shutil.copy2(file_i['full_path_in'], full_path_out)
+                        process_file(file_i,full_path_out,parameters=parameters)
                         SID.log.close("created.")
                     else:
                         SID.log.close("created silently.")
         SID.log.close("Done")
 
     # Write template
-    def write(self,dir_out,silent=False):
+    def write(self,dir_out,parameters=None,silent=False):
         # Note that the order needs to be such that directories are created *before* files
-        self.process_directories(dir_out,silent=silent)
-        self.process_files(dir_out,silent=silent)
+        self.process_directories(dir_out,parameters=parameters,silent=silent)
+        self.process_files(dir_out,parameters=parameters,silent=silent)
 
     # Write template
     def delete(self,dir_out,silent=False):
