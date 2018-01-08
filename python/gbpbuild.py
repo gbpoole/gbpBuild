@@ -12,8 +12,8 @@ def main(argv=None):
 
     # Define cmd line positional arguments
     positional_arguments = []
-    positional_arguments.append(['project_dir',None])
     positional_arguments.append(['template_name',None])
+    positional_arguments.append(['project_dir',None])
 
     # Define cmd line optional arguments.
     optional_arguments = []
@@ -47,19 +47,14 @@ def main(argv=None):
     template = tmp.template(template_name,path=template_path)
 
     ## Process the template
-    if(not flag_uninstall):
-        SID.log.open("Installing template {%s}..."%(template.name))
-
+    if(flag_uninstall):
+        template.uninstall(project_dir_abs,silent=flag_silent)
+    else:
         ## Generate parameter dictionary
         param_dict = {}
-        param_dict['author_name']='Gregory B. Poole'
+        #param_dict['author_name'] = 'Gregory B. Poole'
 
-        template.write(project_dir_abs,parameters=param_dict,silent=flag_silent)
-        SID.log.close("Done")
-    else:
-        SID.log.open("Removing template {%s}..."%(template.name))
-        template.delete(project_dir_abs,silent=flag_silent)
-        SID.log.close("Done")
+        template.install(project_dir_abs, parameters=param_dict, silent=flag_silent)
 
     SID.log.close("Done")
 
