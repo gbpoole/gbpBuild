@@ -1,4 +1,4 @@
-# Define these outside any of any macros or functions
+# Define these outside any macros or functions
 set(GBPBUILD_REL_PATH "extern/gbpBuild" )
 set(GBP_PROJECT_NAME  "gbpSID")
 
