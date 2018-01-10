@@ -86,7 +86,7 @@ class template:
 
         # If nothing was found in the environment, check local path
         if (not path):
-            path='./'
+            path='./:./templates/'
 
         # Search the path for the template
         path_list=path.split(':')
@@ -242,3 +242,4 @@ class template:
         self.process_files(dir_out,uninstall=True,silent=silent)
         self.process_directories(dir_out, uninstall=True, silent=silent)
         SID.log.close("Done")
+
