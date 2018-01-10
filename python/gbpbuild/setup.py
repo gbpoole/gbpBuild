@@ -49,6 +49,6 @@ setup(name='gbpBuild',
       description="The gbpBuild library's Python package",
       author='Gregory B. Poole',
       author_email='gbpoole@gmail.com',
-      packages=['docs'],
+      packages=find_packages(),
      )
 

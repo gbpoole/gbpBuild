@@ -21,8 +21,8 @@ import os
 import sys
 
 # Add gbpBuild python code to path and import it
-sys.path.append("@GBP_BUILD_DIR@/docs/")
-import gbpBuild_docs as gbpDocs
+sys.path.append("@GBP_BUILD_DIR@/python/gbpbuild")
+import gbpbuild.docs as gbpDocs
 
 # Add it to the project path
 breathe_directory = "@Sphinx_BUILD_DIR@/breathe/"
