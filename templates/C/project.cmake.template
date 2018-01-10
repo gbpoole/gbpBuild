@@ -16,14 +16,6 @@ macro(project_options_and_dependancies)
     # (look in gbpBuild/cmake/3rd_party.cmake for a list of supported libraries)
     message(STATUS "")
     message(STATUS "Initializing 3rd-party libraries...")
-
-    #========= Set project-specific options ========
-    # Use double precision liberally ?
-
-    #=========== Add 3rd-party libraries ===========
-    # (look in gbpBuild/cmake/3rd_party.cmake for a list of supported libraries)
-    message(STATUS "")
-    message(STATUS "Initializing 3rd-party libraries...")
     
     # The following three macros have been set-up for automating
     # 3rd-party library configuration  The folling libraries are
