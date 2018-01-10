@@ -1,0 +1,71 @@
+# Makefile for C/C++ code
+
+# Set the build directory based on the variable 'mode'
+ifndef mode
+    mode=release
+endif
+ifeq ($(mode),release)
+    BUILD_DIR:=build
+else ifeq ($(mode),debug)
+    BUILD_DIR:=build-debug
+else ifeq ($(mode),test)
+    BUILD_DIR:=build-test
+else 
+    $(error Invalid build mode {$(mode)} specified.)
+endif
+
+# Supported 'cmake' targets
+CMAKE_TARGETS = clang-format clang-format-fix clang-tidy clang-tidy-fix
+
+.PHONY: cmake build-c docs-c install-c test-c coverage-c clean-c lint-c $(CMAKE_TARGETS)
+
+# This '.DIR' trick is needed to avoid
+# conflicts with the 'build' target.
+$(BUILD_DIR).DIR:
+ifeq ($(wildcard $(BUILD_DIR)),)
+	@$(ECHO) -n "Making build directory {"$(basename $@)"}..."
+	@mkdir $(basename $@)
+	@$(ECHO) "Done."
+endif
+cmake:  $(BUILD_DIR).DIR
+	@$(ECHO) "Running 'cmake'..."
+	@cd $(BUILD_DIR);cmake ..
+	@$(ECHO) "Done."
+build-c: cmake
+	@$(ECHO) "Running 'make'..."
+	@cd $(BUILD_DIR);make
+	@$(ECHO) "Done."
+docs-c: .print_status
+	@$(ECHO) "Generating project docs..."
+	@cd $(BUILD_DIR);make docs
+	@$(ECHO) "Done."
+install-c: .print_status build-c
+	@$(ECHO) "Installing C/C++ code..."
+	@cd $(BUILD_DIR);make DESTDIR=$(PREFIX) install
+	@$(ECHO) "Done."
+test-c: .print_status build-c
+	@$(ECHO) "Running C/C++ tests..."
+	@make -f test/Makefile tests
+	@$(ECHO) "Done."
+coverage-c: .print_status build-c
+	@$(ECHO) "Generating C/C++ test coverage report..."
+	@make -f test/Makefile kcov
+	@$(ECHO) "Done."
+clean-c: .print_status
+	@$(ECHO) -n "Cleaning-up build directory '"$(BUILD_DIR)"'..."
+	@rm -rf $(BUILD_DIR)
+	@$(ECHO) "Done."
+lint-c: .print_status
+	@$(ECHO) "Linting C/C++ code..."
+	@cd $(BUILD_DIR);make clang-format
+	@cd $(BUILD_DIR);make clang-tidy
+	@$(ECHO) "Done."
+lint-fix-c: .print_status
+	@$(ECHO) "Applying linting suggestions to C/C++ code..."
+	@cd $(BUILD_DIR);make clang-format-fix
+	@cd $(BUILD_DIR);make clang-tidy-fix
+	@$(ECHO) "Done."
+$(CMAKE_TARGETS): .print_status cmake
+	@$(ECHO) "Running cmake target '"$@"'..."
+	@cd $(BUILD_DIR);make $@
+	@$(ECHO) "Done."

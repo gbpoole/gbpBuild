@@ -1,0 +1,99 @@
+# Makefile for Python code
+
+# Set default mode
+ifndef mode
+    mode=release
+endif
+
+# Assume that all the directories in python/ are
+# python packages.  Get a list of them.
+PKG_DIRS:=$(sort $(realpath $(dir $(wildcard python/*/*))))
+
+# Compile a list of build directories
+BUILD_DIRS:=$(addsuffix /build,$(PKG_DIRS))
+
+#.PHONY: cmake build-py docs.c_cpp install.c_cpp test.c_cpp coverage.c_pp
+
+$(BUILD_DIRS):
+	@$(ECHO) -n "Making build directory {"$@"}..."
+	@mkdir $@
+	@$(ECHO) "Done."
+
+.PHONY: build-py
+build-py: $(addsuffix .BUILD,  $(PKG_DIRS))
+$(addsuffix .BUILD,  $(PKG_DIRS)):
+	@$(ECHO) "Building python package '"$(shell basename $(realpath -s $(basename $@)))"'..."
+	@cd python/$(shell basename $(realpath -s $(basename $@)));python setup.py build
+	@$(ECHO) "Done."
+
+.PHONY: docs-py
+docs-py: $(addsuffix .DOCS,  $(PKG_DIRS))
+$(addsuffix .DOCS,  $(PKG_DIRS)):
+	@$(ECHO) -n "Generating documentation for python package '"$(shell basename $(realpath -s $(basename $@)))"'..."
+	@cd python/$(shell basename $(realpath -s $(basename $@)));python setup.py build_sphinx
+	@$(ECHO) "Done."
+
+.PHONY: install-py
+install-py: $(addsuffix .INSTALL,  $(PKG_DIRS))
+$(addsuffix .INSTALL,  $(PKG_DIRS)):
+	@$(ECHO) "Installing python package '"$(shell basename $(realpath -s $(basename $@)))"'..."
+ifeq ($(mode),release)
+	@cd python/$(shell basename $(realpath -s $(basename $@)));python setup.py install
+else ifeq ($(mode),develop)
+	@cd python/$(shell basename $(realpath -s $(basename $@)));python setup.py install develop
+else
+    $(error Invalid python build mode {$(mode)} specified for installation.)
+endif
+	@$(ECHO) "Done."
+
+.PHONY: test-py
+test-py: $(addsuffix .TEST,  $(PKG_DIRS))
+$(addsuffix .TEST,  $(PKG_DIRS)):
+	@$(ECHO) "Running tests for python package '"$(shell basename $(realpath -s $(basename $@)))"'..."
+	@cd python/$(shell basename $(realpath -s $(basename $@)));python setup.py test
+ifeq ($(shell which tox),)
+	@$(warning 'tox' not in path.  Please (re)install and try command again if you want it's support.)
+else
+	@cd python/$(shell basename $(realpath -s $(basename $@)));tox
+endif
+	@$(ECHO) "Done."
+
+.PHONY: coverage-py
+coverage-py: $(addsuffix .COVERAGE,  $(PKG_DIRS))
+$(addsuffix .COVERAGE,  $(PKG_DIRS)):
+	@$(ECHO) "Generating Python test coverage report for python package '"$(shell basename $(realpath -s $(basename $@)))"'..."
+ifeq ($(shell which tox),)
+	@$(error 'coverage' not in path.  Please (re)install coverage.py and try command again if you want it's support.)
+else
+	@cd python/$(shell basename $(realpath -s $(basename $@)));coverage run setup.py test
+	@cd python/$(shell basename $(realpath -s $(basename $@)));coverage report -m
+	@cd python/$(shell basename $(realpath -s $(basename $@)));coverage html
+endif
+	@$(ECHO) "Done."
+
+.PHONY: clean-py
+clean-py: $(addsuffix .CLEAN,  $(PKG_DIRS))
+$(addsuffix .CLEAN,  $(PKG_DIRS)):
+	@$(ECHO) -n "Cleaning-up python package '"$(shell basename $(realpath -s $(basename $@)))"'..."
+	@cd python/$(shell basename $(realpath -s $(basename $@)));rm -rf build/
+	@cd python/$(shell basename $(realpath -s $(basename $@)));rm -rf dist/
+	@cd python/$(shell basename $(realpath -s $(basename $@)));rm -rf *.egg-info
+	@cd python/$(shell basename $(realpath -s $(basename $@)));rm -rf .tox/
+	@cd python/$(shell basename $(realpath -s $(basename $@)));rm -f .coverage
+	@cd python/$(shell basename $(realpath -s $(basename $@)));rm -rf htmlcov/
+	@cd python/$(shell basename $(realpath -s $(basename $@)));find . -name '*.pyc' -exec rm -f {} +
+	@cd python/$(shell basename $(realpath -s $(basename $@)));find . -name '*.pyo' -exec rm -f {} +
+	@cd python/$(shell basename $(realpath -s $(basename $@)));find . -name '*~' -exec rm -f {} +
+	@cd python/$(shell basename $(realpath -s $(basename $@)));find . -name '__pycache__' -exec rm -fr {} +
+	@$(ECHO) "Done."
+
+.PHONY: lint-py
+lint-py: $(addsuffix .LINT,  $(PKG_DIRS))
+$(addsuffix .LINT,  $(PKG_DIRS)):
+	@$(ECHO) -n "Linting python package '"$(shell basename $(realpath -s $(basename $@)))"'..."
+ifeq ($(shell which flake8),)
+	@$(error 'flake8' not in path.  Please (re)install and try command again.)
+else
+	@cd python/$(shell basename $(realpath -s $(basename $@)));flake8 --exclude=.tox
+endif
+	@$(ECHO) "Done."

@@ -52,7 +52,9 @@ def main(argv=None):
     else:
         ## Generate parameter dictionary
         param_dict = {}
-        #param_dict['author_name'] = 'Gregory B. Poole'
+        param_dict['project_name'] = project_name
+        param_dict['author_name'] = 'Gregory B. Poole'
+        param_dict['kcov_token'] = 'unset'
 
         template.install(project_dir_abs, parameters=param_dict, silent=flag_silent)
 
