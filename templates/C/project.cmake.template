@@ -55,6 +55,9 @@ macro(project_options_and_dependancies)
     #
     # The build will proceed if these fail to configure.
     #set_3rd_party_requested("XXX" ON)
+
+    # Set-up documentation support by default
+    set_3rd_party_requested("GBP_DOCS_BUILD" ON)
     
     # 3) *optional* 3rd-Party libraries (and their defaults).
     #
