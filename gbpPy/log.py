@@ -68,14 +68,15 @@ class log_stream(object):
         """Close a new indent bracket for the log.  Add an elapsed time since
         the last open to the end if time_elapsed=True"""
         self.n_indent-=1
-        if(not self.hanging):
-            self.indent()
-        if(time_elapsed):
-            dt         =time.time()-self.t_last
-            msg_time   =" (%d seconds)"%(dt)
-        else:
-            msg_time=''
-        print (msg+msg_time, end='\n',flush=True, file=self.fp)
+        if(msg!=None):
+            if(not self.hanging):
+                self.indent()
+            if(time_elapsed):
+                dt         =time.time()-self.t_last
+                msg_time   =" (%d seconds)"%(dt)
+            else:
+                msg_time=''
+            print (msg+msg_time, end='\n',flush=True, file=self.fp)
         self.hanging=False
     
     def error(self,err_msg,code=None):
