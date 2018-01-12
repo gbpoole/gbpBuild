@@ -20,21 +20,6 @@ def check_and_remove_trailing_occurance(txt_in, occurance):
         flag_found = False
     return txt_out, flag_found
 
-def parse_template_filename(filename_in):
-    # Remove any leading '_dot_'s from the output file name
-    filename_out = filename_in.replace("_dot_", ".", 1)
-
-    # Check if the file is a link (and remove any trailing '.link's)
-    filename_out, flag_is_link = check_and_remove_trailing_occurance(filename_out, '.link')
-
-    # If not a link, check if it is a template file
-    if (not flag_is_link):
-        filename_out, flag_is_template = check_and_remove_trailing_occurance(filename_out, '.template')
-    else:
-        flag_is_template = False
-
-    return filename_out, flag_is_template, flag_is_link
-
 # Get project name from given project directory
 def get_base_name(project_dir_abs):
     head, tail = os.path.split(project_dir_abs)
@@ -53,29 +38,234 @@ def find_parameter_references(line):
         matches.append(param)
     return matches
 
-def perform_parameter_substitution(line,parameters):
+def perform_parameter_substitution(line,params):
     regex = re.compile("%\w*%")
     line_new = line
     match = regex.search(line_new)
     while(match):
-        line_new = line_new[0:match.start()]+str(parameters[match.group().strip('%')])+line_new[match.end():]
+        line_new = line_new[0:match.start()]+str(params[match.group().strip('%')])+line_new[match.end():]
         match = regex.search(line_new)
     return line_new
 
-# Process files
-def process_file(file_i,full_path_out,parameters=None):
-    if(file_i['is_link']):
-        os.symlink(file_i['full_path_in'], full_path_out)
-    elif(file_i['is_template']):
-        with open(file_i['full_path_in'],"r") as file_in:
-            with open(full_path_out,"w") as file_out:
-                for line in file_in:
-                    file_out.write(perform_parameter_substitution(line,parameters))
-    else:
-        shutil.copy2(file_i['full_path_in'], full_path_out)
+# Define main classes
+# -------------------
 
-# Define main class
-# -----------------
+class template_directory:
+    def __init__(self,dirname_template,dirname):
+        # Verify that dirname points to a directory
+        if(not os.path.isdir(dirname)):
+            raise IsADirectoryError("Directory name {%s} passed to template_directory constructor does not point to a valid directory."%(dirname))
+
+        # Express names relative to the root of the template
+        dirname_rel_template = os.path.normpath(os.path.relpath(os.path.abspath(dirname), dirname_template))
+
+        # Set basic properties
+        self.parse_name(dirname_rel_template)
+        self._template_path    = os.path.normpath(os.path.dirname(dirname_rel_template))
+        self._full_path_in_abs = os.path.abspath(dirname)
+        self.files             = []
+        self.dirname_template  = dirname_template
+
+        # Check if this directory is a symlink
+        if(os.path.islink(dirname)):
+            self.is_symlink=True
+        else:
+            self.is_symlink=False
+
+    def parse_name(self,dirname_rel_template):
+
+        self.name_in = os.path.basename(dirname_rel_template)
+
+        # Remove any leading '_dot_'s from the output file name
+        self.name_out = self.name_in.replace("_dot_", ".", 1)
+    
+        # Check if the file is a link (and remove any trailing '.link's)
+        self.name_out, self.is_link = check_and_remove_trailing_occurance(self.name_out, '.link')
+
+    def is_root(self):
+        return os.path.realpath(self.full_path_in()) == os.path.realpath(self.dirname_template)
+
+    def full_path_in(self):
+        return os.path.normpath(self._full_path_in_abs)
+
+    def full_path_out(self,dir_install):
+        return os.path.normpath(os.path.normpath(os.path.join(dir_install, self._template_path, self.name_out )))
+
+    def template_path_in(self):
+        return os.path.normpath(os.path.join(self._template_path, self.name_in))
+
+    def template_path_out(self):
+        return os.path.normpath(os.path.join(self._template_path, self.name_out))
+
+    def install(self,dir_install,silent=False):
+        try:
+            if( not self.is_root()):
+                if(os.path.isdir(self.full_path_out(dir_install))):
+                    SID.log.comment("Directory %s exists."%(self.full_path_out(dir_install)))
+                else:
+                    if(self.is_link):
+                        symlink_path=os.path.relpath(self.full_path_in(),os.path.dirname(self.full_path_out(dir_install)))
+                    if(not silent):
+                        if(self.is_link):
+                            if(os.path.lexists(self.full_path_out(dir_install))):
+                                os.unlink(self.full_path_out(dir_install))
+                                os.symlink(symlink_path,self.full_path_out(dir_install))
+                                SID.log.comment("Directory %s link updated." % (self.full_path_out(dir_install)))
+                            else:
+                                os.symlink(symlink_path,self.full_path_out(dir_install))
+                                SID.log.comment("Directory %s linked."%(self.full_path_out(dir_install)))
+                        else:
+                            os.mkdir(self.full_path_out(dir_install))
+                            SID.log.comment("Directory %s created."%(self.full_path_out(dir_install)))
+                    else:
+                        if(self.is_link):
+                            SID.log.comment("Directory %s linked silently."%(self.full_path_out(dir_install)))
+                        else:
+                            SID.log.comment("Directory %s created silently."%(self.full_path_out(dir_install)))
+            else:
+                if(os.path.isdir(self.full_path_out(dir_install))):
+                    SID.log.comment("Directory %s -- root valid." % (self.full_path_out(dir_install)))
+                else:
+                    raise NotADirectoryError
+        except:
+            SID.log.error("Failed to install directory {%s}."%(self.full_path_out()))
+
+    def uninstall(self,dir_install,silent=False):
+        try:
+            if( not self.is_root()):
+                if( not os.path.isdir(self.full_path_out(dir_install))):
+                    SID.log.close("Not found.")
+                else:
+                    if(not silent):
+                        if(self.is_link):
+                            os.unlink(self.full_path_out(dir_install))
+                            SID.log.close("Unlinked.")
+                        else:
+                            os.rmdir(self.full_path_out(dir_install))
+                            SID.log.close("Removed.")
+                    else:
+                        if(self.is_link):
+                            SID.log.close("Unlinked silently.")
+                        else:
+                            SID.log.close("Removed silently.")
+            else:
+                SID.log.close("Root ignored.")
+        except:
+            SID.log.error("Failed to uninstall directory {%s}."%(self.name_out))
+
+    def add_file(self,file_add):
+        if(self.is_symlink):
+            raise Exception("Can not add file {%s} to symlinked directory {%s}."%(file_add.name_in,self.name_in))
+        self.files.append(file_add)
+
+class template_file:
+    def __init__(self,filename,dir_host=None):
+        # Default to the present directory if one is not passed
+        if(not dir_host):
+            dir_host=template_directory('.')
+
+        # Set basic properties
+        self.parse_name(filename)
+        self.dir = dir_host
+
+        # Verify that filename points to a file
+        if(not os.path.isfile(self.full_path_in())):
+            raise FileNotFoundError("File name {%s} passed to template_file constructor does not point to a valid file."%(self.full_path_in()))
+
+        # Check if this file is a symlink
+        if(os.path.islink(filename)):
+            self.is_symlink=True
+        else:
+            self.is_symlink=False
+
+    def parse_name(self,filename):
+
+        self.name_in = filename
+
+        # Remove any leading '_dot_'s from the output file name
+        self.name_out = self.name_in.replace("_dot_", ".", 1)
+    
+        # Check if the file is a link (and remove any trailing '.link's)
+        self.name_out, self.is_link = check_and_remove_trailing_occurance(self.name_out, '.link')
+    
+        # If not a link, check if it is a template file
+        if (not self.is_link):
+            self.name_out, self.is_template = check_and_remove_trailing_occurance(self.name_out, '.template')
+        else:
+            self.is_template = False
+
+    def full_path_in(self):
+        return os.path.normpath(os.path.join(self.dir.full_path_in(),self.name_in))
+
+    def full_path_out(self,dir_install):
+        return os.path.normpath(os.path.join(self.dir.full_path_out(dir_install), self.name_out))
+
+    def template_path_in(self):
+        return os.path.normpath(os.path.join(self.dir.template_path_in(), self.name_in))
+
+    def template_path_out(self):
+        return os.path.normpath(os.path.join(self.dir.template_path_out(), self.name_out))
+
+    def install(self,dir_install,params=None,silent=False):
+        try:
+            if(os.path.isfile(self.full_path_out(dir_install))):
+                SID.log.comment("   --> %s exists."%(self.full_path_out(dir_install)))
+            else:
+                if(self.is_link):
+                    symlink_path=os.path.relpath(self.full_path_in(),self.dir.full_path_out(dir_install))
+                if(not silent):
+                    if(self.is_link):
+                        if(os.path.lexists(self.full_path_out(dir_install))):
+                            os.unlink(self.full_path_out(dir_install))
+                            os.symlink(symlink_path,self.full_path_out(dir_install))
+                            SID.log.comment("   --> %s link updated." % (self.full_path_out(dir_install)))
+                        else:
+                            os.symlink(symlink_path,self.full_path_out(dir_install))
+                            SID.log.comment("   --> %s linked."%(self.full_path_out(dir_install)))
+                    else:
+                        self.write_with_substitution(dir_install,params=params)
+                        SID.log.comment("   --> %s created."%(self.full_path_out(dir_install)))
+                else:
+                    if(self.is_link):
+                        SID.log.comment("   --> %s linked silently."%(self.full_path_out(dir_install)))
+                    else:
+                        SID.log.comment("   --> %s created silently."%(self.full_path_out(dir_install)))
+        except:
+            SID.log.error("Failed to install file {%s}."%(self.full_path_out(dir_install)))
+
+    def uninstall(self,dir_install,silent=False):
+        try:
+            if( not os.path.isfile(self.full_path_out(dir_install))):
+                SID.log.comment("   --> %s not found." % (self.full_path_out(dir_install)))
+            else:
+                if(not silent):
+                    if(self.is_link):
+                        os.unlink(self.full_path_out(dir_install))
+                        SID.log.comment("   --> %s unlinked."%(self.full_path_out(dir_install)))
+                    else:
+                        os.remove(self.full_path_out(dir_install))
+                        SID.log.comment("   --> %s removed."%(self.full_path_out(dir_install)))
+                else:
+                    if(self.is_link):
+                        SID.log.comment("   --> %s unlinked silently."%(self.full_path_out(dir_install)))
+                    else:
+                        SID.log.comment("   --> %s removed silently."%(self.full_path_out(dir_install)))
+        except:
+            SID.log.error("Failed to uninstall file {%s}."%(self.full_path_out(dir_install)))
+
+    def write_with_substitution(self,dir_install,params=None):
+        try:
+            if(self.is_link):
+                os.symlink(os.path.relpath(self.full_path_in(),os.path.dirname(self.full_path_out(dir_install))),self.full_path_out(dir_install))
+            elif(self.is_template):
+                with open(self.full_path_in(),"r") as fp_in:
+                    with open(self.full_path_out(dir_install),"w") as fp_out:
+                        for line in fp_in:
+                            fp_out.write(perform_parameter_substitution(line,params))
+            else:
+                shutil.copy2(self.full_path_in(), self.full_path_out(dir_install))
+        except:
+            SID.log.error("Failed write template file {%s}."%(self.name_in))
 
 class template:
     def __init__(self,template_name,path=None):
@@ -109,137 +299,114 @@ class template:
         self.dir = template_dir_abs
         self.name = template_name
         self.directories = []
-        self.files = []
-        self.n_template_files = 0
 
-        # Parse the template directory
+        # Parse the template directory (n.b.: os.walk() does not follow symlinks by default)
         SID.log.open( "Loading template {'%s' from %s}..." %(self.name,self.path))
+        n_template_files = 0
         for root, dirs, files in os.walk(self.dir):
-            # Parse directories
-            dir_dict = {}
-            dir_dict['full_path_in' ] = os.path.abspath(root)
-            dir_dict['name' ]         = os.path.relpath(os.path.abspath(root),self.dir)
 
-            # Exclude the root directory of the template
-            if (os.path.realpath(dir_dict['full_path_in']) != os.path.realpath(self.dir)):
-                self.directories.append(dir_dict)
+            # Create directory from directory name
+            dir_new = template_directory(self.dir,root)
 
-            # Parse files
+            # Add directory to the list
+            self.directories.append(dir_new)
+
+            # Check for symlinks to directories.  This is necessary
+            # because os.walk() does not list symlinks to directories
+            # and it is less work to look for them manually then to 
+            # walk the tree with them and weed-out everything under
+            # them which we don't want to consider at all.
+            for test_dir_i in os.listdir(root):
+                test_dir=os.path.join(dir_new.full_path_in(),test_dir_i)
+                if(os.path.islink(test_dir) and os.path.isdir(test_dir)):
+                    self.directories.append(template_directory(self.dir,test_dir))
+
+            # Add files
             for file_i in files:
-                name_out, flag_is_template, flag_is_link = parse_template_filename(file_i)
-                file_dict = {}
-                file_dict['dir_name']= dir_dict['name']
-                file_dict['full_path_in']=os.path.join(dir_dict['full_path_in'],file_i )
-                file_dict['name_in']= file_i
-                file_dict['name_out']= name_out
-                file_dict['is_template']= flag_is_template
-                file_dict['is_link']= flag_is_link
-                if(file_dict['is_template']):
-                    self.n_template_files+=1
-                self.files.append(file_dict)
+                file_new=template_file(file_i,dir_new)
+                if(file_new.is_template):
+                    n_template_files+=1
+                dir_new.add_file(file_new)
 
         # Search all files to generate a list of needed parameters
-        if(self.n_template_files>0):
+        if(n_template_files>0):
             SID.log.open("Scanning template files for parameters...")
-            self.parameters = set()
-            for file_i in [f for f in self.files if(f['is_template'])]:
-                with open(file_i['full_path_in'],'r') as file_in:
-                    for line in file_in:
-                        param_refs = find_parameter_references(line)
-                        for param_ref_i in param_refs:
-                            self.parameters.add(param_ref_i['name'])
+            self.params = set()
+            for dir_i in self.directories:
+                for file_i in [f for f in dir_i.files if(f.is_template)]:
+                    with open(file_i.full_path_in(),'r') as file_in:
+                        for line in file_in:
+                            param_refs = find_parameter_references(line)
+                            for param_ref_i in param_refs:
+                                self.params.add(param_ref_i['name'])
             SID.log.close("Done")
 
-        SID.log.comment("n_directories=%d"%(len( self.directories)))
-        SID.log.comment("n_files      =%d"%(len( self.files)))
-        SID.log.comment("n_parameters =%d"%(len( self.parameters)))
-        for param_ref_i in self.parameters:
-            SID.log.comment("   -> %s" % (param_ref_i))
+        SID.log.comment("n_directories=%d"%(len(self.directories)))
+        SID.log.comment("n_files      =%d"%(    self.n_files()))
+        SID.log.comment("n_parameters =%d"%(len(self.params)))
+        for param_ref_i in self.params:
+            SID.log.comment("   --> %s" % (param_ref_i))
+
+        # Print the contents of the template
+        self.print()
 
         SID.log.close("Done")
 
-    # Process directories
-    def process_directories(self, dir_install, parameters=None, uninstall=False,silent=False):
-        if (uninstall):
-            SID.log.open("Removing directories...")
-            flag_reverse_sort = True
-        else:
-            SID.log.open("Processing directories...")
+    # Count the number of files in the template
+    def n_files(self):
+        n_files =0
+        for dir_i in self.directories:
+            n_files += len(dir_i.files)
+        return n_files
+
+    # Print the template contents
+    def print(self):
+        SID.log.open("Template contents:")
+        for dir_i in self.directories:
+            SID.log.comment("Directory {%s}:"%(dir_i.full_path_in()))
+            for file_i in dir_i.files:
+                SID.log.comment("   --> %s"%(file_i.full_path_in()))
+        SID.log.close()
+
+    # Install or uninstall a template
+    def _process_template(self, dir_install, params=None, uninstall=False,silent=False):
+        if (not uninstall):
+            SID.log.open("Installing template {%s} to {%s}..."%(self.name,self.dir))
             flag_reverse_sort = False
-        # Process in sorted order to ensure that the sub-directory structure is respected
-        for dir_i in sorted(self.directories, key=lambda k: len(k['name']), reverse=flag_reverse_sort):
-            name_out = os.path.normpath(os.path.join(dir_install ,dir_i['name']))
-            SID.log.open("Processing directory {%s}..." % (dir_i['name']))
-            try:
-                if (not os.path.isdir(name_out)):
-                    raise IsADirectoryError
-                if (uninstall):
-                    if(not silent):
-                        os.rmdir(name_out)
-                        SID.log.close("removed.")
-                    else:
-                        SID.log.close("removed silently.")
-                else:
-                    SID.log.close("exists.")
-            except:
-                if (uninstall):
-                    SID.log.close("not found.")
-                else:
-                    if(not silent):
-                        os.mkdir(name_out)
-                        SID.log.close("created.")
-                    else:
-                        SID.log.close("created silently.")
-        SID.log.close("Done")
-
-    # Process files
-    def process_files(self,dir_install,parameters=None,uninstall=False,silent=False):
-        if (uninstall):
-            SID.log.open("Removing files...")
         else:
-            SID.log.open("Processing files...")
-        for file_i in self.files:
-            full_path_out = os.path.normpath(os.path.join(dir_install, file_i['dir_name'], file_i['name_out']))
-            SID.log.open("Processing file {%s}..." % (os.path.normpath(os.path.join(file_i['dir_name'],file_i['name_out']))))
-            try:
-                os.stat(full_path_out)
-                if (uninstall):
-                    if(not silent):
-                        os.remove(full_path_out)
-                        SID.log.close("removed.")
-                    else:
-                        SID.log.close("removed silently.")
+            flag_reverse_sort = True
+            SID.log.open("Uninstalling template {%s} from {%s}..."%(self.name,self.dir))
+
+        # Process directories in sorted order to ensure that
+        # the sub-directory structure is respected
+        for dir_i in sorted(self.directories, key=lambda k: len(k._full_path_in_abs), reverse=flag_reverse_sort):
+            # Note the different ordering of directory processing
+            # vs. file processing between install/uninstall cases
+            if (not uninstall):
+                dir_i.install(dir_install,silent=silent)
+            else:
+                SID.log.open("Uninstalling directory %s..." % (dir_i.full_path_out(dir_install)))
+
+            for file_i in dir_i.files:
+                if(uninstall):
+                    file_i.uninstall(dir_install,silent=silent)
                 else:
-                    SID.log.close("exists.")
-            except:
-                if (uninstall):
-                    SID.log.close("not found.")
-                else:
-                    if(not silent):
-                        process_file(file_i,full_path_out,parameters=parameters)
-                        SID.log.close("created.")
-                    else:
-                        SID.log.close("created silently.")
-        SID.log.close("Done")
+                    file_i.install(dir_install,params=params,silent=silent)
+
+            if(uninstall):
+                dir_i.uninstall(dir_install,silent=silent)
+
+        SID.log.close("Done.")
 
     # Install template
-    def install(self,dir_out,parameters=None,silent=False):
+    def install(self,dir_out,params=None,silent=False):
         # Check that all the needed template parameters are in the given dictionary
-        for param_i in self.parameters:
-            if not param_i in parameters:
+        for param_i in self.params:
+            if not param_i in params:
                 SID.log.error("Required parameter {%s} is not present in template installation dictionary."%(param_i))
-
-        # Note that the order needs to be such that directories are created *before* files
-        SID.log.open("Installing template {%s}..."%(self.name))
-        self.process_directories(dir_out,parameters=parameters,silent=silent)
-        self.process_files(dir_out,parameters=parameters,silent=silent)
-        SID.log.close("Done")
+        self._process_template(dir_out,params=params,silent=silent)
 
     # Uninstall template
     def uninstall(self,dir_out,silent=False):
-        # Note that the order needs to be such that directories are removed *after* files
-        SID.log.open("Removing template {%s}..."%(self.name))
-        self.process_files(dir_out,uninstall=True,silent=silent)
-        self.process_directories(dir_out, uninstall=True, silent=silent)
-        SID.log.close("Done")
+        self._process_template(dir_out,uninstall=True,silent=silent)
 
