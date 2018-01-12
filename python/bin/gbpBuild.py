@@ -51,12 +51,14 @@ def main(argv=None):
         template.uninstall(project_dir_abs,silent=flag_silent)
     else:
         ## Generate parameter dictionary
-        param_dict = {}
-        param_dict['project_name'] = project_name
-        param_dict['author_name'] = 'Gregory B. Poole'
-        param_dict['kcov_token'] = 'unset'
+        params = {}
+        params['project_name'] = project_name
+        params['author_name'] = 'Gregory B. Poole'
+        params['kcov_token'] = 'unset'
+        params['gbpbuild_rel_path'] = os.path.relpath(os.getcwd(),project_dir_abs)
 
-        template.install(project_dir_abs, parameters=param_dict, silent=flag_silent)
+        ## Install template
+        template.install(project_dir_abs, params=params, silent=flag_silent)
 
     SID.log.close("Done")
 

@@ -1,6 +1,6 @@
 # Define these outside any macros or functions
-set(GBPBUILD_REL_PATH "extern/gbpBuild" )
-set(GBP_PROJECT_NAME  "gbpSID")
+set(GBPBUILD_REL_PATH "%gbpbuild_rel_path%" )
+set(GBP_PROJECT_NAME  "%project_name%")
 
 # Set options and dependencies
 macro(project_options_and_dependancies)
