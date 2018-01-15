@@ -53,7 +53,7 @@ def main(argv=None):
         ## Generate parameter dictionary
         params = {}
         params['project_name'] = project_name
-        params['author_name'] = 'Gregory B. Poole'
+        params['project_author'] = 'Gregory B. Poole'
         params['kcov_token'] = 'unset'
         params['gbpbuild_rel_path'] = os.path.relpath(os.getcwd(),project_dir_abs)
 

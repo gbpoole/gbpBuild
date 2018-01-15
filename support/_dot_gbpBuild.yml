@@ -1,0 +1,5 @@
+# gbpBuild configuration file for project: %project_name%
+# ** Don't edit this file unless you're sure about what you're doing! **
+
+parameters:
+    %iterate.dict:parameters.key%:  %iterate.dict:parameters.value%

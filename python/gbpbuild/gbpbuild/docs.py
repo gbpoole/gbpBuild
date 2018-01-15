@@ -67,14 +67,14 @@ def harvest_doxygen_groups(file_list,group_list):
                         words=line[group_start:].strip().split(None,2)
                         group_list.append([words[1],words[2]])
 
-def write_group_to_file(outFile,group_to_write,project_name):
+def write_group_to_file(project,outFile,group_to_write):
     outFile.write(".. doxygengroup:: "+group_to_write+"\n")
-    outFile.write("   :project: "+project_name+"\n")
+    outFile.write("   :project: "+project.name+"\n")
     outFile.write("   :content-only:\n")
     outFile.write("   :members:\n\n")
 
-def add_project_file(input_dir,filename_root,filename_modifier,outFile,default_text=None):
-    filename_in = input_dir+"/"+filename_root+'.rst'+filename_modifier
+def cat_project_file(project,filename_root,filename_modifier,outFile,default_text=None):
+    filename_in = project.dir_docs+"/"+filename_root+'.rst'+filename_modifier
     if(os.path.isfile(filename_in)):
         with open(filename_in,'r') as inFile:
             for line in inFile :
@@ -103,14 +103,16 @@ def make_module_list_unique(modules_in):
         del(modules_out[i_del])
     return(modules_out)
 
-def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root="API"):
+def generate_API_rst(project):
+    filename_root="API"
+
     # Open the output file for writing
-    outFile = open(output_dir + "/" + filename_root + '.rst', "w")
+    outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
 
     # Generate a list of the project's header files (and their modules)
     header_file_list = []
     module_list      = []
-    parse_cmake_project(project_dir,"INCFILES", header_file_list,module_list=module_list,prepend_path=True,strip_ext=False)
+    parse_cmake_project(project.dir_root,"INCFILES", header_file_list,module_list=module_list,prepend_path=True,strip_ext=False)
     module_list=make_module_list_unique(module_list)
 
     # Generate a list of doxygen groups in those header files
@@ -118,7 +120,7 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
     harvest_doxygen_groups(header_file_list,group_list)
 
     # copy header to output file
-    add_project_file(input_dir,filename_root,".header",outFile,default_text=underlined_text("API Documentation",'='))
+    cat_project_file(project,filename_root,".header",outFile,default_text=underlined_text("API Documentation",'='))
 
     # ----------- Output logic for this file starts here -----------
 
@@ -132,21 +134,21 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
         if(group_found != None):
             # Add the header if there is material for this module
             if(flag_write_header):
-                add_project_file(input_dir,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
+                cat_project_file(project,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
                 outFile.write("\n")
                 flag_write_header=False
             outFile.write(group_found[1]+"\n")
             outFile.write('`'*len(group_found[1])+"\n")
-            write_group_to_file(outFile,module_group,project_name)
+            write_group_to_file(project,outFile,module_group)
 
         # 2) ... add this module's functions ...
         function_list=[]
-        parse_cmake_project(project_dir,"SRCFILES", function_list, module_select=module_i[0],prepend_path=False,strip_ext=True)
+        parse_cmake_project(project.dir_root,"SRCFILES", function_list, module_select=module_i[0],prepend_path=False,strip_ext=True)
         flag_write_header_group=True
         for fctn in function_list:
             # Add the header if there is material for this module
             if(flag_write_header):
-                add_project_file(input_dir,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
+                cat_project_file(project,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
                 outFile.write("\n")
                 flag_write_header=False
             if(flag_write_header_group):
@@ -155,7 +157,7 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
                 outFile.write('`'*len(title_txt)+"\n")
                 flag_write_header_group=False
             outFile.write(".. doxygenfunction:: "+fctn+"\n")
-            outFile.write("   :project: "+project_name+"\n\n")
+            outFile.write("   :project: "+project.name+"\n\n")
 
         # 3) ... add any remaining defined groups ...
         for [group_i,group_i_desc] in group_list:
@@ -165,21 +167,21 @@ def generate_API_rst(input_dir,output_dir,project_name,project_dir,filename_root
                 if(group_words[0]==module_i[0] and module_group!="classes"):
                     # Add the header if there is material for this module
                     if(flag_write_header):
-                        add_project_file(input_dir,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
+                        cat_project_file(project,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
                         outFile.write("\n")
                         flag_write_header=False
                     outFile.write(group_i_desc+"\n")
                     outFile.write('`'*len(group_i_desc)+"\n")
-                    write_group_to_file(outFile,group_i,project_name)
+                    write_group_to_file(project,outFile,group_i)
 
         # Add the footer if there is material for this module
         if(not flag_write_header):
-            add_project_file(input_dir,filename_root,'.'+module_i[0]+".footer",outFile)
+            cat_project_file(project,filename_root,'.'+module_i[0]+".footer",outFile)
 
     # ---------------------------------------------------------------
 
     # copy footer to output file
-    add_project_file(input_dir,filename_root,".footer",outFile)
+    cat_project_file(project,filename_root,".footer",outFile)
 
     # Close output file
     outFile.close()
@@ -244,14 +246,16 @@ def reformat_Clara_help_to_rst(lines_in):
             flag_remove_top_blank_lines=False
     return(''.join(lines_out))
 
-def generate_execs_rst(input_dir,output_dir,project_name,project_dir,filename_root="execs"):
+def generate_execs_rst(project):
+    filename_root="execs"
+
     # Open the output file for writing
-    outFile = open(output_dir + "/" + filename_root + '.rst', "w")
+    outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
 
     # Generate a list of the project's header files (and their modules)
     header_file_list   = []
     header_module_list = []
-    parse_cmake_project(project_dir,"INCFILES", header_file_list,module_list=header_module_list,prepend_path=True,strip_ext=False)
+    parse_cmake_project(project.dir_root,"INCFILES", header_file_list,module_list=header_module_list,prepend_path=True,strip_ext=False)
     module_list=make_module_list_unique(header_module_list)
 
     # Generate a list of doxygen groups in those header files
@@ -259,19 +263,19 @@ def generate_execs_rst(input_dir,output_dir,project_name,project_dir,filename_ro
     harvest_doxygen_groups(header_file_list,group_list)
 
     # copy header to output file
-    add_project_file(input_dir,filename_root,".header",outFile,default_text=underlined_text("Applications",'='))
+    cat_project_file(project,filename_root,".header",outFile,default_text=underlined_text("Applications",'='))
 
     # ----------- Output logic for this file starts here -----------
 
     # Loop over the modules, adding each in turn to the API docs
     for module_i in module_list:
         exe_list=[]
-        parse_cmake_project(project_dir,"EXEFILES", exe_list, module_select=module_i[0],prepend_path=False,strip_ext=True)
+        parse_cmake_project(project.dir_root,"EXEFILES", exe_list, module_select=module_i[0],prepend_path=False,strip_ext=True)
         flag_write_header=True
         for exec_i in exe_list:
             # Add the header if there is material for this module
             if(flag_write_header):
-                add_project_file(input_dir,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
+                cat_project_file(project,filename_root,'.'+module_i[0]+".header",outFile,default_text=underlined_text(module_i[1],'-'))
                 outFile.write("\n")
                 flag_write_header=False
 
@@ -283,32 +287,34 @@ def generate_execs_rst(input_dir,output_dir,project_name,project_dir,filename_ro
 
         # Add the footer if there is material for this module
         if(not flag_write_header):
-            add_project_file(input_dir,filename_root,'.'+module_i[0]+".footer",outFile)
+            cat_project_file(project,filename_root,'.'+module_i[0]+".footer",outFile)
 
     # ---------------------------------------------------------------
 
     # copy footer to output file
-    add_project_file(input_dir,filename_root,".footer",outFile)
+    cat_project_file(project,filename_root,".footer",outFile)
 
     # Close output file
     outFile.close()
 
-def generate_default_rst(input_dir,output_dir,project_name,project_dir,filename_root="header",default_title=None):
+def generate_default_rst(project,filename_root="header",default_title=None):
     # Open the output file for writing
-    outFile = open(output_dir + "/" + filename_root + '.rst', "w")
+    outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
 
     # copy header to output file
-    add_project_file(input_dir,filename_root,"",outFile,default_text=underlined_text(default_title,'='))
+    cat_project_file(project,filename_root,"",outFile,default_text=underlined_text(default_title,'='))
 
     # Close output file
     outFile.close()
 
-def generate_index_rst(input_dir,output_dir,project_name,project_dir,filename_root="index"):
+def generate_index_rst(project):
+    filename_root="index"
+
     # Open the output file for writing
-    outFile = open(output_dir + "/" + filename_root + '.rst', "w")
+    outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
 
     # copy header to output file
-    add_project_file(input_dir,filename_root,".header",outFile)
+    cat_project_file(project,filename_root,".header",outFile)
 
     # Add a table of contents title
     outFile.write("\n")
@@ -316,10 +322,9 @@ def generate_index_rst(input_dir,output_dir,project_name,project_dir,filename_ro
     outFile.write("-----------------\n")
     outFile.write("\n")
 
-    outFile.write(".. "+project_name+" documentation master file\n")
+    outFile.write(".. "+project.name+" documentation master file\n")
     outFile.write("\n")
     outFile.write(".. toctree::\n")
-#    outFile.write("   :hidden:\n")
     outFile.write("   :maxdepth: 2\n")
     outFile.write("\n")
 
@@ -329,7 +334,7 @@ def generate_index_rst(input_dir,output_dir,project_name,project_dir,filename_ro
                  'API.rst']
 
     # Check if there is a 'doc_order.txt' file and over-write the defaults with it if so
-    filename_in = input_dir+"/index_order.txt"
+    filename_in = project.dir_docs+"/index_order.txt"
     if(os.path.isfile(filename_in)):
         with open(filename_in,"r") as inFile:
             doc_order = []
@@ -343,7 +348,7 @@ def generate_index_rst(input_dir,output_dir,project_name,project_dir,filename_ro
     outFile.write("* :ref:`genindex`\n")
 
     # copy header to output file
-    add_project_file(input_dir,filename_root,".footer",outFile)
+    cat_project_file(project,filename_root,".footer",outFile)
 
     # Close output file
     outFile.close()

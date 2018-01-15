@@ -37,7 +37,7 @@ set(Sphinx_RESULTS_DIR "${CMAKE_CURRENT_BINARY_DIR}/docs")
 # Perform variable substitution into the Sphinx config file
 set(PRJ_DOCS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs )
 configure_file(
-    "${PRJ_DOCS_DIR}/conf.py.in"
+    "${PRJ_DOCS_DIR}/conf.py"
     "${Sphinx_BUILD_DIR}/conf.py"
     @ONLY)
 
