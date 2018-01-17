@@ -299,38 +299,38 @@ class template_file:
                         if(os.path.lexists(self.full_path_out(dir_install))):
                             os.unlink(self.full_path_out(dir_install))
                             os.symlink(symlink_path,self.full_path_out(dir_install))
-                            SID.log.comment("   --> %s link updated." % (self.full_path_out(dir_install)))
+                            SID.log.comment("--> %s link updated." % (self.full_path_out(dir_install)))
                         else:
                             os.symlink(symlink_path,self.full_path_out(dir_install))
-                            SID.log.comment("   --> %s linked."%(self.full_path_out(dir_install)))
+                            SID.log.comment("--> %s linked."%(self.full_path_out(dir_install)))
                     else:
                         self.write_with_substitution(dir_install,params=project_params)
-                        SID.log.comment("   --> %s created."%(self.full_path_out(dir_install)))
+                        SID.log.comment("--> %s created."%(self.full_path_out(dir_install)))
                 else:
                     if(self.is_link):
-                        SID.log.comment("   --> %s linked silently."%(self.full_path_out(dir_install)))
+                        SID.log.comment("--> %s linked silently."%(self.full_path_out(dir_install)))
                     else:
-                        SID.log.comment("   --> %s created silently."%(self.full_path_out(dir_install)))
+                        SID.log.comment("--> %s created silently."%(self.full_path_out(dir_install)))
         except:
             SID.log.error("Failed to install file {%s}."%(self.full_path_out(dir_install)))
 
     def uninstall(self,dir_install,silent=False):
         try:
             if( not os.path.isfile(self.full_path_out(dir_install))):
-                SID.log.comment("   --> %s not found." % (self.full_path_out(dir_install)))
+                SID.log.comment("--> %s not found." % (self.full_path_out(dir_install)))
             else:
                 if(not silent):
                     if(self.is_link):
                         os.unlink(self.full_path_out(dir_install))
-                        SID.log.comment("   --> %s unlinked."%(self.full_path_out(dir_install)))
+                        SID.log.comment("--> %s unlinked."%(self.full_path_out(dir_install)))
                     else:
                         os.remove(self.full_path_out(dir_install))
-                        SID.log.comment("   --> %s removed."%(self.full_path_out(dir_install)))
+                        SID.log.comment("--> %s removed."%(self.full_path_out(dir_install)))
                 else:
                     if(self.is_link):
-                        SID.log.comment("   --> %s unlinked silently."%(self.full_path_out(dir_install)))
+                        SID.log.comment("--> %s unlinked silently."%(self.full_path_out(dir_install)))
                     else:
-                        SID.log.comment("   --> %s removed silently."%(self.full_path_out(dir_install)))
+                        SID.log.comment("--> %s removed silently."%(self.full_path_out(dir_install)))
         except:
             SID.log.error("Failed to uninstall file {%s}."%(self.full_path_out(dir_install)))
 
@@ -350,15 +350,24 @@ class template_file:
             SID.log.error("Failed write template file {%s}."%(self.name_in))
 
 class template:
-    def __init__(self,template_name,path=None):
+    def __init__(self,template_name=None,path=None):
 
+        self.path = []
+        self.dir = []
+        self.name = []
+        self.directories = []
+
+        if(template_name!=None):
+            self.add(template_name,path=path)
+
+    def add(self,template_name,path=None):
         # If path wasn't given, then check for an environment variable
         if (not path):
             path=os.environ.get('GBPPY_TEMPLATE_PATH')
 
         # If nothing was found in the environment, check local path
         if (not path):
-            path='./:./templates/'
+            path='./templates/'
 
         # Search the path for the template
         path_list=path.split(':')
@@ -377,21 +386,20 @@ class template:
         template_path_dir,template_name = os.path.split(template_dir_abs)
 
         # Proceed with template construction
-        self.path = template_path_dir
-        self.dir = template_dir_abs
-        self.name = template_name
-        self.directories = []
+        self.path.append(template_path_dir)
+        self.dir.append(template_dir_abs)
+        self.name.append(template_name)
 
         # Parse the template directory (n.b.: os.walk() does not follow symlinks by default)
-        SID.log.open( "Loading template {'%s' from %s}..." %(self.name,self.path))
+        SID.log.open( "Loading template {'%s' from %s}..." %(self.name[-1],self.path[-1]))
         n_template_files = 0
-        for root, dirs, files in os.walk(self.dir):
+        for root, dirs, files in os.walk(self.dir[-1]):
 
             # Create directory from directory name
-            dir_new = template_directory(self.dir,root)
+            dir_new = template_directory(self.dir[-1],root)
 
             # Add directory to the list
-            self.directories.append(dir_new)
+            dir_current=self.add_directory(dir_new)
 
             # Check for symlinks to directories.  This is necessary
             # because os.walk() does not list symlinks to directories
@@ -401,14 +409,14 @@ class template:
             for test_dir_i in os.listdir(root):
                 test_dir=os.path.join(dir_new.full_path_in(),test_dir_i)
                 if(os.path.islink(test_dir) and os.path.isdir(test_dir)):
-                    self.directories.append(template_directory(self.dir,test_dir))
+                    self.add_directory(template_directory(self.dir[-1],test_dir))
 
             # Add files
             for file_i in files:
-                file_new=template_file(file_i,dir_new)
+                file_new=template_file(file_i,dir_current)
                 if(file_new.is_template):
                     n_template_files+=1
-                dir_new.add_file(file_new)
+                dir_current.add_file(file_new)
 
         # Search all files to generate a list of needed parameters
         if(n_template_files>0):
@@ -434,6 +442,20 @@ class template:
 
         SID.log.close("Done")
 
+    def get_directory(self,template_path_out):
+        for dir_i in self.directories:
+            if(dir_i.template_path_out()==template_path_out):
+                return dir_i
+        return None
+
+    def add_directory(self,dir_add):
+        dir_check = self.get_directory(dir_add.template_path_out())
+        if(dir_check==None):
+            self.directories.append(dir_add)
+            return dir_add
+        else:
+            return dir_check
+
     # Count the number of files in the template
     def n_files(self):
         n_files =0
@@ -445,19 +467,32 @@ class template:
     def print(self):
         SID.log.open("Template contents:")
         for dir_i in self.directories:
-            SID.log.comment("Directory {%s}:"%(dir_i.full_path_in()))
+            SID.log.open("Directory {%s}:"%(dir_i.full_path_in()))
             for file_i in dir_i.files:
-                SID.log.comment("   --> %s"%(file_i.full_path_in()))
+                SID.log.comment("--> %s"%(file_i.full_path_in()))
+            SID.log.close()
         SID.log.close()
 
     # Install or uninstall a template
     def _process_template(self, dir_install, params=None, uninstall=False,silent=False):
+        names_txt = ''
+        for i_name,name_i in enumerate(self.names):
+            if(i_name==0):
+                name_txt+=name_i
+            else:
+                name_txt+=','+name_i
         if (not uninstall):
-            SID.log.open("Installing template {%s} to {%s}..."%(self.name,self.dir))
+            if(len(self.name)>1):
+                SID.log.open("Installing templates {%s} to {%s}..."%(name_txt,dir_install))
+            else:
+                SID.log.open("Installing template {%s} to {%s}..."%(name_txt,dir_install))
             flag_reverse_sort = False
         else:
             flag_reverse_sort = True
-            SID.log.open("Uninstalling template {%s} from {%s}..."%(self.name,self.dir))
+            if(len(self.name)>1):
+                SID.log.open("Uninstalling templates {%s} from {%s}..."%(name_txt,dir_install))
+            else:
+                SID.log.open("Uninstalling template {%s} from {%s}..."%(name_txt,dir_install))
 
         # Process directories in sorted order to ensure that
         # the sub-directory structure is respected
@@ -492,4 +527,3 @@ class template:
     # Uninstall template
     def uninstall(self,dir_out,silent=False):
         self._process_template(dir_out,uninstall=True,silent=silent)
-
