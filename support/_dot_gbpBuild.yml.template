@@ -2,4 +2,4 @@
 # ** Don't edit this file unless you're sure about what you're doing! **
 
 parameters:
-    %iterate.dict:parameters.key%:  %iterate.dict:parameters.value%
+    %_PARAMETERS.key%:  %_PARAMETERS.value%

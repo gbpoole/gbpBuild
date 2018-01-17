@@ -30,6 +30,7 @@ import gbpbuild.docs as docs
 import gbpbuild.project as prj
 
 # Parse the project directory to learn what we need about the project
+# TODO: Can't parse directives with :'s .'s etc due to regex definition
 # TODO: populate project .gbpBuild file with parameters dictionary
 # TODO: add list of python modules and executables to project object
 # TODO: add python modules and scripts to the path
