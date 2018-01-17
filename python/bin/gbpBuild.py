@@ -39,12 +39,17 @@ def main(argv=None):
     project_dir_abs = os.path.abspath(project_dir_in)
     project_name    = tmp.get_base_name(project_dir_abs)
 
+    # Create list of input templates
+    template_list=template_name.split(',')
+
     ## End parsing of command line
 
     SID.log.open("Creating new project (name=%s)..."%(project_name))
 
-    ## Load the template
-    template = tmp.template(template_name,path=template_path)
+    ## Load the template(s)
+    template = tmp.template()
+    for template_name in template_list:
+        template.add(template_name,path=template_path)
 
     ## Process the template
     if(flag_uninstall):
