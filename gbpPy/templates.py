@@ -27,25 +27,102 @@ def get_base_name(project_dir_abs):
         head, tail = os.path.split(head)
     return (tail)
 
+_protected_inputs = ['_PARAMETERS.key','_PARAMETERS.value']
+class project_inputs:
+    def __init__(self,user_params):
+        # Create two lists; one of protected items and one of 
+        self.list = []
+
+        # Create protected inputs
+        self.list.append({'name': '_PARAMETERS.key',   'input':[key for key in user_params.keys()]})
+        self.list.append({'name': '_PARAMETERS.value', 'input':[val for val in user_params.values()]})
+        
+        # Verify that all the protected inputs are present
+        for input_name_i in _protected_inputs:
+            input_check = self.get_input(input_name_i)
+            if(not input_check):
+                SID.error("Failed to add protected input {%s} to the project parameter list."%(input_name_i))
+
+        # Add user-defined list
+        for param_i_key,param_i_value in user_params.items():
+            if(hasattr(param_i_value, '__iter__') and not isinstance(param_i_value, str)):
+                self.list.append({'name':param_i_key,'input':param_i_value})
+            else:    
+                self.list.append({'name':param_i_key,'input':[param_i_value]})
+
+    def get_input(self,name_get):
+        # Find the entry
+        input_return = None
+        for input_i in self.list:
+            if(input_i['name']==name_get):
+                input_return = input_i
+                break
+        return input_return
+
+    def get_value(self,name_get,idx=0):
+        input_get = self.get_input(name_get)
+        if(not input_get):
+            SID.error("Failed to find requested parameter {%s} in project parameter list."%(name_get))
+        if(abs(idx)>=len(input_get)):
+            SID.error("Requested input index {%d} exceeds allowed bounds of paramerer {%s; size=%d}."%(idx,name_get,size(input_get)))
+        return input_get[idx]
+
 # This function locates all annotated parameter references in a line
 def find_parameter_references(line):
-    regex = re.compile("%\w*%")
+    regex = re.compile("%[\w:.]*%")
     matches = []
     for match in regex.finditer(line):
         param = {}
-        param['name']=match.group().strip('%')
-        param['span']=match.span()
-        matches.append(param)
+        # Check if there are any directives in the match
+        directive = match.group().strip('%')
+        if(directive not in _protected_inputs):
+            param['name']=directive
+            param['span']=match.span()
+            matches.append(param)
     return matches
 
-def perform_parameter_substitution(line,params):
-    regex = re.compile("%\w*%")
+def _perform_parameter_substitution_ith(line,params,idx=None):
     line_new = line
+    regex = re.compile("%[\w:.]*%")
     match = regex.search(line_new)
+    n_lines = 1
     while(match):
-        line_new = line_new[0:match.start()]+str(params[match.group().strip('%')])+line_new[match.end():]
+        directive = match.group().strip('%')
+        # First pass: check that input.size() is 1 or current size >1
+        param_insert=params.get_input(directive)
+        param_insert_size=len(param_insert['input'])
+        if(param_insert_size>1):
+            if(n_lines==1):
+                n_lines=param_insert_size
+            elif(param_insert_size!=1 and n_lines!=param_insert_size):
+                SID.error("There is an input list size incompatibility (%d!=%d) in {%s}."%(n_lines,param_insert_size,line))
+        # Perform substitution
+        if(idx==None):
+            line_new = line_new[0:match.start()]+str(param_insert['input'][0])+line_new[match.end():]
+        else:
+            line_new = line_new[0:match.start()]+str(param_insert['input'][idx])+line_new[match.end():]
         match = regex.search(line_new)
-    return line_new
+    if(idx==None):
+        return n_lines,line_new
+    else:
+        return line_new
+
+def perform_parameter_substitution(line,params):
+    # As a first attempt, assume all subsitutions are of scalars.
+    # If in the course of trying to do this, >=1 subsitution(s)
+    # is/are a list, then subsequently deal with that.  If the
+    # assumption is correct, we will have a string at the end
+    # that we can sue.
+    n_lines,line_new = _perform_parameter_substitution_ith(line,params)
+
+    # If one of the parameters is iterable, we generate a set of lines instead.
+    lines_new = []
+    if(n_lines>1):
+        for idx in range(n_lines):
+            lines_new.append(_perform_parameter_substitution_ith(line,params,idx=idx))
+    else:
+        lines_new.append(line_new)
+    return lines_new
 
 # Define main classes
 # -------------------
@@ -207,6 +284,10 @@ class template_file:
         return os.path.normpath(os.path.join(self.dir.template_path_out(), self.name_out))
 
     def install(self,dir_install,params=None,silent=False):
+        # Create a list of project parameters, which includes the user parameters
+        # we've been passed as well as the protected variables
+        project_params = project_inputs(params)
+
         try:
             if(os.path.isfile(self.full_path_out(dir_install))):
                 SID.log.comment("   --> %s exists."%(self.full_path_out(dir_install)))
@@ -223,7 +304,7 @@ class template_file:
                             os.symlink(symlink_path,self.full_path_out(dir_install))
                             SID.log.comment("   --> %s linked."%(self.full_path_out(dir_install)))
                     else:
-                        self.write_with_substitution(dir_install,params=params)
+                        self.write_with_substitution(dir_install,params=project_params)
                         SID.log.comment("   --> %s created."%(self.full_path_out(dir_install)))
                 else:
                     if(self.is_link):
@@ -260,8 +341,9 @@ class template_file:
             elif(self.is_template):
                 with open(self.full_path_in(),"r") as fp_in:
                     with open(self.full_path_out(dir_install),"w") as fp_out:
-                        for line in fp_in:
-                            fp_out.write(perform_parameter_substitution(line,params))
+                        for line_in in fp_in:
+                            for line_out in perform_parameter_substitution(line_in,params):
+                                fp_out.write(line_out)
             else:
                 shutil.copy2(self.full_path_in(), self.full_path_out(dir_install))
         except:
@@ -401,6 +483,7 @@ class template:
     # Install template
     def install(self,dir_out,params=None,silent=False):
         # Check that all the needed template parameters are in the given dictionary
+        # and that they are of the appropriate type
         for param_i in self.params:
             if not param_i in params:
                 SID.log.error("Required parameter {%s} is not present in template installation dictionary."%(param_i))
