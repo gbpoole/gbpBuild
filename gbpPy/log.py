@@ -77,7 +77,7 @@ class log_stream(object):
             else:
                 msg_time=''
             print (msg+msg_time, end='\n',flush=True, file=self.fp)
-        self.hanging=False
+            self.hanging=False
     
     def error(self,err_msg,code=None):
         """Emit an error message and exit."""
