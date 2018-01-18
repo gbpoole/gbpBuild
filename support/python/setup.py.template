@@ -12,7 +12,7 @@ import re, os
 # https://stackoverflow.com/questions/6786555/automatic-version-number-both-in-setup-py-setuptools-and-source-code
 
 # Read the version file in the project directory
-PROJECT_DIRECTORY = path.abspath(path.dirname(__file__))+'/../'
+PROJECT_DIRECTORY = path.abspath(path.dirname(__file__))+'/../../'
 VERSIONFILE=os.path.join(PROJECT_DIRECTORY,".version")
 version_string = None
 with open(VERSIONFILE,'rt') as fp:
@@ -32,11 +32,11 @@ if os.path.exists(os.path.join(PROJECT_DIRECTORY, '.git')):
     if not git_version_string in tags:
         # ... then add that tag to the HEAD commit
         cmd = 'git tag -a %s %s -m "tagged by setup.py"' % (git_version_string, git_hash)        
-        print('Quitting before I run cmd:',cmd)
-        exit(1)
-        subprocess.check_output(cmd, shell=True, universal_newlines=True)
+        #print('Quitting before I run cmd:',cmd)
+        #exit(1)
+        #subprocess.check_output(cmd, shell=True, universal_newlines=True)
     # Add the git hash to the version we will use in setup.py
-    version_string += ', git hash: %s' % git_hash
+    #version_string += ', git hash: %s' % git_hash
 else:
     raise RuntimeError("Unable to find the project's git repository at %s." % (PROJECT_DIRECTORY,))
 
