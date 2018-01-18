@@ -45,8 +45,10 @@ def main(argv=None):
     template_list=template_name.split(',')
 
     ## End parsing of command line
-
-    SID.log.open("Creating new project (name=%s)..."%(project_name))
+    if(update_element==None):
+        SID.log.open("Creating new project (name=%s)..."%(project_name))
+    else:
+        SID.log.open("Updating element %s in %s..."%(update_element,project_name))
 
     ## Load the template(s)
     template = tmp.template()
