@@ -18,7 +18,8 @@ def main(argv=None):
     # Define cmd line optional arguments.
     optional_arguments = []
     optional_arguments.append([['-d','--path'],'Path to template directory','string',None,'template_path'])
-    optional_arguments.append([['-r'],'Uninstall template','bool',False,'flag_uninstall'])
+    optional_arguments.append([['-u'],'Update single element only','string',None,'update_element'])
+    optional_arguments.append([['-r'],'Remove template','bool',False,'flag_uninstall'])
     optional_arguments.append([['-s'],'Silent/test run','bool',False,'flag_silent'])
 
     # Create argument parser and check syntax
@@ -30,6 +31,7 @@ def main(argv=None):
     template_path  = cmdl_parser.extract('template_path')
     flag_uninstall = cmdl_parser.extract('flag_uninstall')
     flag_silent    = cmdl_parser.extract('flag_silent')
+    update_element = cmdl_parser.extract('update_element')
 
     # Validate inputs
     if(not os.path.isdir(project_dir_in)):
@@ -53,7 +55,7 @@ def main(argv=None):
 
     ## Process the template
     if(flag_uninstall):
-        template.uninstall(project_dir_abs,silent=flag_silent)
+        template.uninstall(project_dir_abs,silent=flag_silent,update=update_element)
     else:
         ## Generate parameter dictionary
         params = {}
@@ -64,7 +66,7 @@ def main(argv=None):
         params['gbpbuild_rel_path'] = os.path.relpath(os.getcwd(),project_dir_abs)
 
         ## Install template
-        template.install(project_dir_abs, params=params, silent=flag_silent)
+        template.install(project_dir_abs, params=params, silent=flag_silent,update=update_element)
 
     SID.log.close("Done")
 

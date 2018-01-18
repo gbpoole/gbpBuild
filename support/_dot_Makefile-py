@@ -5,9 +5,7 @@ ifndef mode
     mode=release
 endif
 
-# Assume that all the directories in python/ are
-# python packages.  Get a list of them.
-PKG_DIRS:=$(sort $(realpath $(dir $(wildcard python/*/*))))
+PKG_DIRS:='python'
 
 # Compile a list of build directories
 BUILD_DIRS:=$(addsuffix /build,$(PKG_DIRS))
