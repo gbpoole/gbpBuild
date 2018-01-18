@@ -34,9 +34,9 @@ if os.path.exists(os.path.join(PROJECT_DIRECTORY, '.git')):
         cmd = 'git tag -a %s %s -m "tagged by setup.py"' % (git_version_string, git_hash)        
         print('Quitting before I run cmd:',cmd)
         exit(1)
-        subprocess.check_output(cmd, shell=True, universal_newlines=True)
+        #subprocess.check_output(cmd, shell=True, universal_newlines=True)
     # Add the git hash to the version we will use in setup.py
-    version_string += ', git hash: %s' % git_hash
+    #version_string += ', git hash: %s' % git_hash
 else:
     raise RuntimeError("Unable to find the project's git repository at %s." % (PROJECT_DIRECTORY,))
 
