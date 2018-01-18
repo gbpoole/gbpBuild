@@ -21,6 +21,8 @@ import sys
 
 from datetime import datetime
 
+import shutil
+
 # Set the project root directory
 project_root_dir = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__),'../')))
 
@@ -43,13 +45,21 @@ sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python/bin")))
 # TODO: add an init target to Makefile; load modules and pip install requirements.txt
 gbpBuild_project = prj.project("gbpPy",project_root_dir,"@Sphinx_BUILD_DIR@")
 
+# Copy project .rst files to build directory
+filenames = os.listdir(os.path.abspath(os.path.join(project_root_dir,"docs")))
+print('filenames:',filenames)
+for filename in filenames:
+    if filename.endswith(".rst"):
+        shutil.copy2(os.path.abspath(os.path.join(project_root_dir,"docs",filename)),os.path.join(gbpBuild_project.dir_docs_build,filename)) 
+
 # Generate project .rst files
 docs.generate_index_rst(gbpBuild_project)
 if(gbpBuild_project.is_C_project):
-    docs.generate_API_rst(gbpBuild_project)
-    docs.generate_execs_rst(gbpBuild_project)
+    docs.generate_C_API_rst(gbpBuild_project)
+    docs.generate_C_execs_rst(gbpBuild_project)
 if(gbpBuild_project.is_Python_project):
-    docs.generate_python_rst(gbpBuild_project)
+    docs.generate_Python_API_rst(gbpBuild_project)
+    docs.generate_Python_execs_rst(gbpBuild_project)
 
 # Add it to the project path
 breathe_directory = "%s/breathe/"%(gbpBuild_project.dir_docs_build)
