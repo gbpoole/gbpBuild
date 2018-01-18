@@ -2,8 +2,8 @@
 # ** Don't edit this file unless you're sure about what you're doing! **
 
 parameters:
+    project_name:  gbpPy
     project_email:  gbpoole@gmail.com
     gbpbuild_rel_path:  extern/gbpBuild
-    project_author:  Gregory B. Poole
-    project_name:  gbpPy
     kcov_token:  unset
+    project_author:  Gregory B. Poole
