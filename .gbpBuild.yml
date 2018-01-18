@@ -1,0 +1,9 @@
+# gbpBuild configuration file for project: gbpPy
+# ** Don't edit this file unless you're sure about what you're doing! **
+
+parameters:
+    project_email:  gbpoole@gmail.com
+    gbpbuild_rel_path:  extern/gbpBuild
+    project_author:  Gregory B. Poole
+    project_name:  gbpPy
+    kcov_token:  unset
