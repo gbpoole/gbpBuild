@@ -59,6 +59,7 @@ def main(argv=None):
         params = {}
         params['project_name'] = project_name
         params['project_author'] = 'Gregory B. Poole'
+        params['project_email'] = 'gbpoole@gmail.com'
         params['kcov_token'] = 'unset'
         params['gbpbuild_rel_path'] = os.path.relpath(os.getcwd(),project_dir_abs)
 
