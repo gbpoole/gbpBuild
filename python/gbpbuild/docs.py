@@ -103,8 +103,8 @@ def make_module_list_unique(modules_in):
         del(modules_out[i_del])
     return(modules_out)
 
-def generate_API_rst(project):
-    filename_root="API"
+def generate_C_API_rst(project):
+    filename_root="C_API"
 
     # Open the output file for writing
     outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
@@ -246,8 +246,8 @@ def reformat_Clara_help_to_rst(lines_in):
             flag_remove_top_blank_lines=False
     return(''.join(lines_out))
 
-def generate_execs_rst(project):
-    filename_root="execs"
+def generate_C_execs_rst(project):
+    filename_root="C_execs"
 
     # Open the output file for writing
     outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
@@ -297,6 +297,29 @@ def generate_execs_rst(project):
     # Close output file
     outFile.close()
 
+def generate_Python_API_rst(project):
+    filename_root="Python_API"
+
+    # Open the output file for writing
+    outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
+
+    outFile.write(underlined_text("Python API",'-'))
+
+    # Close output file
+    outFile.close()
+
+
+def generate_Python_execs_rst(project):
+    filename_root="Python_execs"
+
+    # Open the output file for writing
+    outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
+
+    outFile.write(underlined_text("Python Executables",'-'))
+
+    # Close output file
+    outFile.close()
+
 def generate_default_rst(project,filename_root="header",default_title=None):
     # Open the output file for writing
     outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
@@ -329,9 +352,18 @@ def generate_index_rst(project):
     outFile.write("\n")
 
     # Set the default document order
-    doc_order = ['install.rst',
-                 'execs.rst',
-                 'API.rst']
+    doc_order = ['install.rst']
+    if(project.is_C_project and project.is_Python_project):
+        doc_order.append('C_execs.rst')
+        doc_order.append('Python_execs.rst')
+        doc_order.append('C_API.rst')
+        doc_order.append('Python_API.rst')
+    elif(project.is_Python_project):
+        doc_order.append('Python_execs.rst')
+        doc_order.append('Python_API.rst')
+    elif(project.is_C_project):
+        doc_order.append('C_execs.rst')
+        doc_order.append('C_API.rst')
 
     # Check if there is a 'doc_order.txt' file and over-write the defaults with it if so
     filename_in = project.dir_docs+"/index_order.txt"

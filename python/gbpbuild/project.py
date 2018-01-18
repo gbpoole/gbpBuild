@@ -18,13 +18,13 @@ class project:
         if(os.path.isfile(os.path.join(self.dir_root,"CMakeLists.txt"))):
             self.is_C_project = True
         else:
-            self.is_C_project = True
+            self.is_C_project = False
 
         # Check if this is a Python-project (the python directory will exist if so)
         if(os.path.isdir(self.dir_python)):
             self.is_Python_project = True
         else:
-            self.is_Python_project = True
+            self.is_Python_project = False
 
         # If dir_docs_build is of the format "@...@" then it is *not*
         # being called from cmake ... so assume we are doing a python
@@ -33,7 +33,7 @@ class project:
         if(dir_docs_build!=dir_docs_build.strip('@')):
             # Verify that this is a python build
             if(self.is_Python_project):
-                self.dir_docs_build = os.path.join(self.dir_root,"python/docs/build")
+                self.dir_docs_build = os.path.join(self.dir_root,"python/build/sphinx")
             else:
                 raise("Could not set python docs build directory.")
         else:

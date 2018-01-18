@@ -28,7 +28,7 @@ $(addsuffix .BUILD,  $(PKG_DIRS)):
 docs-py: $(addsuffix .DOCS,  $(PKG_DIRS))
 $(addsuffix .DOCS,  $(PKG_DIRS)):
 	@$(ECHO) -n "Generating documentation for python package '"$(shell basename $(realpath -s $(basename $@)))"'..."
-	@cd python/$(shell basename $(realpath -s $(basename $@)));python setup.py build_sphinx -c $(PRJ_DIR)/docs
+	@cd python/$(shell basename $(realpath -s $(basename $@)));python setup.py build_sphinx -c $(PRJ_DIR)/docs -s $(PRJ_DIR)/python/build/sphinx/
 	@$(ECHO) "Done."
 
 .PHONY: install-py
