@@ -134,6 +134,9 @@ def format_template_names(name_list):
             name_txt += ',' + name_i
     return name_txt
 
+def update_element(element,update):
+    return (update==None or update==element.template_path_out())
+
 # Define main classes
 # -------------------
 
@@ -504,7 +507,7 @@ class template:
         SID.log.close()
 
     # Install or uninstall a template
-    def _process_template(self, dir_install, params=None, uninstall=False,silent=False):
+    def _process_template(self, dir_install, params=None, uninstall=False,silent=False,update=None):
         name_txt = format_template_names(self.name)
         if (not uninstall):
             if(len(self.name)>1):
@@ -524,26 +527,26 @@ class template:
         for dir_i in sorted(self.directories, key=lambda k: len(k._full_path_in_abs), reverse=flag_reverse_sort):
             # Note the different ordering of directory processing
             # vs. file processing between install/uninstall cases
-            if (not uninstall):
+            if (not uninstall and update_element(dir_i,update)):
                 dir_i.install(dir_install,silent=silent)
-            else:
+            elif(update_element(dir_i,update)):
                 SID.log.open("Uninstalling directory %s..." % (dir_i.full_path_out(dir_install)))
 
             for file_i in dir_i.files:
-                if(uninstall):
+                if(uninstall and update_element(file_i,update)):
                     file_i.uninstall(dir_install,silent=silent)
-                else:
+                else if(update_element(file_i,update)):
                     file_i.install(dir_install,params=params,silent=silent)
 
-            if(uninstall):
+            if(uninstall and update_element(dir_i,update)):
                 dir_i.uninstall(dir_install,silent=silent)
-            else:
+            elif(update_element(dir_i,update)):
                 SID.log.close()
 
         SID.log.close("Done.")
 
     # Install template
-    def install(self,dir_out,params=None,silent=False):
+    def install(self,dir_out,params=None,silent=False,update=None):
         # Check that all the needed template parameters are in the given dictionary
         # and that they are of the appropriate type
         for param_i in self.params:
@@ -552,5 +555,5 @@ class template:
         self._process_template(dir_out,params=params,silent=silent)
 
     # Uninstall template
-    def uninstall(self,dir_out,silent=False):
+    def uninstall(self,dir_out,silent=False,update=None):
         self._process_template(dir_out,uninstall=True,silent=silent)
