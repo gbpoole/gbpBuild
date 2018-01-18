@@ -535,7 +535,7 @@ class template:
             for file_i in dir_i.files:
                 if(uninstall and update_element(file_i,update)):
                     file_i.uninstall(dir_install,silent=silent)
-                else if(update_element(file_i,update)):
+                elif(update_element(file_i,update)):
                     file_i.install(dir_install,params=params,silent=silent)
 
             if(uninstall and update_element(dir_i,update)):
@@ -552,8 +552,8 @@ class template:
         for param_i in self.params:
             if not param_i in params:
                 SID.log.error("Required parameter {%s} is not present in template installation dictionary."%(param_i))
-        self._process_template(dir_out,params=params,silent=silent)
+        self._process_template(dir_out,params=params,silent=silent,update=update)
 
     # Uninstall template
     def uninstall(self,dir_out,silent=False,update=None):
-        self._process_template(dir_out,uninstall=True,silent=silent)
+        self._process_template(dir_out,uninstall=True,silent=silent,update=update)
