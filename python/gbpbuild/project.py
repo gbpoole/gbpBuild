@@ -1,5 +1,6 @@
 import os
 
+
 class project:
     def __init__(self,project_name,dir_root,dir_docs_build):
         self.name = project_name

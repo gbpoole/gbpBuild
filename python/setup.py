@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
-
-from setuptools import setup, find_packages
-from codecs import open
-from os import path
+import os
+import re
 import subprocess
-import re, os
+from codecs import open
+from distutils.core import setup
+from os import path
+
+from setuptools import find_packages, setup
 
 # The following code which handles versioning was patterned after 
 # a solution posted by 'Sven' here:
@@ -51,4 +52,3 @@ setup(name='gbpBuild',
       author_email='gbpoole@gmail.com',
       packages=find_packages(),
      )
-

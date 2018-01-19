@@ -1,8 +1,9 @@
 import os
-import sys
-import re
-import subprocess 
 import pkgutil
+import re
+import subprocess
+import sys
+
 
 def parse_cmake_local(cur_dir,search_string,result_list,active_API_module,module_select=None,module_list=None,prepend_path=True,strip_ext=False):
     # TODO: Remove external directories from files and paths
@@ -498,4 +499,3 @@ def generate_index_rst(project):
 
     # Close output file
     outFile.close()
-

@@ -1,9 +1,11 @@
 #! /usr/bin/env python
-import gbpPy.log       as SID
-import gbpPy.cmdl      as cmdl
-import gbpPy.templates as tmp
-import sys
 import os
+import sys
+
+import gbpPy.cmdl as cmdl
+import gbpPy.log as SID
+import gbpPy.templates as tmp
+
 
 # Main function
 def main(argv=None):

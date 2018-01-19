@@ -9,9 +9,17 @@ BUILD_DIR:=$(PRJ_DIR)"/python/build"
 
 $(BUILD_DIR):
 ifneq (,$(wildcard $@))
-	@$(ECHO) "test1"$(BUILD_DIR)
-	@$(ECHO) -n "Making pythonbuild directory {"$@"}..."
+	@$(ECHO) -n "Making python build directory {"$@"}..."
 	@mkdir $@
+	@$(ECHO) "Done."
+endif
+
+requirements.txt:
+ifeq ($(shell which pigar),)
+	$(error Pigar not in path.  Please install it with 'pip install pigar' and try again.)
+else
+	@$(ECHO) "Building 'requirements.txt'..."
+	@cd python;pigar
 	@$(ECHO) "Done."
 endif
 
