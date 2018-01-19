@@ -68,7 +68,8 @@ class parser:
         usage_string+=" options"
         parser = optparse.OptionParser(
             usage    =usage_string,
-            formatter=optparse.TitledHelpFormatter(width=78),
+            #formatter=optparse.TitledHelpFormatter(width=78),
+            formatter=optparse.IndentedHelpFormatter(width=100),
             add_help_option=None)
     
         # Add non-positional options here

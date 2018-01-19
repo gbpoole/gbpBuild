@@ -47,7 +47,6 @@ gbpBuild_project = prj.project("gbpPy",project_root_dir,"@Sphinx_BUILD_DIR@")
 
 # Copy project .rst files to build directory
 filenames = os.listdir(os.path.abspath(os.path.join(project_root_dir,"docs")))
-print('filenames:',filenames)
 for filename in filenames:
     if filename.endswith(".rst"):
         shutil.copy2(os.path.abspath(os.path.join(project_root_dir,"docs",filename)),os.path.join(gbpBuild_project.dir_docs_build,filename)) 
