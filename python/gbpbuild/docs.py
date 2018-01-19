@@ -402,31 +402,34 @@ def generate_Python_execs_rst(project):
     # Open the output file for writing
     outFile = open(project.dir_docs_build + "/" + filename_root + '.rst', "w")
 
-    outFile.write(underlined_text("Python Executables",'-'))
-
-    # Create list of python executables
+    # Proceed only if the executable directory exists
     dir_exec = os.path.join(project.dir_root,"python/bin")
-    exe_list=[exec_i for exec_i in os.listdir(dir_exec) if exec_i.endswith(".py")]
+    if(os.path.isdir(dir_exec)):
 
-    # ----------- Output logic for this file starts here -----------
+        outFile.write(underlined_text("Python Executables",'-'))
 
-    # Loop over the modules, adding each in turn to the API docs
-    flag_write_header=True
-    for exec_i in exe_list:
+        # Create list of python executables
+        exe_list=[exec_i for exec_i in os.listdir(dir_exec) if exec_i.endswith(".py")]
 
-        # Send output of executable to the output file
-        outFile.write(underlined_text(exec_i,'`'))
-        out = subprocess.check_output([os.path.join(dir_exec,exec_i), "-h"]).decode("utf-8")
-        outFile.write(reformat_optparse_help_to_rst(out))
+        # ----------- Output logic for this file starts here -----------
 
-    # Add the footer if there is material for this module
-    if(not flag_write_header):
-        cat_project_file(project,filename_root,'.'+module_i[0]+".footer",outFile)
+        # Loop over the modules, adding each in turn to the API docs
+        flag_write_header=True
+        for exec_i in exe_list:
 
-    # ---------------------------------------------------------------
+            # Send output of executable to the output file
+            outFile.write(underlined_text(exec_i,'`'))
+            out = subprocess.check_output([os.path.join(dir_exec,exec_i), "-h"]).decode("utf-8")
+            outFile.write(reformat_optparse_help_to_rst(out))
 
-    # copy footer to output file
-    cat_project_file(project,filename_root,".footer",outFile)
+        # Add the footer if there is material for this module
+        if(not flag_write_header):
+            cat_project_file(project,filename_root,'.'+module_i[0]+".footer",outFile)
+
+        # ---------------------------------------------------------------
+
+        # copy footer to output file
+        cat_project_file(project,filename_root,".footer",outFile)
 
     # Close output file
     outFile.close()
