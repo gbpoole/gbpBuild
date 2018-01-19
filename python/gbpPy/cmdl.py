@@ -5,11 +5,13 @@ Developed with the following library versions:
     python:        3.5.2
 """
 
+import optparse
+import os
 # imports
 import sys
-import os
-import optparse
+
 import gbpPy.log as SID
+
 
 class parser:
     """
@@ -173,4 +175,3 @@ def df_option(string):
         return int(string)
     except ValueError:
         return float(string)
-

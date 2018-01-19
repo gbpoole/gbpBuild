@@ -1,8 +1,10 @@
-import gbpPy.log as SID
-import shutil
+import filecmp
 import os
 import re
-import filecmp
+import shutil
+
+import gbpPy.log as SID
+
 
 # Helper functions
 # ----------------

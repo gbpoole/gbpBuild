@@ -5,8 +5,9 @@ Developed with the following library versions:
     python:        3.5.2
 """
 
-import time
 import sys
+import time
+
 
 class log_stream(object):
     """This class  manages the formatting of log output."""
