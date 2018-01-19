@@ -5,7 +5,7 @@ ifndef mode
     mode=release
 endif
 
-BUILD_DIR:="python/build"
+BUILD_DIR:=$(PRJ_DIR)"/python/build"
 
 $(BUILD_DIR):
 ifneq (,$(wildcard $@))
@@ -24,7 +24,9 @@ build-py: $(BUILD_DIR)
 .PHONY: docs-py
 docs-py:  $(BUILD_DIR)
 	@$(ECHO) "Generating documentation for python package..."
-	@cd python;python setup.py build_sphinx -c $(PRJ_DIR)/docs -s $(PRJ_DIR)/python/build/sphinx/
+	@sphinx-apidoc -o $(BUILD_DIR)/sphinx/ python/$(PRJ_NAME) -T -e -M -f
+	@rm $(BUILD_DIR)/sphinx/$(PRJ_NAME).rst
+	@cd python;python setup.py build_sphinx -c $(PRJ_DIR)/docs -s $(BUILD_DIR)/sphinx
 	@$(ECHO) "Done."
 
 .PHONY: install-py
