@@ -48,7 +48,7 @@ endif
 # Add appropriate targets if Python is supported by this project
 ifneq ($(wildcard .Makefile-py),)
 	include .Makefile-py
-	INIT_LIST := $(INIT_LIST) requirements-py
+	INIT_LIST := $(INIT_LIST) init-py
 	BUILD_LIST := $(BUILD_LIST) build-py
 	DOCS_LIST := $(DOCS_LIST) docs-py
 	INSTALL_LIST := $(INSTALL_LIST) install-py
@@ -64,7 +64,7 @@ endif
 
 .PHONY: all build docs test install clean
 all:	 build docs
-init:	 .print_status submodules-update $(INIT_LIST)
+init:	 .print_status submodules $(INIT_LIST)
 build:	 .print_status $(BUILD_LIST)
 docs:	 .print_status $(DOCS_LIST)
 tests:	 .print_status build $(TEST_LIST)

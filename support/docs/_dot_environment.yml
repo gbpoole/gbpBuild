@@ -1,3 +1,4 @@
+# Conda environment file for Readthedocs builds.
 name: python3.6
 channels:
 - defaults

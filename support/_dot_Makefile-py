@@ -14,12 +14,23 @@ ifneq (,$(wildcard $@))
 	@$(ECHO) "Done."
 endif
 
-requirements.txt:
+init-py:
+ifeq ($(shell which pip),)
+	@$(error 'pip' not in path.  Please (re)install and try command again.)
+else
+ifneq (,$(wildcard .requirements.txt))
+	@$(ECHO) "Ensuring that all required Python modules are installed..."
+	@pip install -r .requirements.txt
+	@$(ECHO) "Done."
+endif
+endif
+
+requirements:
 ifeq ($(shell which pigar),)
 	$(error Pigar not in path.  Please install it with 'pip install pigar' and try again.)
 else
 	@$(ECHO) "Building 'requirements.txt'..."
-	@cd python;pigar
+	@pigar -p .requirements.txt -i extern
 	@$(ECHO) "Done."
 endif
 
@@ -32,8 +43,6 @@ build-py: $(BUILD_DIR)
 .PHONY: docs-py
 docs-py:  $(BUILD_DIR)
 	@$(ECHO) "Generating documentation for python package..."
-	@sphinx-apidoc -o $(BUILD_DIR)/sphinx/ python/$(PRJ_NAME) -T -e -M -f
-	@rm $(BUILD_DIR)/sphinx/$(PRJ_NAME).rst
 	@cd python;python setup.py build_sphinx -c $(PRJ_DIR)/docs -s $(BUILD_DIR)/sphinx
 	@$(ECHO) "Done."
 
