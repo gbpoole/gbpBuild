@@ -25,6 +25,7 @@ ECHO = /bin/echo
 export ECHO
 
 # List of common targets requiring specialized action for each language separately
+INIT_LIST = 
 BUILD_LIST = 
 DOCS_LIST = 
 INSTALL_LIST = 
@@ -36,9 +37,9 @@ LINT_LIST =
 ifneq ($(wildcard .Makefile-c),)
 	include .Makefile-c
 	BUILD_LIST := $(BUILD_LIST) build-c
-	DOCS_LIST := $(DOCS_LIST) docs-c
+	DOCS_LIST := $(DOCS_LIST) build docs-c
 	INSTALL_LIST := $(INSTALL_LIST) install-c
-	TEST_LIST := $(TEST_LIST) test-c
+	TEST_LIST := $(TEST_LIST) tests-c
 	CLEAN_LIST := $(CLEAN_LIST) clean-c
 	LINT_LIST := $(LINT_LIST) lint-c
 	USE_C_CPP := ON
@@ -47,10 +48,11 @@ endif
 # Add appropriate targets if Python is supported by this project
 ifneq ($(wildcard .Makefile-py),)
 	include .Makefile-py
+	INIT_LIST := $(INIT_LIST) requirements-py
 	BUILD_LIST := $(BUILD_LIST) build-py
 	DOCS_LIST := $(DOCS_LIST) docs-py
 	INSTALL_LIST := $(INSTALL_LIST) install-py
-	TEST_LIST := $(TEST_LIST) test-py
+	TEST_LIST := $(TEST_LIST) tests-py
 	CLEAN_LIST := $(CLEAN_LIST) clean-py
 	LINT_LIST := $(LINT_LIST) lint-py
 	USE_PYTHON := ON
@@ -62,9 +64,10 @@ endif
 
 .PHONY: all build docs test install clean
 all:	 build docs
+init:	 .print_status submodules-update $(INIT_LIST)
 build:	 .print_status $(BUILD_LIST)
 docs:	 .print_status $(DOCS_LIST)
-test:	 .print_status $(TEST_LIST)
+tests:	 .print_status build $(TEST_LIST)
 lint:	 .print_status $(LINT_LIST)
 install: .print_status $(INSTALL_LIST)
 clean:	 .print_status $(CLEAN_LIST)
