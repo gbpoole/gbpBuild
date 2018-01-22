@@ -82,7 +82,7 @@ sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python")))
 sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python/bin")))
 
 # Parse the project directory to learn what we need about the project
-gbpBuild_project = prj.project("gbpPy",project_root_dir,"@Sphinx_BUILD_DIR@")
+gbpBuild_project = project("gbpPy",project_root_dir,"@Sphinx_BUILD_DIR@")
 
 # Make sure the build directory exists
 os.makedirs(gbpBuild_project.dir_docs_build, exist_ok=True)
