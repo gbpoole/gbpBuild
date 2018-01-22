@@ -2,6 +2,9 @@
 
 requirements_file: docs/.requirements.txt
 
+build:
+    image: latest
+
 python:
    setup_py_install: true
 
