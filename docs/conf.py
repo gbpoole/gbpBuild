@@ -85,7 +85,8 @@ sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python/bin")))
 gbpBuild_project = project("gbpPy",project_root_dir,"@Sphinx_BUILD_DIR@")
 
 # Make sure the build directory exists
-os.makedirs(gbpBuild_project.dir_docs_build, exist_ok=True)
+if(not os.path.isdir(gbpBuild_project.dir_docs_build)):
+    os.makedirs(gbpBuild_project.dir_docs_build)
 
 # Copy project .rst files to build directory
 filenames = os.listdir(os.path.abspath(os.path.join(project_root_dir,"docs")))
