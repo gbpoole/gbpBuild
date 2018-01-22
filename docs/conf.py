@@ -17,48 +17,36 @@
 # documentation root, use os.path.abspath to make it absolute
 
 import os
+import shutil
 import sys
-
 from datetime import datetime
 
-import shutil
+from recommonmark.parser import CommonMarkParser
 
 # Set the project root directory
 project_root_dir = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__),'../')))
 
 # Add gbpBuild python code to path and import it
 sys.path.append(os.path.abspath(os.path.join(project_root_dir,"extern/gbpBuild/python/")))
-import gbpbuild.docs as docs
-import gbpbuild.project as prj
 
 # Add project python directory so that autodoc can find it
 sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python")))
 sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python/bin")))
 
+import gbpbuild.docs as docs
+import gbpbuild.project as prj
+
 # Parse the project directory to learn what we need about the project
-# TODO: add list of python modules and executables to project object
-# TODO: add python modules and scripts to the path
-# TODO: create docs.generate_python_rst
-# TODO: add python.rst to index.rst (template insert?)
-# TODO: rename docs.generate_API_rst -> docs.generate_C_API_rst etc
-# TODO: add a requirements.txt file to template
-# TODO: add an init target to Makefile; load modules and pip install requirements.txt
 gbpBuild_project = prj.project("gbpPy",project_root_dir,"@Sphinx_BUILD_DIR@")
+
+# Make sure the build directory exists
+os.makedirs(gbpBuild_project.dir_docs_build, exist_ok=True)
 
 # Copy project .rst files to build directory
 filenames = os.listdir(os.path.abspath(os.path.join(project_root_dir,"docs")))
 for filename in filenames:
     if filename.endswith(".rst"):
         shutil.copy2(os.path.abspath(os.path.join(project_root_dir,"docs",filename)),os.path.join(gbpBuild_project.dir_docs_build,filename)) 
-
-# Generate project .rst files
-docs.generate_index_rst(gbpBuild_project)
-if(gbpBuild_project.is_C_project):
-    docs.generate_C_API_rst(gbpBuild_project)
-    docs.generate_C_execs_rst(gbpBuild_project)
-if(gbpBuild_project.is_Python_project):
-    docs.generate_Python_API_rst(gbpBuild_project)
-    docs.generate_Python_execs_rst(gbpBuild_project)
 
 # Add it to the project path
 breathe_directory = "%s/breathe/"%(gbpBuild_project.dir_docs_build)
@@ -88,11 +76,14 @@ breathe_default_project =   gbpBuild_project.name
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['%s/templates'%(gbpBuild_project.dir_docs)]
 
+# Add a markdown parser
+source_parsers = {
+    '.md': CommonMarkParser,
+}
+
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
-#
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
@@ -209,4 +200,3 @@ texinfo_documents = [
      author, gbpBuild_project.name, gbpBuild_project.description,
      'Miscellaneous'),
 ]
-
