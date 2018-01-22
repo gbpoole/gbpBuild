@@ -33,6 +33,9 @@ sys.path.append(os.path.abspath(os.path.join(project_root_dir,"extern/gbpBuild/p
 sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python")))
 sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python/bin")))
 
+for root, dirs, files in os.walk(project_root_dir):
+    print(root, dirs, files)
+
 import gbpbuild.docs as docs
 import gbpbuild.project as prj
 
