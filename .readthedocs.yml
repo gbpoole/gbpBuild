@@ -1,0 +1,9 @@
+# Configure Readthedocs
+
+requirements_file: docs/rtd/requirements.txt
+
+python:
+   setup_py_install: true
+
+conda:
+    file: docs/rtd/environment.yml
