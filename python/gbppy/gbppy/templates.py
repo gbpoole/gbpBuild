@@ -195,6 +195,7 @@ class template_directory:
                 if(os.path.isdir(self.full_path_out(dir_install))):
                     SID.log.open("Directory %s exists."%(self.full_path_out(dir_install)))
                 else:
+                    # Figure-out the relative path directly to the linked file
                     if(self.is_link):
                         symlink_path=os.path.relpath(self.full_path_in(),os.path.dirname(self.full_path_out(dir_install)))
                     if(not silent):
@@ -211,7 +212,10 @@ class template_directory:
                             SID.log.open("Directory %s created."%(self.full_path_out(dir_install)))
                     else:
                         if(self.is_link):
-                            SID.log.open("Directory %s linked silently."%(self.full_path_out(dir_install)))
+                            if(os.path.lexists(self.full_path_out(dir_install))):
+                                SID.log.open("Directory %s link updated silently."%(self.full_path_out(dir_install)))
+                            else:
+                                SID.log.open("Directory %s linked silently."%(self.full_path_out(dir_install)))
                         else:
                             SID.log.open("Directory %s created silently."%(self.full_path_out(dir_install)))
             else:
@@ -293,14 +297,15 @@ class template_file:
     def template_path_out(self):
         return os.path.normpath(os.path.join(self.dir_in.template_path_out(), self.name_out))
 
-    def install(self,dir_install,params=None,silent=False):
+    def install(self,dir_install,params=None,silent=False,force=False):
         # Create a list of project parameters, which includes the user parameters
         # we've been passed as well as the protected variables
         project_params = project_inputs(params)
 
         try:
-            if(os.path.isfile(self.full_path_out(dir_install))):
-                SID.log.comment("   --> %s exists."%(self.full_path_out(dir_install)))
+            flag_file_exists=os.path.isfile(self.full_path_out(dir_install))
+            if(flag_file_exists and not force):
+                SID.log.comment("--> %s exists."%(self.full_path_out(dir_install)))
             else:
                 if(self.is_link):
                     symlink_path=os.path.relpath(self.full_path_in(),self.dir_in.full_path_out(dir_install))
@@ -314,13 +319,25 @@ class template_file:
                             os.symlink(symlink_path,self.full_path_out(dir_install))
                             SID.log.comment("--> %s linked."%(self.full_path_out(dir_install)))
                     else:
+                        if(flag_file_exists):
+                            os.remove(self.full_path_out(dir_install)) 
+                            SID.log.comment("--> %s removed."%(self.full_path_out(dir_install)))
                         self.write_with_substitution(dir_install,params=project_params)
-                        SID.log.comment("--> %s created."%(self.full_path_out(dir_install)))
+                        if(flag_file_exists):
+                            SID.log.comment("--> %s updated."%(self.full_path_out(dir_install)))
+                        else:
+                            SID.log.comment("--> %s created."%(self.full_path_out(dir_install)))
                 else:
                     if(self.is_link):
-                        SID.log.comment("--> %s linked silently."%(self.full_path_out(dir_install)))
+                        if(os.path.lexists(self.full_path_out(dir_install))):
+                            SID.log.comment("--> %s link updated silently."%(self.full_path_out(dir_install)))
+                        else:
+                            SID.log.comment("--> %s linked silently."%(self.full_path_out(dir_install)))
                     else:
-                        SID.log.comment("--> %s created silently."%(self.full_path_out(dir_install)))
+                        if(flag_file_exists):
+                            SID.log.comment("--> %s updated silently."%(self.full_path_out(dir_install)))
+                        else:
+                            SID.log.comment("--> %s created silently."%(self.full_path_out(dir_install)))
         except:
             SID.log.error("Failed to install file {%s}."%(self.full_path_out(dir_install)))
 
@@ -509,7 +526,7 @@ class template:
         SID.log.close()
 
     # Install or uninstall a template
-    def _process_template(self, dir_install, params=None, uninstall=False,silent=False,update=None):
+    def _process_template(self, dir_install, params=None, uninstall=False,silent=False,update=None,force=False):
         name_txt = format_template_names(self.name)
         if (not uninstall):
             if(len(self.name)>1):
@@ -530,7 +547,7 @@ class template:
             # Note the different ordering of directory processing
             # vs. file processing between install/uninstall cases
             if (not uninstall and update_element(dir_i,update)):
-                dir_i.install(dir_install,silent=silent)
+                dir_i.install(dir_install,silent=silent,force=force)
             elif(update_element(dir_i,update)):
                 SID.log.open("Uninstalling directory %s..." % (dir_i.full_path_out(dir_install)))
 
@@ -538,7 +555,7 @@ class template:
                 if(uninstall and update_element(file_i,update)):
                     file_i.uninstall(dir_install,silent=silent)
                 elif(update_element(file_i,update)):
-                    file_i.install(dir_install,params=params,silent=silent)
+                    file_i.install(dir_install,params=params,silent=silent,force=force)
 
             if(uninstall and update_element(dir_i,update)):
                 dir_i.uninstall(dir_install,silent=silent)
@@ -548,13 +565,13 @@ class template:
         SID.log.close("Done.")
 
     # Install template
-    def install(self,dir_out,params=None,silent=False,update=None):
+    def install(self,dir_out,params=None,silent=False,update=None,force=False):
         # Check that all the needed template parameters are in the given dictionary
         # and that they are of the appropriate type
         for param_i in self.params:
             if not param_i in params:
                 SID.log.error("Required parameter {%s} is not present in template installation dictionary."%(param_i))
-        self._process_template(dir_out,params=params,silent=silent,update=update)
+        self._process_template(dir_out,params=params,silent=silent,update=update,force=force)
 
     # Uninstall template
     def uninstall(self,dir_out,silent=False,update=None):

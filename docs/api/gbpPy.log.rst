@@ -1,7 +1,7 @@
-gbpPy.cmdl module
+gbpPy\.log module
 =================
 
-.. automodule:: gbpPy.cmdl
+.. automodule:: gbpPy.log
     :members:
     :undoc-members:
     :show-inheritance:

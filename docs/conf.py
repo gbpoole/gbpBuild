@@ -19,83 +19,23 @@
 import os
 import shutil
 import sys
-from datetime import datetime
 
+from datetime import datetime
 from recommonmark.parser import CommonMarkParser
 
-class project:
-    def __init__(self,project_name,dir_root,dir_docs_build):
-        self.name = project_name
+# Include the project development module
+sys.path.append(os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__),'../python/gbppy_dev/'))))
+import gbppy_dev.project as prj
+import gbppy_dev.docs    as docs
 
-        self.author = "author"
-        self.description = "One line description of project here."
-
-        # Set some project direcories
-        self.dir_root    = dir_root
-        self.dir_docs    = os.path.join(self.dir_root,"docs")
-        self.dir_python  = os.path.join(self.dir_root,"python")
-
-        # Infer the name of the project from the root
-
-        # Check if this is a C-project (CMakeList.txt will exist if so)
-        if(os.path.isfile(os.path.join(self.dir_root,"CMakeLists.txt"))):
-            self.is_C_project = True
-        else:
-            self.is_C_project = False
-
-        # Check if this is a Python-project (the python directory will exist if so)
-        if(os.path.isdir(self.dir_python)):
-            self.is_Python_project = True
-        else:
-            self.is_Python_project = False
-
-        # If dir_docs_build is of the format "@...@" then it is *not*
-        # being called from cmake ... so assume we are doing a python
-        # build.  Otherwise, cmake has performed a variable substitution
-        # (see support/cmake/FindSphinx.cmake) and we just use that.
-        if(dir_docs_build!=dir_docs_build.strip('@')):
-            # Verify that this is a python build
-            if(self.is_Python_project):
-                self.dir_docs_build = os.path.join(self.dir_root,"python/build/sphinx")
-            else:
-                raise("Could not set python docs build directory.")
-        else:
-            self.dir_docs_build = dir_docs_build
-
-        # Extract version & release from .version file.
-        try:
-            with open("%s/.version"%(self.dir_root),"r") as fp_in:
-                self.version = str(fp_in.readline())
-        except:
-            print("Project '.version' file not found.  Setting version='unset'")
-            self.version='unset'
-        self.release = self.version
-
-# Set the project root directory
-project_root_dir = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__),'../')))
-
-# Add gbpBuild python code to path and import it
-sys.path.append(os.path.abspath(os.path.join(project_root_dir,"extern/gbpBuild/python/")))
-
-# Add project python directory so that autodoc can find it
-sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python")))
-sys.path.append(os.path.abspath(os.path.join(project_root_dir,"python/bin")))
+# Include the path to the python project so that autodoc can find it
+sys.path.append(os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__),'../python/gbppy/'))))
 
 # Parse the project directory to learn what we need about the project
-gbpBuild_project = project("gbpPy",project_root_dir,"@Sphinx_BUILD_DIR@")
-
-# Make sure the build directory exists
-if(not os.path.isdir(gbpBuild_project.dir_docs_build)):
-    os.makedirs(gbpBuild_project.dir_docs_build)
-
-# Copy project .rst files to build directory
-filenames = os.listdir(os.path.abspath(os.path.join(project_root_dir,"docs")))
-for filename in filenames:
-    if filename.endswith(".rst"):
-        shutil.copy2(os.path.abspath(os.path.join(project_root_dir,"docs",filename)),os.path.join(gbpBuild_project.dir_docs_build,filename)) 
+this_project = prj.project()
 
 # Add it to the project path
-breathe_directory = "%s/breathe/"%(gbpBuild_project.dir_docs_build)
+breathe_directory = "%s/breathe/"%(this_project.params['dir_docs_build'])
 sys.path.append( breathe_directory )
 
 # -- General configuration ------------------------------------------------
@@ -116,11 +56,11 @@ extensions = ['sphinx.ext.autodoc',
     'breathe']
 
 # Some things that Breathe needs
-breathe_projects        = { gbpBuild_project.name: "%s/doxygen/xml/"%(gbpBuild_project.dir_docs_build) }
-breathe_default_project =   gbpBuild_project.name
+breathe_projects        = { this_project.params['name']: "%s/doxygen/xml/"%(this_project.params['dir_docs_build']) }
+breathe_default_project =   this_project.params['name']
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['%s/templates'%(gbpBuild_project.dir_docs)]
+templates_path = ['%s/templates'%(this_project.dir_root)]
 
 # Add a markdown parser
 source_parsers = {
@@ -134,11 +74,16 @@ source_suffix = ['.rst', '.md']
 # The master toctree document.
 master_doc = 'index'
 
-# General information about the gbpBuild_project.
-project = gbpBuild_project.name
+# Exclude the source files in the docs directory
+# (we've copied them to the build directory and 
+#  dont want to double count them.)
+#exclude_patterns = '*.rst'
+
+# General information about the project.
+project = this_project.params['name']
 year = datetime.today().year
-copyright = str(year)+', %s'%(gbpBuild_project.author)
-author = gbpBuild_project.author
+copyright = str(year)+', %s'%(this_project.params['author'])
+author = this_project.params['author']
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -147,8 +92,8 @@ author = gbpBuild_project.author
 # Extract version from .version file.
 # n.b.: 'version' should be the short X.Y version
 #       'release' should be the full version, including alpha/beta/rc tags
-version = gbpBuild_project.version
-release = gbpBuild_project.release
+version = this_project.params['version']
+release = this_project.params['release']
 
 # The language for content autogenerated by Sphinx. Refer to documentation
 # for a list of supported languages.
@@ -160,7 +105,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['build-*','**/extern']
+exclude_patterns = ['build*','**/extern']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -172,30 +117,30 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme_path =['%s/themes'%(gbpBuild_project.dir_docs)]
+html_theme_path =['themes']
 html_theme = 'gbp_theme'
 html_show_sourcelink = False
-html_favicon = '%s/static/favicon.ico'%(gbpBuild_project.dir_docs)
-html_logo = '%s/static/logo.gif'%(gbpBuild_project.dir_docs)
+html_favicon = '%s/static/favicon.ico'%(this_project.dir_root)
+html_logo = '%s/static/logo.gif'%(this_project.dir_root)
 
 html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'], }
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'gbp_project_name':gbpBuild_project.name}
+html_theme_options = {'gbp_project_name':this_project.params['name']}
 
 extra_nav_links = {'Index' : 'genindex.html'}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['%s/static'%(gbpBuild_project.dir_docs)]
+html_static_path = ['static']
 
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = '%sdoc'%(gbpBuild_project.dir_docs)
+htmlhelp_basename = '%sdoc'%(this_project.params['name'])
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -221,8 +166,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, '%s.tex'%(gbpBuild_project.name), '%s Documentation'%(gbpBuild_project.name),
-     gbpBuild_project.author, 'manual'),
+    (master_doc, '%s.tex'%(this_project.params['name']), '%s Documentation'%(this_project.params['name']),
+     this_project.params['author'], 'manual'),
 ]
 
 
@@ -231,7 +176,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, gbpBuild_project.name.lower(), '%s Documentation'%(gbpBuild_project.name),
+    (master_doc, this_project.params['name'].lower(), '%s Documentation'%(this_project.params['name']),
      [author], 1)
 ]
 
@@ -242,7 +187,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, gbpBuild_project.name, '%s Documentation'%(gbpBuild_project.name),
-     author, gbpBuild_project.name, gbpBuild_project.description,
+    (master_doc, this_project.params['name'], '%s Documentation'%(this_project.params['name']),
+     author, this_project.params['name'], this_project.params['description'],
      'Miscellaneous'),
 ]

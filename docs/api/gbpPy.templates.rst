@@ -1,5 +1,5 @@
-gbpPy.templates module
-======================
+gbpPy\.templates module
+=======================
 
 .. automodule:: gbpPy.templates
     :members:

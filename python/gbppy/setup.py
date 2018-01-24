@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 
-import os
-import re
-import subprocess
-from codecs import open
 from distutils.core import setup
-from os import path
 
-from setuptools import find_packages, setup
+from setuptools import setup, find_packages
+from codecs import open
+from os import path
+import subprocess
+import re, os
 
 # The following code which handles versioning was patterned after a solution posted by 'Sven' here: 
 # https://stackoverflow.com/questions/6786555/automatic-version-number-both-in-setup-py-setuptools-and-source-code
 
 # Read the version file in the project directory
-PROJECT_DIRECTORY = path.abspath(path.dirname(__file__))+'/../'
+PROJECT_DIRECTORY = path.abspath(path.dirname(__file__))+'/../../'
 VERSIONFILE=os.path.join(PROJECT_DIRECTORY,".version")
 version_string = None
 with open(VERSIONFILE,'rt') as fp:
@@ -50,3 +49,4 @@ setup(name='gbpPy',
       author_email='gbpoole@gmail.com',
       packages=find_packages(),
      )
+

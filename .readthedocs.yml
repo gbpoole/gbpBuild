@@ -5,8 +5,12 @@ requirements_file: docs/.requirements.txt
 build:
     image: latest
 
-#python:
-    #setup_py_install: true
+python:
+    version: 3.6
+#   setup_py_install: true
 
+# This has to remain commented out until
+# Anaconda gets cross-platform environment
+# exports working correctly.
 #conda:
-   #file: docs/.environment.yml
+#    file: docs/.environment.yml
