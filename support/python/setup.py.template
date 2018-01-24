@@ -47,6 +47,6 @@ setup(name='%project_name%',
       description="The %project_name% project's Python package",
       author='%project_author%',
       author_email='%project_email%',
-      packages=find_packages(),
+      packages=['%project_name%'],
      )
 

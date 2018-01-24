@@ -5,11 +5,21 @@ ifndef mode
     mode=release
 endif
 
-BUILD_DIR:=$(PRJ_DIR)"/python/build"
+PKGS:=$(shell find python -name 'setup.py' -not -path "python/*_dev/*" -exec dirname {} \;)
+
+BUILD_DIR:=$(PRJ_DIR)/python/build
+DOCS_BUILD_DIR:=$(PRJ_DIR)/docs/build
 
 $(BUILD_DIR):
-ifneq (,$(wildcard $@))
+ifeq (,$(wildcard $@))
 	@$(ECHO) -n "Making python build directory {"$@"}..."
+	@mkdir $@
+	@$(ECHO) "Done."
+endif
+
+$(DOCS_BUILD_DIR):
+ifeq (,$(wildcard $@))
+	@$(ECHO) -n "Making docs build directory {"$@"}..."
 	@mkdir $@
 	@$(ECHO) "Done."
 endif
@@ -35,73 +45,73 @@ else
 endif
 
 .PHONY: build-py 
-build-py: $(BUILD_DIR)
-	@$(ECHO) "Building python package..."
-	@cd python;python setup.py build
-	@$(ECHO) "Done."
-
-.PHONY: docs-py
-docs-py:  $(BUILD_DIR)
-	@$(ECHO) "Generating documentation for python package..."
-	@cd python;python setup.py build_sphinx -c $(PRJ_DIR)/docs -s $(BUILD_DIR)/sphinx
+build-py: $(BUILD_DIR) $(addsuffix .BUILD,$(PKGS))
+$(addsuffix .BUILD,$(PKGS)):
+	@$(ECHO) "Building python package {"$(basename $@)"}..."
+	@cd $(basename $@);python setup.py build
 	@$(ECHO) "Done."
 
 .PHONY: install-py
-install-py: build-py
-	@$(ECHO) "Installing python package..."
+install-py: build-py $(addsuffix .INSTALL,$(PKGS))
+$(addsuffix .INSTALL,$(PKGS)): 
+	@$(ECHO) "Installing python package {"$(basename $@)"}..."
 ifeq ($(mode),release)
-	@cd python;python setup.py install
+	@cd $(basename $@);python setup.py install
 else ifeq ($(mode),develop)
-	@cd python;python setup.py install develop
+	@cd $(basename $@);python setup.py install develop
 else
     $(error Invalid python build mode {$(mode)} specified for installation.)
 endif
 	@$(ECHO) "Done."
 
 .PHONY: test-py
-test-py: 
+test-py: $(addsuffix .TEST,$(PKGS))
+$(addsuffix .TEST,$(PKGS)):
 	@$(ECHO) "Running tests for python package..."
-	@cd python;python setup.py test
+	@cd $(basename $@);python setup.py test
 ifeq ($(shell which tox),)
 	@$(warning 'tox' not in path.  Please (re)install and try command again if you want it's support.)
 else
-	@cd python/$(shell basename $(realpath -s $(basename $@)));tox
+	@cd $(basename $@);tox
 endif
 	@$(ECHO) "Done."
 
 .PHONY: coverage-py
-coverage-py: 
-	@$(ECHO) "Generating Python test coverage report..."
+coverage-py: test-py $(addsuffix .COV,$(PKGS))
+$(addsuffix .COV,$(PKGS)):
+	@$(ECHO) "Generating Python test coverage report for package {"$(basename $@)"}..."
 ifeq ($(shell which tox),)
 	@$(error 'coverage' not in path.  Please (re)install coverage.py and try command again if you want it's support.)
 else
-	@cd python/$(shell basename $(realpath -s $(basename $@)));coverage run setup.py test
-	@cd python/$(shell basename $(realpath -s $(basename $@)));coverage report -m
-	@cd python/$(shell basename $(realpath -s $(basename $@)));coverage html
+	@cd $(basename $@);coverage run setup.py test
+	@cd $(basename $@);coverage report -m
+	@cd $(basename $@);coverage html
 endif
 	@$(ECHO) "Done."
 
 .PHONY: clean-py
 clean-py: 
-	@$(ECHO) -n "Cleaning-up python package..."
-	@cd python;rm -rf build/
-	@cd python;rm -rf dist/
-	@cd python;rm -rf *.egg-info
-	@cd python;rm -rf .tox/
-	@cd python;rm -f .coverage
-	@cd python;rm -rf htmlcov/
+	@$(ECHO) -n "Cleaning-up Python debris..."
+	@rm -rf docs/build/
+	@rm -rf python/build/
+	@rm -rf python/dist/
+	@rm -rf python/.tox/
+	@rm -f  python/.coverage
+	@rm -rf python/htmlcov/
 	@cd python;find . -name '*.pyc' -exec rm -f {} +
 	@cd python;find . -name '*.pyo' -exec rm -f {} +
 	@cd python;find . -name '*~' -exec rm -f {} +
 	@cd python;find . -name '__pycache__' -exec rm -fr {} +
+	@cd python;find . -name '*.egg-info' -exec rm -fr {} +
 	@$(ECHO) "Done."
 
 .PHONY: lint-py
-lint-py: 
-	@$(ECHO) -n "Linting python package..."
+lint-py: $(addsuffix .LINT,$(PKGS))
+$(addsuffix .LINT,$(PKGS)):
+	@$(ECHO) -n "Linting python package {"$(basename $@)"}..."
 ifeq ($(shell which flake8),)
 	@$(error 'flake8' not in path.  Please (re)install and try command again.)
 else
-	@cd python/$(shell basename $(realpath -s $(basename $@)));flake8 --exclude=.tox
+	@cd $(basename $@);flake8 --exclude=.tox
 endif
 	@$(ECHO) "Done."

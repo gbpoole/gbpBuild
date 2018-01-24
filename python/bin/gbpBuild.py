@@ -22,6 +22,7 @@ def main(argv=None):
     optional_arguments.append([['-d','--path'],'Path to template directory','string',None,'template_path'])
     optional_arguments.append([['-u'],'Update single element only','string',None,'update_element'])
     optional_arguments.append([['-r'],'Remove template','bool',False,'flag_uninstall'])
+    optional_arguments.append([['-f'],'Force write for existing files','bool',False,'flag_force'])
     optional_arguments.append([['-s'],'Silent/test run','bool',False,'flag_silent'])
 
     # Create argument parser and check syntax
@@ -33,6 +34,7 @@ def main(argv=None):
     template_path  = cmdl_parser.extract('template_path')
     flag_uninstall = cmdl_parser.extract('flag_uninstall')
     flag_silent    = cmdl_parser.extract('flag_silent')
+    flag_force     = cmdl_parser.extract('flag_force')
     update_element = cmdl_parser.extract('update_element')
 
     # Validate inputs
@@ -66,11 +68,12 @@ def main(argv=None):
         params['project_name'] = project_name
         params['project_author'] = 'Gregory B. Poole'
         params['project_email'] = 'gbpoole@gmail.com'
+        params['project_description'] = 'One line description of project.'
         params['kcov_token'] = 'unset'
         params['gbpbuild_rel_path'] = os.path.relpath(os.getcwd(),project_dir_abs)
 
         ## Install template
-        template.install(project_dir_abs, params=params, silent=flag_silent,update=update_element)
+        template.install(project_dir_abs, params=params, silent=flag_silent,update=update_element,force=flag_force)
 
     SID.log.close("Done")
 
