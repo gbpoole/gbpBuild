@@ -136,9 +136,6 @@ def format_template_names(name_list):
             name_txt += ',' + name_i
     return name_txt
 
-def update_element(element,update):
-    return (update==None or update==element.template_path_out())
-
 # Define main classes
 # -------------------
 
@@ -189,7 +186,7 @@ class template_directory:
     def template_path_out(self):
         return os.path.normpath(os.path.join(self._template_path, self.name_out))
 
-    def install(self,dir_install,silent=False):
+    def install(self,dir_install,silent=False,force=None):
         try:
             if( not self.is_root()):
                 if(os.path.isdir(self.full_path_out(dir_install))):
@@ -253,7 +250,7 @@ class template_file:
     def __init__(self,filename,dir_host):
         # Default to the present directory if one is not passed
         if(not dir_host):
-            dir_host=template_directory('.')
+            dir_host=template_directory('.','')
 
         # Set basic properties
         self.parse_name(filename)
@@ -463,6 +460,28 @@ class template:
 
         SID.log.close("Done")
 
+    def update_element(self,element,update):
+        # If no update element is given, then we're updating everythong
+        if(update==None):
+            return True
+
+        # Check if this is the update element
+        if(element.template_path_out()==update):
+            return True
+
+        # Compute the element's full output path and use that to make comparisons.
+        # Also get the name of the directory it's sitting in 
+        element_path_out = element.template_path_out()
+        element_dir = os.path.dirname(element_path_out)
+
+        # ... else, check if this element sits within the directory structure of the update element
+        parent_path_out=os.path.dirname(element_path_out)
+        is_in_update_path=(parent_path_out==update)
+        while parent_path_out!='' and not is_in_update_path:
+            parent_path_out=os.path.dirname(parent_path_out)
+            is_in_update_path=(parent_path_out==update)
+        return (is_in_update_path)
+
     def get_directory(self,template_path_out):
         for dir_i in self.directories:
             if(dir_i.template_path_out()==template_path_out):
@@ -482,8 +501,10 @@ class template:
             self.directories.append(dir_add)
 
     def add_file(self, file_add):
+        # Prevent the addition of files to symlinked directories
         if (file_add.dir_in.is_symlink):
             raise Exception("Can not add file {%s} to symlinked directory {%s}." % (file_add.name_in, file_add.dir_in.name_in))
+
         # Check if we should be adding this file to an existing directory
         dir_check = self.get_directory(file_add.dir_in.template_path_out())
         if(dir_check==None):
@@ -546,20 +567,20 @@ class template:
         for dir_i in sorted(self.directories, key=lambda k: len(k._full_path_in_abs), reverse=flag_reverse_sort):
             # Note the different ordering of directory processing
             # vs. file processing between install/uninstall cases
-            if (not uninstall and update_element(dir_i,update)):
+            if (not uninstall and self.update_element(dir_i,update)):
                 dir_i.install(dir_install,silent=silent,force=force)
-            elif(update_element(dir_i,update)):
+            elif(self.update_element(dir_i,update)):
                 SID.log.open("Uninstalling directory %s..." % (dir_i.full_path_out(dir_install)))
 
             for file_i in dir_i.files:
-                if(uninstall and update_element(file_i,update)):
+                if(uninstall and self.update_element(file_i,update)):
                     file_i.uninstall(dir_install,silent=silent)
-                elif(update_element(file_i,update)):
+                elif(self.update_element(file_i,update)):
                     file_i.install(dir_install,params=params,silent=silent,force=force)
 
-            if(uninstall and update_element(dir_i,update)):
+            if(uninstall and self.update_element(dir_i,update)):
                 dir_i.uninstall(dir_install,silent=silent)
-            elif(update_element(dir_i,update)):
+            elif(self.update_element(dir_i,update)):
                 SID.log.close()
 
         SID.log.close("Done.")
