@@ -61,7 +61,7 @@ def main(argv=None):
 
     ## Process the template
     if(flag_uninstall):
-        template.uninstall(project_dir_abs,silent=flag_silent,update=update_element)
+        template.uninstall(project_dir_abs,params_raw=params,silent=flag_silent,update=update_element)
     else:
         ## Generate parameter dictionary
         params = {}
@@ -73,7 +73,7 @@ def main(argv=None):
         params['gbpbuild_rel_path'] = os.path.relpath(os.getcwd(),project_dir_abs)
 
         ## Install template
-        template.install(project_dir_abs, params=params, silent=flag_silent,update=update_element,force=flag_force)
+        template.install(project_dir_abs, params_raw=params, silent=flag_silent,update=update_element,force=flag_force)
 
     SID.log.close("Done")
 

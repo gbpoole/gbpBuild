@@ -1,5 +1,0 @@
-# gbpBuild configuration file for project: %project_name%
-# ** Don't edit this file unless you're sure about what you're doing! **
-
-parameters:
-    %_PARAMETERS.key%:  %_PARAMETERS.value%
