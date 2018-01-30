@@ -19,17 +19,24 @@
 import os
 import shutil
 import sys
+import git
+import glob
 
 from datetime import datetime
 from recommonmark.parser import CommonMarkParser
 
-# Include the project development module
-sys.path.append(os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__),'../python/gbppy_dev/'))))
-import gbppy_dev.project as prj
-import gbppy_dev.docs    as docs
+# Find the project root directory
+git_repo = git.Repo(os.path.realpath(__file__), search_parent_directories=True)
+dir_root = git_repo.git.rev_parse("--show-toplevel")
+dir_python = os.path.abspath(os.path.join(dir_root,"python"))
 
-# Include the path to the python project so that autodoc can find it
-sys.path.append(os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__),'../python/gbppy/'))))
+# Include the paths to local python projects (including the _dev package)
+for setup_py_i in glob.glob(dir_python+"/**/setup.py",recursive=True):
+    sys.path.append(os.path.abspath(os.path.dirname(setup_py_i)))
+
+# Include the project development module
+import gbpPy_dev.project as prj
+import gbpPy_dev.docs    as docs
 
 # Parse the project directory to learn what we need about the project
 this_project = prj.project()
@@ -75,7 +82,7 @@ source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
 # Exclude the source files in the docs directory
-# (we've copied them to the build directory and 
+# (we've copied them to the build directory and
 #  dont want to double count them.)
 #exclude_patterns = '*.rst'
 

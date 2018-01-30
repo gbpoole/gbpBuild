@@ -19,7 +19,7 @@ if version_string==None or version_string=="":
 
 print('Current `setup.py` version:',version_string)
 
-setup(name='gbppy_dev',
+setup(name='gbpPy_dev',
       version=version_string,
       description="Python code supporting development operations (documenation building, etc.) for the gbpPy project.",
       author='Gregory B. Poole',

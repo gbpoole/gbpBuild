@@ -486,15 +486,17 @@ def generate_index_rst(project):
         doc_order.append('api/C_API.rst')
 
     # Check if there is a 'doc_order.txt' file and over-write the defaults with it if so
-    filename_in = project.params['dir_docs']+"/index_order.txt"
+    filename_in = os.path.join(project.params['dir_docs'],"index_order.txt")
     if(os.path.isfile(filename_in)):
         with open(filename_in,"r") as inFile:
             doc_order = []
             for line in inFile:
                 doc_order.append(line)
 
+    # Process each file in turn
     for doc_i in doc_order:
         # Check that the files exist before adding them
+        print("test:",project.params['dir_docs'],doc_i,os.path.join(project.params['dir_docs'],doc_i))
         if(os.path.isfile(os.path.join(project.params['dir_docs'],doc_i))):
             outFile.write("   "+doc_i+"\n")
 
@@ -508,9 +510,6 @@ def generate_index_rst(project):
     outFile.close()
 
 def generate_project_rsts(project):
-
-    # Generate the main project .rst index file
-    generate_index_rst(project)
 
     # Generate documenation for C code
     if(project.params['is_C_project']):
@@ -540,3 +539,9 @@ def generate_project_rsts(project):
         # Note that all executables will be run with a '-h' option and the
         # output parsed to generate this information.
         generate_Python_execs_rst(project)
+
+    # Generate the main project .rst index file
+    # Do this last because a check will be done on
+    # files to include in the index before adding them.
+    # Hence, we need to build them first before doing this.
+    generate_index_rst(project)

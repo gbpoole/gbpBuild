@@ -9,10 +9,8 @@
 # Python stuff
 *.pyc
 *.egg-info
-*.egg
 __pycache__
 .idea
-dist
 
 # .vi swap files
 *.*.swp
