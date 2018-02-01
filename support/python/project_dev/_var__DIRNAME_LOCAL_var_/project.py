@@ -29,3 +29,9 @@ class project:
             print("Project '.version' file not found.  Setting version='unset'")
             self.params['version'] ='unset'
         self.params['release'] = self.params['version']
+
+    def print(self):
+        print("Project information:")
+        print("-------------------")
+        for k,v in sorted(self.params.items()):
+            print('   '+k+" = "+str(v))

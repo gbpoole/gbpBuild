@@ -53,10 +53,11 @@ setup(name=package_name,
       author='%%%project_author%%%',
       author_email='%%%project_email%%%',
       install_requires=['Click'],
-      entry_points='''
-          [console_scripts]
-          update_%%%project_name%%%_docs=%s.scripts.%s:update_%%%project_name%%%_docs
-          '''%s(package_name,package_name),
+      entry_points={
+        'console_scripts': [
+            'update_%%%project_name%%%_docs=%s.scripts.%s:update_%%%project_name%%%_docs'%(package_name,package_name)
+        ]
+      },
       packages=find_packages(),
      )
 

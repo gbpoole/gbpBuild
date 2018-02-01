@@ -1,3 +1,5 @@
+import os
+import sys
 import git
 import click
 
@@ -18,9 +20,8 @@ def sample_%%%project_name%%%_script():
     # Set/fetch all the project details we need
     project=prj.project()
 
-    # Generate the main project .rst index file
-    # and any needed API files as well
-    docs.generate_project_rsts(project)
+    # Print project information
+    project.print()
 
 # Permit script execution
 if __name__ == '__main__':
