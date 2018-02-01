@@ -10,11 +10,11 @@ dir_root = git_repo.git.rev_parse("--show-toplevel")
 dir_python = os.path.abspath(os.path.join(dir_root,"python"))
 
 # Include the path to the local python development packages
-sys.path.append(os.path.abspath(os.path.join(dir_python,"gbpPy_dev")))
+sys.path.append(os.path.abspath(os.path.join(dir_python,"%project_name%_dev")))
 
 # Include the project development module
-import gbpPy_dev.project as prj
-import gbpPy_dev.docs    as docs
+import %project_name%_dev.project as prj
+import %project_name%_dev.docs    as docs
 
 @click.command()
 def update_API_docs():
