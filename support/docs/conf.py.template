@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# %project_name% documentation build configuration file
+# %%%project_name%%% documentation build configuration file
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -35,8 +35,8 @@ for setup_py_i in glob.glob(dir_python+"/**/setup.py",recursive=True):
     sys.path.append(os.path.abspath(os.path.dirname(setup_py_i)))
 
 # Include the project development module
-import %project_name%_dev.project as prj
-import %project_name%_dev.docs    as docs
+import %%%project_name%%%_dev.project as prj
+import %%%project_name%%%_dev.docs    as docs
 
 # Parse the project directory to learn what we need about the project
 this_project = prj.project()

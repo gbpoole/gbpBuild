@@ -45,16 +45,16 @@ else:
 
 print('Current version used by `setup.py`:',version_string)
 
-package_name = "%_DIRNAME_LOCAL%"
+package_name = "%%%_DIRNAME_LOCAL%%%"
 setup(name=package_name,
       version=version_string,
-      description="The %project_name% project's Python package",
-      author='%project_author%',
-      author_email='%project_email%',
+      description="%%%project_description%%%",
+      author='%%%project_author%%%',
+      author_email='%%%project_email%%%',
       install_requires=['Click'],
       entry_points='''
           [console_scripts]
-          update_%project_name%_docs=%s.scripts.%s:update_%project_name%_docs
+          update_%%%project_name%%%_docs=%s.scripts.%s:update_%%%project_name%%%_docs
           '''%s(package_name,package_name),
       packages=find_packages(),
      )

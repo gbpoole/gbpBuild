@@ -3,7 +3,7 @@
 .PHONY: test clean
 
 # Set the KCov token for this project
-KCOV_TOKEN="%kcov_token%"
+KCOV_TOKEN="%%%kcov_token%%%"
 
 # List the executable tests that will be run
 EXE_TESTS = 

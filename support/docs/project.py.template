@@ -4,16 +4,16 @@ import sys
 class project:
     def __init__(self,dir_root,dir_docs_build):
 
-        self.name = "%project_name%"
-        self.author = "%project_author%"
-        self.description = "%project_description%"
+        self.name = "%%%project_name%%%"
+        self.author = "%%%project_author%%%"
+        self.description = "%%%project_description%%%"
 
         # Set some project direcories
         self.dir_root       = os.path.abspath(dir_root)
         self.dir_docs       = os.path.abspath(os.path.join(self.dir_root,"docs"))
         self.dir_python     = os.path.abspath(os.path.join(self.dir_root,"python"))
         self.dir_python_bin = os.path.abspath(os.path.join(self.dir_root,"python"))
-        self.dir_python_pkg = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__),'../python/%project_name%/')))
+        self.dir_python_pkg = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(__file__),'../python/%%%project_name%%%/')))
 
         # Check if this is a C-project (CMakeList.txt will exist if so)
         if(os.path.isfile(os.path.join(self.dir_root,"CMakeLists.txt"))):
