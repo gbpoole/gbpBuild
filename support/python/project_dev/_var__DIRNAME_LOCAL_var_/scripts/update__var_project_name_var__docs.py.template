@@ -17,7 +17,7 @@ import %%%project_name%%%_dev.project as prj
 import %%%project_name%%%_dev.docs    as docs
 
 @click.command()
-def update_API_docs():
+def update_%%%project_name%%%_docs():
     # Set/fetch all the project details we need
     project=prj.project()
 
@@ -27,5 +27,5 @@ def update_API_docs():
 
 # Permit script execution
 if __name__ == '__main__':
-    status = update_API_docs()
+    status = update_%%%project_name%%%_docs()
     sys.exit(status)

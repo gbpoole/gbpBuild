@@ -54,7 +54,7 @@ setup(name=package_name,
       install_requires=['Click'],
       entry_points={
         'console_scripts': [
-            'sample_%%%project_name%%%_script=%s.scripts.%s:sample_%%%project_name%%%_script'%(package_name,package_name)
+            '%%%project_name%%%_params=%s.scripts.%%%project_name%%%_params:%%%project_name%%%_params'%(package_name)
         ]
       },
       packages=find_packages(),

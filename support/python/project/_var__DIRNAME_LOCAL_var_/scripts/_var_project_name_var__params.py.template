@@ -16,7 +16,7 @@ import gbpPy_dev.project as prj
 import gbpPy_dev.docs    as docs
 
 @click.command()
-def sample_%%%project_name%%%_script():
+def %%%project_name%%%_params():
     # Set/fetch all the project details we need
     project=prj.project()
 
@@ -25,5 +25,5 @@ def sample_%%%project_name%%%_script():
 
 # Permit script execution
 if __name__ == '__main__':
-    status = sample_%%%project_name%%%_script()
+    status = %%%project_name%%%_params()
     sys.exit(status)
