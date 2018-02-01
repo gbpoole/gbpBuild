@@ -132,9 +132,9 @@ class template:
             self.add(template_name,path=path)
 
     # This function locates all annotated parameter references in a line
-    def collect_parameter_references(self,line,delimiter="%"):
+    def collect_parameter_references(self,line,delimiter="%%%"):
         if(delimiter==None):
-            delimiter="%"
+            delimiter="%%%"
         regex = re.compile("%s[\w:._]*%s"%(delimiter,delimiter))
         for match in regex.finditer(line):
             # Check if there are any directives in the match
@@ -182,9 +182,9 @@ class template:
                     break
         return input_return
 
-    def _perform_parameter_substitution_ith(self,element,line,idx=None,delimiter="%"):
+    def _perform_parameter_substitution_ith(self,element,line,idx=None,delimiter="%%%"):
         if(delimiter==None):
-            delimiter="%"
+            delimiter="%%%"
         line_new = line
         n_lines = 1
         if(self.params!=None):
@@ -339,7 +339,7 @@ class template:
                     if(file_i.is_template):
                         with open(file_i.full_path_in(),'r') as file_in:
                             for line in file_in:
-                                self.collect_parameter_references(line,delimiter="%")
+                                self.collect_parameter_references(line,delimiter="%%%")
             SID.log.close("Done")
 
         # Print the contents of the template

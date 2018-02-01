@@ -17,7 +17,7 @@ import gbpPy_dev.project as prj
 import gbpPy_dev.docs    as docs
 
 @click.command()
-def update_API_docs():
+def update_gbpPy_docs():
     # Set/fetch all the project details we need
     project=prj.project()
 
@@ -27,5 +27,5 @@ def update_API_docs():
 
 # Permit script execution
 if __name__ == '__main__':
-    status = update_API_docs()
+    status = update_gbpPy_docs()
     sys.exit(status)

@@ -1,3 +1,5 @@
+import os
+import sys
 import git
 import click
 
@@ -14,15 +16,14 @@ import gbpPy_dev.project as prj
 import gbpPy_dev.docs    as docs
 
 @click.command()
-def sample_gbpPy_script():
+def gbpPy_params():
     # Set/fetch all the project details we need
     project=prj.project()
 
-    # Generate the main project .rst index file
-    # and any needed API files as well
-    docs.generate_project_rsts(project)
+    # Print project information
+    project.print()
 
 # Permit script execution
 if __name__ == '__main__':
-    status = sample_gbpPy_script()
+    status = gbpPy_params()
     sys.exit(status)
