@@ -2,6 +2,7 @@ import filecmp
 import os
 import re
 import shutil
+import traceback
 
 import gbpPy.log as SID
 
@@ -43,123 +44,77 @@ _protected_inputs = ['_DIRNAME_LOCAL','_PARAMETERS.key','_PARAMETERS.value']
 # Define main classes
 # -------------------
 
-class template_directory:
-    def __init__(self,dirname_template,full_path_in):
-        # Verify that full_path_in points to a directory
-        if(not os.path.isdir(full_path_in)):
-            raise IsADirectoryError("Directory name {%s} passed to template_directory constructor does not point to a valid directory."%(full_path_in))
-
-        # Express names relative to the root of the template
-        #dirname_rel_template = os.path.normpath(os.path.relpath(full_path_in, dirname_template))
-        dirname_rel_template = dirname_template
+class template_element(object):
+    def __init__(self, full_path_in_template_root, full_path_in, template_path, dir_host,is_directory=False,is_file=False):
 
         # Set basic properties
-        self.parse_name(dirname_rel_template)
-        self._template_path    = os.path.normpath(os.path.dirname(dirname_rel_template))
-        self._full_path_in_abs = os.path.abspath(full_path_in)
-        self.files             = []
-        self.dirname_template  = dirname_template
+        self.dirname_template = full_path_in_template_root
+        self._full_path_in = full_path_in
+        self._template_path_in = template_path
+        self.parse_name(self._template_path_in)
+
+        # Set the host directory
+        self.dir_host = dir_host
 
         # Check if this directory is a symlink
-        if(os.path.islink(full_path_in)):
-            self.is_symlink=True
-        else:
-            self.is_symlink=False
+        self.is_symlink = os.path.islink(full_path_in)
 
-    def parse_name(self,dirname_rel_template):
+        # Set some flags determining what type of element this is
+        self.is_directory=is_directory
+        self.is_file=is_file
 
-        self.name_in = os.path.basename(dirname_rel_template)
+        # Make sure full_path_in points to actual file
+        # if element is a symlink and not marked as a template link
+        if(self.is_symlink and not self.is_link):
+            self._full_path_in = os.path.realpath(self._full_path_in)
+
+    def parse_name(self, template_path_in):
+
+        self.name_in = os.path.basename(template_path_in)
 
         # Remove any leading '_dot_'s from the output file name
         self.name_out = self.name_in.replace("_dot_", ".", 1)
-    
+
         # Check if the file is a link (and remove any trailing '.link's)
         self.name_out, self.is_link = check_and_remove_trailing_occurance(self.name_out, '.link')
+
+    def full_path_in(self):
+        return os.path.normpath(os.path.abspath(self._full_path_in))
+
+    def template_path_in(self):
+        return self._template_path_in
+
+
+class template_directory(template_element):
+    def __init__(self, full_path_in_template_root, full_path_dir, template_path, dir_host):
+        # Verify that full_path_in points to a directory
+        if (not os.path.isdir(full_path_dir)):
+            raise IsADirectoryError(
+                "Directory name {%s} passed to template_directory constructor does not point to a valid directory." % (
+                full_path_dir))
+
+        # Call the base-class _init_
+        template_element.__init__(self, full_path_in_template_root, full_path_dir, template_path, dir_host, is_directory=True)
+
+        # This will host a list of all files in this directory
+        self.files = []
 
     def is_root(self):
         return os.path.realpath(self.full_path_in()) == os.path.realpath(self.dirname_template)
 
-    def full_path_in(self):
-        return os.path.normpath(self._full_path_in_abs)
 
-    def full_path_out(self,dir_install,template):
-        dir_out=template.perform_parameter_substitution_filename(self,dir_install)
-        template_path=template.perform_parameter_substitution_filename(self,self._template_path)
-        name_out=template.perform_parameter_substitution_filename(self,self.name_out)
-        return os.path.normpath(os.path.normpath(os.path.join(dir_out, template_path, name_out )))
+class template_file(template_element):
+    def __init__(self, full_path_in_template_root, full_path_file, template_path, dir_host):
+        # Verify that full_path_in points to a file
+        if (not os.path.isfile(full_path_file)):
+            raise FileNotFoundError(
+                "File name {%s} passed to template_file constructor does not point to a valid file." % (full_path_file))
 
-    def template_path_in(self):
-        return os.path.normpath(os.path.join(self._template_path, self.name_in))
+        # Call the base-class _init_
+        template_element.__init__(self, full_path_in_template_root, full_path_file, template_path, dir_host, is_file=True)
 
-    def template_path_out(self,template):
-        template_path=template.perform_parameter_substitution_filename(self,self._template_path)
-        name_out=template.perform_parameter_substitution_filename(self,self.name_out)
-        return os.path.normpath(os.path.join(template_path, name_out))
-
-class template_file:
-    def __init__(self,filename,dir_host):
-        # Default to the present directory if one is not passed
-        if(not dir_host):
-            dir_host=template_directory('.',os.path.abspath('.'))
-
-        # Set basic properties
-        self.parse_name(filename)
-        self.dir_host = dir_host
-
-        # Verify that filename points to a file
-        if(not os.path.isfile(self.full_path_in())):
-            raise FileNotFoundError("File name {%s} passed to template_file constructor does not point to a valid file."%(self.full_path_in()))
-
-        # Check if this file is a symlink
-        if(os.path.islink(filename)):
-            self.is_symlink=True
-        else:
-            self.is_symlink=False
-
-    def parse_name(self,filename):
-
-        self.name_in = filename
-
-        # Remove any leading '_dot_'s from the output file name
-        self.name_out = self.name_in.replace("_dot_", ".", 1)
-    
-        # Check if the file is a link (and remove any trailing '.link's)
-        self.name_out, self.is_link = check_and_remove_trailing_occurance(self.name_out, '.link')
-    
-        # If not a link, check if it is a template file
-        if (not self.is_link):
-            self.name_out, self.is_template = check_and_remove_trailing_occurance(self.name_out, '.template')
-        else:
-            self.is_template = False
-
-    def full_path_in(self):
-        return os.path.normpath(os.path.join(self.dir_host.full_path_in(), self.name_in))
-
-    def full_path_out(self,dir_install,template):
-        name_out=template.perform_parameter_substitution_filename(self,self.name_out)
-        return os.path.normpath(os.path.join(self.dir_host.full_path_out(dir_install, template), name_out))
-
-    def template_path_in(self):
-        return os.path.normpath(os.path.join(self.dir_host.template_path_in(), self.name_in))
-
-    def template_path_out(self,template):
-        name_out=template.perform_parameter_substitution_filename(self,self.name_out)
-        return os.path.normpath(os.path.join(self.dir_host.template_path_out(template), name_out))
-
-    def write_with_substitution(self,dir_install,template):
-        try:
-            if(self.is_link):
-                os.symlink(os.path.relpath(self.full_path_in(),os.path.dirname(self.full_path_out(dir_install,template))),self.full_path_out(dir_install,template))
-            elif(self.is_template):
-                with open(self.full_path_in(),"r") as fp_in:
-                    with open(self.full_path_out(dir_install,template),"w") as fp_out:
-                        for line_in in fp_in:
-                            for line_out in template.perform_parameter_substitution(self,line_in):
-                                fp_out.write(line_out)
-            else:
-                shutil.copy2(self.full_path_in(), self.full_path_out(dir_install,template))
-        except:
-            SID.log.error("Failed write template file {%s}."%(self.name_in))
+        # Check if the file is a template (and remove any trailing '.template's)
+        self.name_out, self.is_template = check_and_remove_trailing_occurance(self.name_out, '.template')
 
 class template:
     def __init__(self,template_name=None,path=None):
@@ -171,6 +126,7 @@ class template:
         self.params = []
         self.params_list = []
         self.current_element = None
+        self.dir_install = "."
 
         if(template_name!=None):
             self.add(template_name,path=path)
@@ -182,7 +138,8 @@ class template:
         regex = re.compile("%s[\w:._]*%s"%(delimiter,delimiter))
         for match in regex.finditer(line):
             # Check if there are any directives in the match
-            directive = match.group().strip(delimiter)
+            directive = match.group()
+            directive = directive[len(delimiter):len(directive) - len(delimiter)]
             if(directive not in _protected_inputs):
                 self.params_list.add(directive)
 
@@ -208,15 +165,14 @@ class template:
 
     def resolve_directive(self, element, directive):
         if(directive=='_DIRNAME_LOCAL'):
-            dir_temp = element.template_path_in()
-            if(hasattr(element,'dir')):
+            if(element==None):
+                SID.log.error("No element passed to 'resolve_directive.")
+            if(element.dir_host!=None):
+                dir_path_out = self.template_path_out(element.dir_host)
             else:
-                dir_temp=
-            print("ZZZZZ0",element.name_in)
-            dir_temp = os.path.dirname(element.full_path_out("",self))
-            print("ZZZZZ1")
-            input_return = {'name': '_DIRNAME_LOCAL', 'input': [os.path.basename(dir_temp)]}
-            print("ZZZZZ2")
+                dir_path_out = self.dir_install
+            dirname = os.path.basename(dir_path_out)
+            input_return = {'name': '_DIRNAME_LOCAL', 'input': [dirname]}
         else:
             # Find the entry
             input_return = None
@@ -231,7 +187,6 @@ class template:
             delimiter="%"
         line_new = line
         n_lines = 1
-        print('a:',line,'-',element.name_in,'-')
         if(self.params!=None):
             regex = re.compile("%s[\w:._]*%s"%(delimiter,delimiter))
             match = regex.search(line_new)
@@ -246,7 +201,6 @@ class template:
                     replace_with = param_insert['input']
                 else:
                     replace_with = [directive]
-                print('b',directive,param_insert,match.group(),match.group().strip(delimiter),replace_with)
                 param_insert_size=len(replace_with)
                 if(param_insert_size>1):
                     if(n_lines==1):
@@ -281,50 +235,59 @@ class template:
             lines_new.append(line_new)
         return lines_new
     
-    def perform_parameter_substitution_filename(self,element,filename_in):
+    def perform_parameter_substitution_filename(self,element,name_out=False):
         # Finally, perform substitution
-        print('A:',element.name_in)
-        n_lines,filename_out = self._perform_parameter_substitution_ith(element,filename_in,delimiter="_var_")
-    
+        if(name_out):
+            n_lines,filename_out = self._perform_parameter_substitution_ith(element,element.name_out,delimiter="_var_")
+        else:
+            n_lines,filename_out = self._perform_parameter_substitution_ith(element,element.name_in,delimiter="_var_")
+
         # Check that we haven't used an iterable for the substitution
         if(n_lines!=1):
             SID.log.error("An invalid filename parameter substitution has occured for {%s} (n_lines=%d)."%(filename_in,n_lines))
     
         return filename_out
 
-    def _process_directory_recursive(self,full_path_start,template_start,n_template_files):
+    def _process_directory_recursive(self, full_path_template, full_path_recurse_start, template_path_start, n_template_files):
         # Parse the given template directory
-        for root, dirs, files in os.walk(full_path_start):
+        for root, dirs, files in os.walk(full_path_recurse_start):
             # Create directory from directory name
-            template_path=os.path.normpath(os.path.join(template_start,os.path.relpath(root,full_path_start)))
-            dir_new = template_directory(template_path,root)
+            full_path_element = os.path.abspath(root)
+            template_path_dir=os.path.normpath(os.path.join(template_path_start,os.path.relpath(root,full_path_recurse_start)))
+            template_path_parent=os.path.dirname(template_path_dir)
+            if(template_path_parent==''):
+                template_path_parent='.'
+            dir_new = template_directory(full_path_template,full_path_element,template_path_dir,self.get_directory(template_path_parent))
 
             # Add directory to the list
             self.add_directory(dir_new)
 
             # Check for symlinks to directories.  This is necessary
-            # because os.walk() does not list symlinks to directories
-            # and it is less work to look for them manually then to 
+            # because os.walk() does not list symlinks to directories (by default)
+            # and it is less work (I think) to look for them manually then to
             # walk the tree with them and weed-out everything under
-            # them which we don't want to consider at all.
+            # them which we may not (often don't) want to consider at all.
             for test_dir_i in os.listdir(root):
-                test_dir=os.path.join(dir_new.full_path_in(),test_dir_i)
-                if(os.path.islink(test_dir) and os.path.isdir(test_dir)):
-                    # Resolve the link
-                    test_dir=os.path.abspath(os.path.join(root,os.readlink(test_dir)))
-                    # Process paths underneith symlinked template directories
+                full_path_element=os.path.join(dir_new.full_path_in(),test_dir_i)
+                if(os.path.islink(full_path_element) and os.path.isdir(full_path_element)):
+                    # Sort-out some paths for the link
+                    full_path_element=os.path.abspath(os.path.join(root,os.readlink(full_path_element)))
+                    template_path_element = os.path.join(template_path_dir,test_dir_i)
+                    template_path_parent = os.path.dirname(template_path_element)
+                    # Process paths underneath sym-linked template directories
                     # if they are not marked as being links
-                    template_path=os.path.normpath(os.path.join(template_start,os.path.relpath(os.path.join(root,test_dir_i),full_path_start)))
-                    dir_link = template_directory(template_path,test_dir)
+                    dir_link = template_directory(full_path_template, full_path_element, template_path_element, self.get_directory(template_path_parent))
                     if(not dir_link.is_link):
-                        n_template_files=self._process_directory_recursive(test_dir,template_path,n_template_files)
+                        n_template_files=self._process_directory_recursive(full_path_template,full_path_element,template_path_element,n_template_files)
                     # ...else, just add the path
                     else:
                         self.add_directory(dir_link)
 
             # Add files
             for file_i in files:
-                file_new=template_file(file_i,dir_new)
+                template_path = os.path.normpath(os.path.join(template_path_start, file_i))
+                full_path_element = os.path.join(root,file_i)
+                file_new=template_file(full_path_template, full_path_element, template_path, dir_new)
                 if(file_new.is_template):
                     n_template_files+=1
                 self.add_file(file_new)
@@ -361,9 +324,9 @@ class template:
         self.dir.append(template_dir_abs)
         self.name.append(template_name)
 
-        # Walk the template directory structure, recursively processing symlinked directories
+        # Walk the template directory structure, recursively processing sym-linked directories
         SID.log.open( "Loading template {'%s' from %s}..." %(self.name[-1],self.path[-1]))
-        n_template_files = self._process_directory_recursive(self.dir[-1],'',0)
+        n_template_files = self._process_directory_recursive(self.dir[-1],self.dir[-1],'.',0)
 
         # Search all files to generate a list of needed parameters
         self.params_list = set()
@@ -373,9 +336,10 @@ class template:
                 self.collect_parameter_references(dir_i.full_path_in(),delimiter="_var_")
                 for file_i in [f for f in dir_i.files if(f.is_template)]:
                     self.collect_parameter_references(file_i.full_path_in(),delimiter="_var_")
-                    with open(file_i.full_path_in(),'r') as file_in:
-                        for line in file_in:
-                            self.collect_parameter_references(line,delimiter="%")
+                    if(file_i.is_template):
+                        with open(file_i.full_path_in(),'r') as file_in:
+                            for line in file_in:
+                                self.collect_parameter_references(line,delimiter="%")
             SID.log.close("Done")
 
         # Print the contents of the template
@@ -384,67 +348,70 @@ class template:
         SID.log.close("Done")
 
     def update_element(self,element,update):
-        # If no update element is given, then we're updating everythong
+        # If no update element is given, then we're updating everything
         if(update==None):
             return True
 
         # Check if this is the update element
-        if(element.template_path_out(self)==update):
+        if(self.template_path_out(element)==update):
             return True
 
         # Compute the element's full output path and use that to make comparisons.
         # Also get the name of the directory it's sitting in 
-        element_path_out = element.template_path_out(self)
-        element_dir = os.path.dirname(element_path_out)
+        element_path_out = self.template_path_out(element)
 
         # ... else, check if this element sits within the directory structure of the update element
         parent_path_out=os.path.dirname(element_path_out)
         is_in_update_path=(parent_path_out==update)
-        while parent_path_out!='' and not is_in_update_path:
+        while parent_path_out not in ['','/'] and not is_in_update_path:
             parent_path_out=os.path.dirname(parent_path_out)
             is_in_update_path=(parent_path_out==update)
         return (is_in_update_path)
 
-    def get_directory(self,template_path_out):
+    def get_directory(self,template_path_in):
         for dir_i in self.directories:
-            if(dir_i.template_path_out(self)==template_path_out):
+            if(dir_i.template_path_in()==template_path_in):
                 return dir_i
         return None
 
-    def get_file(self,template_path_out):
+    def get_file(self,template_path_in):
         for dir_i in self.directories:
             for file_i in dir_i.files:
-                if(file_i.template_path_out(self)==template_path_out):
+                if(file_i.template_path_in()==template_path_in):
                     return file_i
         return None
 
     def add_directory(self,dir_add):
-        dir_check = self.get_directory(dir_add.template_path_out(self))
+        dir_check = self.get_directory(dir_add.template_path_in())
         if(dir_check==None):
             self.directories.append(dir_add)
 
     def add_file(self, file_add):
-        # Prevent the addition of files to symlinked directories
-        if (file_add.dir_in.is_symlink):
-            raise Exception("Can not add file {%s} to symlinked directory {%s}." % (file_add.name_in, file_add.dir_in.name_in))
+        # Prevent the addition of files to sym-linked directories
+        if (file_add.dir_host.is_symlink):
+            raise Exception("Can not add file {%s} to sym-linked directory {%s}." % (file_add.name_in, file_add.dir_host.name_in))
 
         # Check if we should be adding this file to an existing directory
-        dir_check = self.get_directory(file_add.dir_in.template_path_out(self))
+        if(file_add.dir_host!=None):
+            dir_check = self.get_directory(file_add.dir_host.template_path_in())
+        else:
+            dir_check = None
         if(dir_check==None):
-            dir_out = file_add.dir_in
+            dir_out = file_add.dir_host
         else:
             dir_out = dir_check
+
         # Check if this file already exists
-        file_check = self.get_file(file_add.template_path_out(self))
+        file_check = self.get_file(file_add.template_path_in())
 
-        # ... if it does, check for conflicts
-        if(file_check != None):
-            if(not filecmp.cmp(file_add.full_path_in(),file_check.full_path_in())):
-                SID.log.error("There is a file incompatability between template files '%s' and '%s'."%(file_add.full_path_in(),file_check.full_path_in()))
-
-        # Append file to list if it's new
+        # If not, append it to its directory's list
         if(file_check == None):
             dir_out.files.append(file_add)
+
+        # ... else, check for conflicts
+        else:
+            if(not filecmp.cmp(file_add.full_path_in(),file_check.full_path_in())):
+                SID.log.error("There is a file incompatibility between template files '%s' and '%s'."%(file_add.full_path_in(),file_check.full_path_in()))
 
     # Count the number of files in the template
     def n_files(self):
@@ -452,6 +419,40 @@ class template:
         for dir_i in self.directories:
             n_files += len(dir_i.files)
         return n_files
+
+    def full_path_out(self, element):
+        if (element.dir_host == None):
+            dir_host = self.dir_install
+        else:
+            dir_host = self.full_path_out(element.dir_host)
+        name_out = self.perform_parameter_substitution_filename(element,name_out=True)
+        return os.path.normpath(os.path.abspath(os.path.join(dir_host, name_out)))
+
+    def template_path_out(self, element):
+        if (element.dir_host == None):
+            dir_host = "."
+        else:
+            dir_host = self.template_path_out(element.dir_host)
+        name_out = self.perform_parameter_substitution_filename(element,name_out=True)
+        return os.path.normpath(os.path.join(dir_host, name_out))
+
+    def write_with_substitution(self, file_in):
+        if(not file_in.is_file):
+            SID.log.error("Something other than a file {%s} has been passed to the 'write_with_substitution' template method." % (self.name_in))
+        try:
+            if(file_in.is_link):
+                os.symlink(os.path.relpath(self.full_path_in(file_in), os.path.dirname(self.full_path_out(file_in))),
+                           self.full_path_out(file_in))
+            elif(file_in.is_template):
+                with open(file_in.full_path_in(),"r") as fp_in:
+                    with open(self.full_path_out(file_in), "w") as fp_out:
+                        for line_in in fp_in:
+                            for line_out in self.perform_parameter_substitution(file_in,line_in):
+                                fp_out.write(line_out)
+            else:
+                shutil.copy2(file_in.full_path_in(), self.full_path_out(file_in))
+        except:
+            SID.log.error("Failed write template file {%s}."%(element.template_path_in()))
 
     # Print the template contents
     def print(self):
@@ -462,57 +463,57 @@ class template:
         for param_ref_i in self.params_list:
             SID.log.comment("   --> %s" % (param_ref_i))
 
-        for dir_i in sorted(self.directories, key=lambda dir_j: len(dir_j.template_path_out(self))):
-            SID.log.open("Directory {%s}:"%(dir_i.template_path_out(self)))
-            for file_i in sorted(dir_i.files, key=lambda file_j: file_j.template_path_out(self)):
-                SID.log.comment("--> %s"%(file_i.template_path_out(self)))
+        for dir_i in sorted(self.directories, key=lambda dir_j: len(self.template_path_out(dir_j))):
+            SID.log.open("Directory {%s}:"%(dir_i.template_path_in()))
+            for file_i in sorted(dir_i.files, key=lambda file_j: self.template_path_out(file_j)):
+                SID.log.comment("--> %s"%(file_i.template_path_in()))
             SID.log.close()
         SID.log.close()
 
     # Install or uninstall a template
-    def _process_template(self, dir_install, params=None, uninstall=False,silent=False,update=None,force=False):
+    def _process_template(self, params=None, uninstall=False, silent=False, update=None, force=False):
         name_txt = format_template_names(self.name)
         if (not uninstall):
             if(len(self.name)>1):
-                SID.log.open("Installing templates {%s} to {%s}..."%(name_txt,dir_install))
+                SID.log.open("Installing templates {%s} to {%s}..."%(name_txt,self.dir_install))
             else:
-                SID.log.open("Installing template {%s} to {%s}..."%(name_txt,dir_install))
+                SID.log.open("Installing template {%s} to {%s}..."%(name_txt,self.dir_install))
             flag_reverse_sort = False
         else:
             flag_reverse_sort = True
             if(len(self.name)>1):
-                SID.log.open("Uninstalling templates {%s} from {%s}..."%(name_txt,dir_install))
+                SID.log.open("Uninstalling templates {%s} from {%s}..."%(name_txt,self.dir_install))
             else:
-                SID.log.open("Uninstalling template {%s} from {%s}..."%(name_txt,dir_install))
+                SID.log.open("Uninstalling template {%s} from {%s}..."%(name_txt,self.dir_install))
 
         # Process directories in sorted order to ensure that
         # the sub-directory structure is respected
-        for dir_i in sorted(self.directories, key=lambda k: len(k.full_path_out(dir_install,self)), reverse=flag_reverse_sort):
+        for dir_i in sorted(self.directories, key=lambda k: len(self.full_path_out(k)), reverse=flag_reverse_sort):
             # Note the different ordering of directory processing
             # vs. file processing between install/uninstall cases
             self.current_element = dir_i
             if (not uninstall and self.update_element(dir_i,update)):
-                self.install_directory(dir_i,dir_install,silent=silent,force=force)
+                self.install_directory(dir_i, silent=silent, force=force)
             elif(self.update_element(dir_i,update)):
-                SID.log.open("Uninstalling directory %s..." % (dir_i.full_path_out(dir_install,params)))
+                SID.log.open("Uninstalling directory %s..." % (self.full_path_out(dir_i)))
 
             for file_i in dir_i.files:
                 self.current_element = file_i
                 if(uninstall and self.update_element(file_i,update)):
-                    self.uninstall_file(file_i,dir_install,silent=silent)
+                    self.uninstall_file(file_i, silent=silent)
                 elif(self.update_element(file_i,update)):
-                    self.install_file(file_i,dir_install,silent=silent,force=force)
+                    self.install_file(file_i, silent=silent, force=force)
 
             self.current_element = dir_i
             if(uninstall and self.update_element(dir_i,update)):
-                self.uninstall_directory(dir_i,dir_install,silent=silent)
+                self.uninstall_directory(dir_i, silent=silent)
             elif(self.update_element(dir_i,update)):
                 SID.log.close()
 
         SID.log.close("Done.")
 
-    def install_directory(self,directory,dir_install,silent=False,force=None):
-        full_path_out = directory.full_path_out(dir_install,self)
+    def install_directory(self, directory, silent=False, force=None):
+        full_path_out = self.full_path_out(directory)
         try:
             if( not directory.is_root()):
                 if(os.path.isdir(full_path_out)):
@@ -549,8 +550,8 @@ class template:
         except:
             SID.log.error("Failed to install directory {%s}."%(full_path_out))
 
-    def uninstall_directory(self,directory,dir_install,silent=False):
-        full_path_out = directory.full_path_out(dir_install,self)
+    def uninstall_directory(self, directory, silent=False):
+        full_path_out = self.full_path_out(directory)
         try:
             if( not directory.is_root()):
                 if( not os.path.isdir(full_path_out)):
@@ -573,16 +574,16 @@ class template:
         except:
             SID.log.error("Failed to uninstall directory {%s}."%(directory.name_out))
 
-    def install_file(self,file_install,dir_install,silent=False,force=False):
+    def install_file(self, file_install, silent=False, force=False):
         full_path_in  = file_install.full_path_in()
-        full_path_out = file_install.full_path_out(dir_install,self)
+        full_path_out = self.full_path_out(file_install)
         try:
-            flag_file_exists=os.path.isfile(file_install.full_path_out(dir_install,self))
+            flag_file_exists=os.path.isfile(self.full_path_out(file_install))
             if(flag_file_exists and not force):
                 SID.log.comment("--> %s exists."%(full_path_out))
             else:
                 if(file_install.is_link):
-                    symlink_path=os.path.relpath(full_path_in,file_install.dir_in.full_path_out(dir_install,self))
+                    symlink_path=os.path.relpath(full_path_in, self.full_path_out(file_install.dir_in))
                 if(not silent):
                     if(file_install.is_link):
                         if(os.path.lexists(full_path_out)):
@@ -596,7 +597,7 @@ class template:
                         if(flag_file_exists):
                             os.remove(full_path_out) 
                             SID.log.comment("--> %s removed."%(full_path_out))
-                        file_install.write_with_substitution(dir_install,self)
+                        self.write_with_substitution(file_install)
                         if(flag_file_exists):
                             SID.log.comment("--> %s updated."%(full_path_out))
                         else:
@@ -615,8 +616,8 @@ class template:
         except:
             SID.log.error("Failed to install file {%s}."%(full_path_out))
 
-    def uninstall_file(self,file_install,dir_install,silent=False):
-        full_path_out = file_install.full_path_out(dir_install,self)
+    def uninstall_file(self, file_install, silent=False):
+        full_path_out = self.full_path_out(file_install)
         try:
             if( not os.path.isfile(full_path_out)):
                 SID.log.comment("--> %s not found." % (full_path_out))
@@ -639,18 +640,31 @@ class template:
 
     # Install template
     def install(self,dir_out,params_raw=None,silent=False,update=None,force=False):
+        # Set the current install directory
+        self.dir_install=dir_out
+
         # Create a list of project parameters, which includes the user parameters
         # we've been passed as well as the protected variables
         self.init_inputs(params_raw)
 
         # Perform install
-        self._process_template(dir_out,silent=silent,update=update,force=force)
+        self._process_template(silent=silent, update=update, force=force)
+
+        # Unset the current install directory
+        self.dir_install = "."
+
 
     # Uninstall template
     def uninstall(self,dir_out,params_raw=None,silent=False,update=None):
+        # Set the current install directory
+        self.dir_install=dir_out
+
         # Create a list of project parameters, which includes the user parameters
         # we've been passed as well as the protected variables
         self.init_inputs(params_raw)
 
         # Perform uninstall
-        self._process_template(dir_out,uninstall=True,silent=silent,update=update)
+        self._process_template(uninstall=True, silent=silent, update=update)
+
+        # Unset the current install directory
+        self.dir_install="."
