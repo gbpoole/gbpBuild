@@ -54,7 +54,7 @@ setup(name=package_name,
       install_requires=['Click'],
       entry_points={
         'console_scripts': [
-            'gbpPy_params=%s.scripts.gbpPy_params:gbpPy_params'%(package_name)
+            'gbpPy_info=%s.scripts.gbpPy_info:gbpPy_info'%(package_name)
         ]
       },
       packages=find_packages(),
