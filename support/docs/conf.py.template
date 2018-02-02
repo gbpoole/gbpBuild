@@ -63,8 +63,8 @@ extensions = ['sphinx.ext.autodoc',
     'breathe']
 
 # Some things that Breathe needs
-breathe_projects        = { this_project.params['name']: "%s/doxygen/xml/"%(this_project.params['dir_docs_build']) }
-breathe_default_project =   this_project.params['name']
+breathe_projects        = { this_project.params['project_name']: "%s/doxygen/xml/"%(this_project.params['dir_docs_build']) }
+breathe_default_project =   this_project.params['project_name']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['%s/templates'%(this_project.dir_root)]
@@ -87,10 +87,10 @@ master_doc = 'index'
 #exclude_patterns = '*.rst'
 
 # General information about the project.
-project = this_project.params['name']
+project = this_project.params['project_name']
 year = datetime.today().year
-copyright = str(year)+', %s'%(this_project.params['author'])
-author = this_project.params['author']
+copyright = str(year)+', %s'%(this_project.params['project_author'])
+author = this_project.params['project_author']
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -135,7 +135,7 @@ html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'sourcelink.html', 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'gbp_project_name':this_project.params['name']}
+html_theme_options = {'gbp_project_name':this_project.params['project_name']}
 
 extra_nav_links = {'Index' : 'genindex.html'}
 
@@ -147,7 +147,7 @@ html_static_path = ['static']
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = '%sdoc'%(this_project.params['name'])
+htmlhelp_basename = '%sdoc'%(this_project.params['project_name'])
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -173,8 +173,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, '%s.tex'%(this_project.params['name']), '%s Documentation'%(this_project.params['name']),
-     this_project.params['author'], 'manual'),
+    (master_doc, '%s.tex'%(this_project.params['project_name']), '%s Documentation'%(this_project.params['project_name']),
+     this_project.params['project_author'], 'manual'),
 ]
 
 
@@ -183,7 +183,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, this_project.params['name'].lower(), '%s Documentation'%(this_project.params['name']),
+    (master_doc, this_project.params['project_name'].lower(), '%s Documentation'%(this_project.params['project_name']),
      [author], 1)
 ]
 
@@ -194,7 +194,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, this_project.params['name'], '%s Documentation'%(this_project.params['name']),
-     author, this_project.params['name'], this_project.params['description'],
+    (master_doc, this_project.params['project_name'], '%s Documentation'%(this_project.params['project_name']),
+     author, this_project.params['project_name'], this_project.params['project_description'],
      'Miscellaneous'),
 ]

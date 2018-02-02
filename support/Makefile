@@ -79,11 +79,11 @@ clean:	 .print_status $(CLEAN_LIST)
 .PHONY: docs-update
 docs-update: build
 	@$(ECHO) "Updating API documenation..."
-	@python python/$(PRJ_NAME)_dev/bin/update_API_docs.py
+	@python python/$(PRJ_NAME)_dev/$(PRJ_NAME)_dev/scripts/update_$(PRJ_NAME)_docs.py
 	@$(ECHO) "Done."
 
 .PHONY: docs
-docs:
+docs: docs-update
 	@$(ECHO) "Building documenation..."
 	@cd docs;sphinx-build . build
 	@$(ECHO) "Done."
