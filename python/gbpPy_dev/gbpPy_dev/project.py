@@ -20,6 +20,25 @@ class project:
         ## Convert to single dictionary
         self.params={ k: v for d in params_list for k, v in d.items() } 
 
+        # Set some project direcories
+        self.params['dir_docs']         = os.path.abspath(os.path.join(self.dir_root,"docs"))
+        self.params['dir_docs_api_src'] = os.path.abspath(os.path.join(self.dir_root,"docs/src"))
+        self.params['dir_docs_build']   = os.path.abspath(os.path.join(self.dir_root,"docs/build"))
+        self.params['dir_python']       = os.path.abspath(os.path.join(self.dir_root,"python"))
+        self.params['dir_python_pkg']   = os.path.abspath(os.path.join(self.dir_root,'python/gbpPy/'))
+
+        # Check if this is a C-project (the appropriate makefile will be present if so)
+        if(os.path.isfile(os.path.join(self.dir_root,".Makefile-c"))):
+            self.params['is_C_project'] = True
+        else:
+            self.params['is_C_project'] = False
+
+        # Check if this is a Python-project (the appropriate makefile will be present if so)
+        if(os.path.isfile(os.path.join(self.dir_root,".Makefile-py"))):
+            self.params['is_Python_project'] = True
+        else:
+            self.params['is_Python_project'] = False
+
         # Extract version & release from .version file.
         # TODO: Need to split version from release.
         try:
