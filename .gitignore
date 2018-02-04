@@ -8,19 +8,20 @@
 
 # Python stuff
 *.pyc
+*.egg-info
+__pycache__
+.idea
 
 # .vi swap files
 *.*.swp
 
 # Common names for out-of-source build directories
 cmake-build-*
-build-*
-build
+build*
 
 # Used for testing
 mpich
 
 #Miscillaneous
-.idea
 .install*
 *.old
