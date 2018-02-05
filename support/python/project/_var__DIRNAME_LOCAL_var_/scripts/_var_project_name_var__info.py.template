@@ -15,7 +15,8 @@ sys.path.append(os.path.abspath(os.path.join(dir_python,"%%%project_name%%%_dev"
 import gbpPy_dev.project as prj
 import gbpPy_dev.docs    as docs
 
-@click.command()
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
 def %%%project_name%%%_params():
     # Set/fetch all the project details we need
     project=prj.project()

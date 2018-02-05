@@ -2,20 +2,22 @@
 import os
 import sys
 
+import click
+
 import gbpPy.cmdl as cmdl
 import gbpPy.log as SID
 import gbpPy.templates as tmp
 
-
 # Main function
-@click.command()
-@click.argument('template_name',default=None,type=STRING)
-@click.argument('project_dir',default=None,type=STRING)
-@click.option('-d','--path',help='Path to template directory',    type=STRING,default=None)
-@click.option('-r',         help='Remove template',                           default=False)
-@click.option('-s',         help='Silent/test run',                           default=False)
-@click.option('-f',         help='Force write for existing files',            default=False)
-@click.option('-u',         help='Update single element only',    type=STRING,default=None)
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('template_name',default=None,type=str)
+@click.argument('project_dir',default=None,type=str)
+@click.option('-d','--path',help='Path to template directory',    type=str,default=None)
+@click.option('-r',         help='Remove template',                        default=False)
+@click.option('-s',         help='Silent/test run',                        default=False)
+@click.option('-f',         help='Force write for existing files',         default=False)
+@click.option('-u',         help='Update single element only',    type=str,default=None)
 def gbpBuild(template_name,project_dir_in,template_path,flag_uninstall,flag_silent,flag_force,update_element):
 
     ### Start parsing of command line

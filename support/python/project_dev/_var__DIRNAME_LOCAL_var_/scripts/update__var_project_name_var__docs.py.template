@@ -16,7 +16,8 @@ sys.path.append(os.path.abspath(os.path.join(dir_python,"%%%project_name%%%_dev"
 import %%%project_name%%%_dev.project as prj
 import %%%project_name%%%_dev.docs    as docs
 
-@click.command()
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
 def update_%%%project_name%%%_docs():
     # Set/fetch all the project details we need
     project=prj.project()

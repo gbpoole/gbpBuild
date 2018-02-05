@@ -8,6 +8,7 @@
 
 # Python stuff
 *.pyc
+*.egg
 *.egg-info
 __pycache__
 .idea
