@@ -16,7 +16,7 @@ macro(add_custom_clang)
         -i
         ${ALL_FILES_PROJECT}
     )
-    message(STATUS "   -> clang-format       ; apply the project style standards using clang-tidy")
+    message(STATUS "   -> clang-format       ; apply the project style standards using clang-format")
     
     # Clang-tidy
     add_custom_target(

@@ -287,7 +287,7 @@ def generate_C_execs_rst(project):
             # Send output of executable to the output file
             outFile.write(exec_i+'\n')
             outFile.write('-'*len(exec_i)+'\n')
-            out = subprocess.check_output([project.dir_root+"/build-dev/"+exec_i, "-h"]).decode("utf-8")
+            out = subprocess.check_output([project.dir_root+"/build/"+exec_i, "-h"]).decode("utf-8")
             outFile.write(reformat_Clara_help_to_rst(out))
 
         # Add the footer if there is material for this module
@@ -495,7 +495,6 @@ def generate_index_rst(project):
     # Process each file in turn
     for doc_i in doc_order:
         # Check that the files exist before adding them
-        print("test:",project.params['dir_docs'],doc_i,os.path.join(project.params['dir_docs'],doc_i))
         if(os.path.isfile(os.path.join(project.params['dir_docs'],doc_i))):
             outFile.write("   "+doc_i+"\n")
 

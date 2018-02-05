@@ -13,12 +13,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('template_name',default=None,type=str)
 @click.argument('project_dir',default=None,type=str)
-@click.option('-d','--path',help='Path to template directory',    type=str,default=None)
-@click.option('-r',         help='Remove template',                        default=False)
-@click.option('-s',         help='Silent/test run',                        default=False)
-@click.option('-f',         help='Force write for existing files',         default=False)
-@click.option('-u',         help='Update single element only',    type=str,default=None)
-def gbpBuild(template_name,project_dir_in,template_path,flag_uninstall,flag_silent,flag_force,update_element):
+@click.option('-d','--path','template_path', help='Path to template directory',    type=str,default=None)
+@click.option('-r',         'flag_uninstall',help='Remove template',                        default=False)
+@click.option('-s',         'flag_silent',   help='Silent/test run',                        default=False)
+@click.option('-f',         'flag_force',    help='Force write for existing files',         default=False)
+@click.option('-u',         'update_element',help='Update single element only',    type=str,default=None)
+def gbpBuild(template_name,project_dir,template_path,flag_uninstall,flag_silent,flag_force,update_element):
 
     ### Start parsing of command line
 
@@ -48,11 +48,11 @@ def gbpBuild(template_name,project_dir_in,template_path,flag_uninstall,flag_sile
     #update_element = cmdl_parser.extract('update_element')
 
     # Validate inputs
-    if(not os.path.isdir(project_dir_in)):
-        SID.log.error("Given project directory (%s) is not a valid directory."%(project_dir_in))
+    if(not os.path.isdir(project_dir)):
+        SID.log.error("Given project directory (%s) is not a valid directory."%(project_dir))
 
     # Process inputs
-    project_dir_abs = os.path.abspath(project_dir_in)
+    project_dir_abs = os.path.abspath(project_dir)
     project_name    = tmp.get_base_name(project_dir_abs)
 
     # Create list of input templates
