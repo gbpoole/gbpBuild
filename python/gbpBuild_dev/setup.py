@@ -7,6 +7,14 @@ import subprocess
 import re, os
 import git
 
+# Generate a list of package files
+def package_files(directory='data'):
+    paths = []
+    for (path, directories, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join('..', path, filename))
+    return paths
+
 # Find the project root directory
 git_repo = git.Repo(os.path.realpath(__file__), search_parent_directories=True)
 dir_root = git_repo.git.rev_parse("--show-toplevel")
@@ -52,6 +60,7 @@ setup(name=package_name,
       author='Gregory B. Poole',
       author_email='gbpoole@gmail.com',
       install_requires=['Click'],
+      package_data={'gbpBuild_dev': package_files()},
       entry_points={
         'console_scripts': [
             'update_gbpBuild_docs=%s.scripts.update_gbpBuild_docs:update_gbpBuild_docs'%(package_name)

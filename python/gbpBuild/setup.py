@@ -69,4 +69,3 @@ setup(name=package_name,
       },
       packages=find_packages(),
      )
-
