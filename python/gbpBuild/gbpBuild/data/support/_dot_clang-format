@@ -11,7 +11,7 @@ AllowShortFunctionsOnASingleLine: None
 BinPackArguments: false
 BinPackParameters: false
 BreakConstructorInitializers: AfterColon
-ColumnLimit:     150
+ColumnLimit:     120
 ForEachMacros:   
 IndentCaseLabels: true
 #IndentPPDirectives: AfterHash # Not available in clang 5

@@ -41,7 +41,8 @@ ifneq ($(wildcard .Makefile-c),)
 	INSTALL_LIST := $(INSTALL_LIST) install-c
 	TEST_LIST := $(TEST_LIST) tests-c
 	CLEAN_LIST := $(CLEAN_LIST) clean-c
-	LINT_LIST := $(LINT_LIST) lint-c
+	LINT_CHECK_LIST := $(LINT_CHECK_LIST) lint-check-c
+	LINT_FIX_LIST := $(LINT_FIX_LIST) lint-fix-c
 endif
 
 # Add appropriate targets if Python is supported by this project
@@ -49,22 +50,23 @@ ifneq ($(wildcard .Makefile-py),)
 	include .Makefile-py
 	INIT_LIST := $(INIT_LIST) init-py
 	BUILD_LIST := $(BUILD_LIST) build-py
-	DOCS_LIST := $(DOCS_LIST) docs-py
 	INSTALL_LIST := $(INSTALL_LIST) install-py
 	TEST_LIST := $(TEST_LIST) tests-py
 	CLEAN_LIST := $(CLEAN_LIST) clean-py
-	LINT_LIST := $(LINT_LIST) lint-py
+	LINT_CHECK_LIST := $(LINT_CHECK_LIST) lint-check-py
+	LINT_FIX_LIST := $(LINT_FIX_LIST) lint-fix-py
 endif
 
 ################################
 # TARGETS and RULES BEGIN HERE #
 ################################
 
-.PHONY: init build tests lint install clean
-init:	 .print_status submodules $(INIT_LIST)
+.PHONY: build init tests lint install clean
 build:	 .print_status $(BUILD_LIST)
+init:	 .print_status submodules $(INIT_LIST)
 tests:	 .print_status build $(TEST_LIST)
-lint:	 .print_status $(LINT_LIST)
+lint-check:	 .print_status $(LINT_CHECK_LIST)
+lint-fix:	 .print_status $(LINT_FIX_LIST)
 install: .print_status $(INSTALL_LIST)
 clean:	 .print_status $(CLEAN_LIST)
 
@@ -80,10 +82,34 @@ docs-update: build
 	@python python/$(PRJ_NAME)_dev/$(PRJ_NAME)_dev/scripts/update_$(PRJ_NAME)_docs.py
 	@$(ECHO) "Done."
 
+# Build the pip python requirements file for the project
+# This needs to be kept up-to-date for Readthedocs builds
+.PHONY: requirements
+requirements:
+	@$(ECHO) "Generating project Python requirements..."
+ifeq ($(shell which pigar),)
+	@$(error "'pigar' not in path.  Please (re)install pigar and try command again.")
+else
+	@pigar -p .requirements.txt
+endif
+	@$(ECHO) "Done."
+
 .PHONY: docs
 docs: $(DOCS_LIST) docs-update
 	@$(ECHO) "Building documenation..."
 	@cd docs;sphinx-build . build
+	@$(ECHO) "Done."
+
+# Update build environment
+.PHONY: update
+update: requirements submodules
+	@$(ECHO) "Build environment up-to-date"
+
+# Make sure all submodules are up-to-date
+.PHONY: requirements
+requirements:
+	@$(ECHO) "Making sure that all needed Python modules are present..."
+	@pip install -r .requirements.txt
 	@$(ECHO) "Done."
 
 # Make sure all submodules are up-to-date

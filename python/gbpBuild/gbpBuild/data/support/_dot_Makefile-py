@@ -105,13 +105,24 @@ clean-py:
 	@cd python;find . -name '*.egg-info' -exec rm -fr {} +
 	@$(ECHO) "Done."
 
-.PHONY: lint-py
-lint-py: $(addsuffix .LINT,$(PKGS))
+.PHONY: lint-check-py
+lint-check-py: $(addsuffix .LINT,$(PKGS))
 $(addsuffix .LINT,$(PKGS)):
 	@$(ECHO) -n "Linting python package {"$(basename $@)"}..."
 ifeq ($(shell which flake8),)
 	@$(error 'flake8' not in path.  Please (re)install and try command again.)
 else
 	@cd $(basename $@);flake8 --exclude=.tox
+endif
+	@$(ECHO) "Done."
+
+.PHONY: lint-fix-py
+lint-check-py: $(addsuffix .LINT,$(PKGS))
+$(addsuffix .LINT,$(PKGS)):
+	@$(ECHO) -n "Applying linting suggestions to python package {"$(basename $@)"}..."
+ifeq ($(shell which autopep8),)
+	@$(error 'autopep8' not in path.  Please (re)install with 'pip install autopep8' and try command again.)
+else
+	@cd $(basename $@);autopep8 -a -a --max-line-length 120 --exclude=*.tox -r . 
 endif
 	@$(ECHO) "Done."

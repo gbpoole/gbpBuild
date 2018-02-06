@@ -17,7 +17,7 @@ endif
 # Supported 'cmake' targets
 CMAKE_TARGETS = clang-format clang-format-fix clang-tidy clang-tidy-fix
 
-.PHONY: cmake build-c docs-c install-c test-c coverage-c clean-c lint-c $(CMAKE_TARGETS)
+.PHONY: cmake build-c docs-c install-c test-c coverage-c clean-c lint-check-c lint-fix-c $(CMAKE_TARGETS)
 
 # This '.DIR' trick is needed to avoid
 # conflicts with the 'build' target.
@@ -55,15 +55,13 @@ clean-c: .print_status
 	@$(ECHO) -n "Cleaning-up build directory '"$(BUILD_DIR)"'..."
 	@rm -rf $(BUILD_DIR)
 	@$(ECHO) "Done."
-lint-c: .print_status
+lint-check-c: .print_status
 	@$(ECHO) "Linting C/C++ code..."
-	@cd $(BUILD_DIR);make clang-format
-	@cd $(BUILD_DIR);make clang-tidy
+	@cd $(BUILD_DIR);make clang-format-check
 	@$(ECHO) "Done."
 lint-fix-c: .print_status
 	@$(ECHO) "Applying linting suggestions to C/C++ code..."
 	@cd $(BUILD_DIR);make clang-format-fix
-	@cd $(BUILD_DIR);make clang-tidy-fix
 	@$(ECHO) "Done."
 $(CMAKE_TARGETS): .print_status cmake
 	@$(ECHO) "Running cmake target '"$@"'..."
