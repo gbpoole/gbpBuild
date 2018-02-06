@@ -8,6 +8,8 @@ import gbpPy.cmdl as cmdl
 import gbpPy.log as SID
 import gbpPy.templates as tmp
 
+import gbpBuild as bld
+
 # Main function
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -19,33 +21,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-f',         'flag_force',    help='Force write for existing files',         default=False)
 @click.option('-u',         'update_element',help='Update single element only',    type=str,default=None)
 def gbpBuild(template_name,project_dir,template_path,flag_uninstall,flag_silent,flag_force,update_element):
-
-    ### Start parsing of command line
-
-    ## Define cmd line positional arguments
-    #positional_arguments = []
-    #positional_arguments.append(['template_name',None])
-    #positional_arguments.append(['project_dir',None])
-
-    ## Define cmd line optional arguments.
-    #optional_arguments = []
-    #optional_arguments.append([['-d','--path'],'Path to template directory','string',None,'template_path'])
-    #optional_arguments.append([['-u'],'Update single element only','string',None,'update_element'])
-    #optional_arguments.append([['-r'],'Remove template','bool',False,'flag_uninstall'])
-    #optional_arguments.append([['-f'],'Force write for existing files','bool',False,'flag_force'])
-    #optional_arguments.append([['-s'],'Silent/test run','bool',False,'flag_silent'])
-
-    ## Create argument parser and check syntax
-    #cmdl_parser = cmdl.parser(argv,positional_arguments,optional_arguments)
-
-    ## For readability, create variables to express content of cmd-line
-    #project_dir_in = cmdl_parser.extract('project_dir')
-    #template_name  = cmdl_parser.extract('template_name')
-    #template_path  = cmdl_parser.extract('template_path')
-    #flag_uninstall = cmdl_parser.extract('flag_uninstall')
-    #flag_silent    = cmdl_parser.extract('flag_silent')
-    #flag_force     = cmdl_parser.extract('flag_force')
-    #update_element = cmdl_parser.extract('update_element')
 
     # Validate inputs
     if(not os.path.isdir(project_dir)):
@@ -67,7 +42,7 @@ def gbpBuild(template_name,project_dir,template_path,flag_uninstall,flag_silent,
     ## Load the template(s)
     template = tmp.template()
     for template_name in template_list:
-        template.add(template_name,path=template_path)
+        template.add(template_name,path=[template_path,bld.full_path_datafile('templates')])
 
     ## Process the template
     if(flag_uninstall):
