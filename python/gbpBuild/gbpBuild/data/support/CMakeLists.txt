@@ -8,12 +8,6 @@ cmake_minimum_required(VERSION 3.2)
 # the initialization macro
 include(${CMAKE_SOURCE_DIR}/project.cmake)
 
-# Check that the relative path (from the main project directory)
-# to gbpBuild has been defined by project.cmake
-if(NOT GBPBUILD_REL_PATH)
-    message( FATAL_ERROR "GBPBUILD_REL_PATH has not been set by project.cmake")
-endif()
-
 # Add the 'cmake' directory in the project directory to the module path
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR};${CMAKE_SOURCE_DIR}/cmake")
 message(STATUS "${CMAKE_MODULE_PATH}")
@@ -36,9 +30,6 @@ set(CMAKE_CXX_COMPILER "g++")
 # Compiler flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 set(CMAKE_CXX_STANDARD 11)
-
-# Set the location of the gbpBuild submodule
-set(GBP_BUILD_DIR "${CMAKE_SOURCE_DIR}/${GBPBUILD_REL_PATH}/" )
 
 # Load all macros and functions
 message(STATUS "Loading macros & functions...")
