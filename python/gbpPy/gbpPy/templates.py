@@ -294,18 +294,28 @@ class template:
 
         return(n_template_files)
 
+    def _build_path_list(self,path=None):
+
+        # Priority goes to the list of paths passed by the call
+        path_list = []
+        for path_i in [p for p in path if p!=None]:
+            path_list.append(path_i)
+
+        # Then prioritize anyhting in the environment path 
+        path_env=os.environ.get('GBPPY_TEMPLATE_PATH')
+        if(path_env!=None):
+            print("test:",path_env)
+            for path_i in [p for p in path_env.split(':') if p!=None]:
+                path_list.append(path_i)
+
+        return(path_list) 
+
     def add(self,template_name,path=None):
-        # If path wasn't given, then check for an environment variable
-        if (not path):
-            path=os.environ.get('GBPPY_TEMPLATE_PATH')
 
-        # If nothing was found in the environment, check local path
-        if (not path):
-            path='./templates/'
+        # Build a list of priority-ordered paths to search
+        path_list = self._build_path_list(path)
 
-        # Search the path for the template
-        path_list=path.split(':')
-        template_dir_abs = None
+        # Search the path
         for path_i in path_list:
             dir_test  = os.path.join(path_i,template_name)
             if(os.path.isdir(dir_test)):
