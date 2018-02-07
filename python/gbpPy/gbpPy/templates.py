@@ -285,7 +285,7 @@ class template:
 
             # Add files
             for file_i in files:
-                template_path = os.path.normpath(os.path.join(template_path_start, file_i))
+                template_path = os.path.normpath(os.path.join(template_path_start,os.path.relpath(root,full_path_recurse_start),file_i))
                 full_path_element = os.path.join(root,file_i)
                 file_new=template_file(full_path_template, full_path_element, template_path, dir_new)
                 if(file_new.is_template):
@@ -421,7 +421,7 @@ class template:
         # ... else, check for conflicts
         else:
             if(not filecmp.cmp(file_add.full_path_in(),file_check.full_path_in())):
-                SID.log.error("There is a file incompatibility between template files '%s' and '%s'."%(file_add.full_path_in(),file_check.full_path_in()))
+                SID.log.error("There is a file incompatibility between template files '%s' and '%s'."%(file_add.template_path_in(),file_check.template_path_in()))
 
     # Count the number of files in the template
     def n_files(self):
