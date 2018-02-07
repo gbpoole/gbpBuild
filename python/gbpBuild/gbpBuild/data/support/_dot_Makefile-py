@@ -106,23 +106,29 @@ clean-py:
 	@$(ECHO) "Done."
 
 .PHONY: lint-check-py
-lint-check-py: $(addsuffix .LINT,$(PKGS))
-$(addsuffix .LINT,$(PKGS)):
+lint-check-py: $(addsuffix .LINT-CHECK,$(PKGS))
+$(addsuffix .LINT-CHECK,$(PKGS)):
 	@$(ECHO) -n "Linting python package {"$(basename $@)"}..."
-ifeq ($(shell which flake8),)
-	@$(error 'flake8' not in path.  Please (re)install and try command again.)
+ifeq ($(shell which autopep8),)
+	@$(error 'autopep8' not in path.  Please (re)install with 'pip install autopep8' and try command again.)
+else ifeq ($(shell which docformatter),)
+	@$(error 'docformatter' not in path.  Please (re)install with 'pip install docformatter' and try command again.)
 else
-	@cd $(basename $@);flake8 --exclude=.tox
+	@cd $(basename $@);autopep8 -a -a --max-line-length 120 --diff --exclude=*.tox -r . 
+	@cd $(basename $@);docformatter -r . 
 endif
 	@$(ECHO) "Done."
 
 .PHONY: lint-fix-py
-lint-check-py: $(addsuffix .LINT,$(PKGS))
-$(addsuffix .LINT,$(PKGS)):
+lint-fix-py: $(addsuffix .LINT-FIX,$(PKGS))
+$(addsuffix .LINT-FIX,$(PKGS)):
 	@$(ECHO) -n "Applying linting suggestions to python package {"$(basename $@)"}..."
 ifeq ($(shell which autopep8),)
 	@$(error 'autopep8' not in path.  Please (re)install with 'pip install autopep8' and try command again.)
+else ifeq ($(shell which docformatter),)
+	@$(error 'docformatter' not in path.  Please (re)install with 'pip install docformatter' and try command again.)
 else
-	@cd $(basename $@);autopep8 -a -a --max-line-length 120 --exclude=*.tox -r . 
+	@cd $(basename $@);autopep8 -i -a -a --max-line-length 120 --exclude=*.tox -r . 
+	@cd $(basename $@);docformatter -i -r . 
 endif
 	@$(ECHO) "Done."
