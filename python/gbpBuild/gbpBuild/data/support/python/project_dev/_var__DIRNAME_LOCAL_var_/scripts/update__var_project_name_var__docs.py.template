@@ -21,6 +21,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 def update_%%%project_name%%%_docs():
+    """
+    Auto-generate the .rst files which describe all the project APIs (both C/C++ and Python, if present).
+
+    This function is meant to be called automatically by the "docs-update" target of the project makefile.
+    :return: None
+    """
     # Set/fetch all the project details we need
     project = prj.project()
 

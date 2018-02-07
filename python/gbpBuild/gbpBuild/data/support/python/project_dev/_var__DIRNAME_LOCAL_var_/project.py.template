@@ -1,10 +1,16 @@
 import os
-import sys
 import git
 import yaml
 
 
 class project:
+    """
+    This class provides a project object, storing project parameters which describe the project.
+
+    No arguments are needed.  It will scan backwards from the location of this source file
+    to the first encountered .git directory.  In that directory, it will look for a .project.yml
+    file and read all parameters from there.
+    """
     def __init__(self):
 
         # Find the root directory
@@ -21,7 +27,7 @@ class project:
         # Convert to single dictionary
         self.params = {k: v for d in params_list for k, v in d.items()}
 
-        # Set some project direcories
+        # Set some project directories
         self.params['dir_docs'] = os.path.abspath(os.path.join(self.dir_root, "docs"))
         self.params['dir_docs_api_src'] = os.path.abspath(os.path.join(self.dir_root, "docs/src"))
         self.params['dir_docs_build'] = os.path.abspath(os.path.join(self.dir_root, "docs/build"))
@@ -51,6 +57,10 @@ class project:
         self.params['release'] = self.params['version']
 
     def print(self):
+        """
+        Print project parameters to standard out.
+        :return: None
+        """
         print("Project information:")
         print("-------------------")
         for k, v in sorted(self.params.items()):

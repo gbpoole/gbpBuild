@@ -20,6 +20,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 def %%%project_name%%%_params():
+    """
+    Print the dictionary of project parameters stored in the project .project.yml file.
+    :return: None
+    """
     # Set/fetch all the project details we need
     project = prj.project()
 

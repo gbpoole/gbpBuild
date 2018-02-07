@@ -8,8 +8,14 @@ import re
 import os
 import git
 
-# Generate a list of package files
 def package_files(directory='data'):
+    """
+    Generate a list of non-code files to be included in the package.
+
+    By default, all files in the 'data' directory in the package root will be added.
+    :param directory: The path to walk to generate the file list.
+    :return: a list of filenames.
+    """
     paths = []
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:

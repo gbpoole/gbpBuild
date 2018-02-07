@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 
-def parse_cmake_local(
+def _parse_cmake_local(
         cur_dir,
         search_string,
         result_list,
@@ -14,6 +14,18 @@ def parse_cmake_local(
         module_list=None,
         prepend_path=True,
         strip_ext=False):
+    """
+    Parse a list of build elements of a given type from a local.cmake file in a given directory.
+    :param cur_dir: The directory with the local.cmake file to parse
+    :param search_string: The type of build element to search for
+    :param result_list: The list to append to
+    :param active_API_module: The currently active API module
+    :param module_select: The module we are assembling a listing for (set to None for all modules)
+    :param module_list: A resulting list of all modules (ignored if None)
+    :param prepend_path: a boolean flag indicating whether to prepend the path to the resulting list items
+    :param strip_ext: A boolean flag indicating whether to strip filename extensions from the resulting list items
+    :return: None
+    """
     # TODO: Remove external directories from files and paths
     # TODO: Remove submodules from files and paths
     with open(cur_dir + "/" + "local.cmake", 'r') as infile:
@@ -55,12 +67,28 @@ def parse_cmake_project(
         active_API_module=[
             "undefined",
             "undefined"],
-    module_list=None,
-    module_select=None,
-    prepend_path=True,
+        module_list=None,
+        module_select=None,
+        prepend_path=True,
         strip_ext=False):
+    """
+    Recursively generate a list of build elements of a given type from a project's local.cmake files.
+
+    Optionally, an API module can be specified and a list of files obtained only for it.
+    Additionally, a list of project modules can be returned if module_list is given.
+    :param cur_dir: The directory from which to start the search
+    :param search_string: The type of build element to search for
+    :param result_list: The list to append to
+    :param active_API_module: The currently active API module
+    :param module_select: The module we are assembling a listing for (set to None for all modules)
+    :param module_list: A resulting list of all modules (ignored if None)
+    :param prepend_path: a boolean flag indicating whether to prepend the path to the resulting list items
+    :param strip_ext: A boolean flag indicating whether to strip filename extensions from the resulting list items
+    :return: None
+    """
+
     # Add local entries to list
-    parse_cmake_local(
+    _parse_cmake_local(
         cur_dir,
         search_string,
         result_list,
@@ -72,8 +100,8 @@ def parse_cmake_project(
 
     # Build list of local project directories
     local_dirs = []
-    parse_cmake_local(cur_dir, "SRCDIRS", local_dirs, active_API_module)
-    parse_cmake_local(cur_dir, "PASSDIRS", local_dirs, active_API_module)
+    _parse_cmake_local(cur_dir, "SRCDIRS", local_dirs, active_API_module)
+    _parse_cmake_local(cur_dir, "PASSDIRS", local_dirs, active_API_module)
 
     # Recurse over local project directories
     for local_dir in local_dirs:
@@ -90,6 +118,12 @@ def parse_cmake_project(
 
 
 def harvest_doxygen_groups(file_list, group_list):
+    """
+    Scan a list of C/C++ header files, appending found Doxygen API groups to the given list.
+    :param file_list: The list of files to search
+    :param group_list: A list to append found groups to
+    :return: None
+    """
     # Loop over header files
     for file_i in file_list:
         with open(file_i, 'r') as infile:
@@ -107,6 +141,13 @@ def harvest_doxygen_groups(file_list, group_list):
 
 
 def write_group_to_file(project, outFile, group_to_write):
+    """
+    Add a doxygen group .rst directive to the given output file.
+    :param project: A project object providing a dictionary of project parameters
+    :param outFile: A file pointer to the output file
+    :param group_to_write: The group to write
+    :return: None
+    """
     outFile.write(".. doxygengroup:: " + group_to_write + "\n")
     outFile.write("   :project: " + project.params['project_name'] + "\n")
     outFile.write("   :content-only:\n")
@@ -114,6 +155,18 @@ def write_group_to_file(project, outFile, group_to_write):
 
 
 def cat_project_file(project, filename_root, filename_modifier, outFile, default_text=None):
+    """
+    Concatenate one .rst file to another.
+
+    This checks for an .rst file with a given filename root and suffix modifier.
+    If it is found, it concatenates it to the given output file.
+    :param project: A project object providing a dictionary of project parameters
+    :param filename_root: The root of the file name
+    :param filename_modifier: the filename suffix modifier to
+    :param outFile: A file pointer to the output file
+    :param default_text: Text to write to the output file if the file is not found
+    :return: None
+    """
     filename_in = project.params['dir_docs'] + "/" + filename_root + '.rst' + filename_modifier
     if(os.path.isfile(filename_in)):
         with open(filename_in, 'r') as inFile:
@@ -124,13 +177,24 @@ def cat_project_file(project, filename_root, filename_modifier, outFile, default
 
 
 def underlined_text(text_to_underline, underline_character):
+    """
+    Underline a given string with a specified character.
+    :param text_to_underline: The string to underline
+    :param underline_character: The character to underline with
+    :return: The underlined text as a string
+    """
     if(text_to_underline is not None):
         return(text_to_underline + "\n" + underline_character * len(text_to_underline) + "\n")
     else:
         return("")
 
 
-def make_module_list_unique(modules_in):
+def make_list_unique(modules_in):
+    """
+    Trim duplicates from a given list.
+    :param modules_in: The input list with (possible) duplicates
+    :return: The returned list with duplicates removed
+    """
     modules_out = modules_in[:]
     # This is a dumb n^2 algorithm.  Fix it!
     del_list = []
@@ -147,6 +211,13 @@ def make_module_list_unique(modules_in):
 
 
 def generate_C_API_rst(project):
+    """
+    Generate the .rst files which describe the project's C/C++ API (if present).
+
+    Files are written to the directory specified in project.params['dir_docs_api_src']
+    :param project: A project object providing a dictionary of project parameters
+    :return: None
+    """
     filename_root = "C_API"
 
     # Open the output file for writing
@@ -164,7 +235,7 @@ def generate_C_API_rst(project):
         module_list=module_list,
         prepend_path=True,
         strip_ext=False)
-    module_list = make_module_list_unique(module_list)
+    module_list = make_list_unique(module_list)
 
     # Generate a list of doxygen groups in those header files
     group_list = []
@@ -270,6 +341,11 @@ def generate_C_API_rst(project):
 
 
 def reformat_Clara_help_to_rst(lines_in):
+    """
+    Reformat the command line syntax for a C/C++ executable (as generated by Clara) for writing to an .rst file
+    :param lines_in: The raw text from Clara (generated using '-h')
+    :return: The reformatted text as a list of lines
+    """
     lines_out = []
     flag_remove_top_blank_lines = True
     process_phase = 0
@@ -331,6 +407,11 @@ def reformat_Clara_help_to_rst(lines_in):
 
 
 def generate_C_execs_rst(project):
+    """
+    Generate the .rst files which describe the project's C/C++ executables' (if present) command line syntax.
+    :param project: A project object providing a dictionary of project parameters
+    :return: None
+    """
     filename_root = "C_execs"
 
     # Open the output file for writing
@@ -348,7 +429,7 @@ def generate_C_execs_rst(project):
         module_list=header_module_list,
         prepend_path=True,
         strip_ext=False)
-    module_list = make_module_list_unique(header_module_list)
+    module_list = make_list_unique(header_module_list)
 
     # Generate a list of doxygen groups in those header files
     group_list = []
@@ -406,6 +487,11 @@ def generate_C_execs_rst(project):
 
 
 def list_submodules(package_name):
+    """
+    Generate a list of submodules in a given Python package
+    :param package_name: The name of the package
+    :return: A list of submodules
+    """
     list_name = []
     for loader, module_name, is_pkg in pkgutil.walk_packages(package_name.__path__, package_name.__name__ + '.'):
         list_name.append(module_name)
@@ -416,6 +502,13 @@ def list_submodules(package_name):
 
 
 def generate_Python_API_rst(project):
+    """
+    Generate the .rst files which describe the project's Python API (if present).
+
+    Files are written to the directory specified in project.params['dir_docs_api_src']
+    :param project: A project object providing a dictionary of project parameters
+    :return: None
+    """
     filename_root = "Python_API"
 
     # Open the output file for writing
@@ -446,7 +539,12 @@ def generate_Python_API_rst(project):
     outFile.close()
 
 
-def reformat_optparse_help_to_rst(lines_in):
+def reformat_Click_help_to_rst(lines_in):
+    """
+    Generate the .rst files which describe the project's Python executables' (if present) command line syntax.
+    :param project: A project object providing a dictionary of project parameters
+    :return: None
+    """
     lines_out = []
     flag_remove_top_blank_lines = True
     process_phase = 0
@@ -508,6 +606,11 @@ def reformat_optparse_help_to_rst(lines_in):
 
 
 def generate_Python_execs_rst(project):
+    """
+    Generate the .rst files which describe the project's Python executables' (if present) command line syntax.
+    :param project: A project object providing a dictionary of project parameters
+    :return: None
+    """
     filename_root = "Python_execs"
 
     # Proceed only if the executable directory exists
@@ -531,7 +634,7 @@ def generate_Python_execs_rst(project):
             # Send output of executable to the output file
             outFile.write(underlined_text(exec_i, '`'))
             out = subprocess.check_output(['python', os.path.join(dir_exec, exec_i), "-h"]).decode("utf-8")
-            outFile.write(reformat_optparse_help_to_rst(out))
+            outFile.write(reformat_Click_help_to_rst(out))
 
         # copy footer to output file
         if(flag_execs_present):
@@ -543,6 +646,13 @@ def generate_Python_execs_rst(project):
 
 
 def generate_default_rst(project, filename_root="header", default_title=None):
+    """
+    Create a default .rst file with a given name, adding an (optional) title and content from a file (if present).
+    :param project: A project object providing a dictionary of project parameters
+    :param filename_root:
+    :param default_title: The title to use for the
+    :return:
+    """
     # Open the output file for writing
     if(not os.path.isdir(project.params['dir_docs_api_src'])):
         os.makedirs(project.params['dir_docs_api_src'])
@@ -556,6 +666,11 @@ def generate_default_rst(project, filename_root="header", default_title=None):
 
 
 def generate_index_rst(project):
+    """
+    Generate the main index.rst file for the documentation.  This needs to be the file pointed to by docs/conf.py.
+    :param project: A project object providing a dictionary of project parameters
+    :return: None
+    """
     filename_root = "index"
 
     # Open the output file for writing
@@ -617,8 +732,12 @@ def generate_index_rst(project):
 
 
 def generate_project_rsts(project):
-
-    # Generate documenation for C code
+    """
+    This is the main function which drives the generation of ALL auto-generated API documentation for the project
+    :param project: A project object providing a dictionary of project parameters
+    :return: None
+    """
+    # Generate documentation for C code
     if(project.params['is_C_project']):
         # Generate C API documenation
         generate_C_API_rst(project)
@@ -631,7 +750,7 @@ def generate_project_rsts(project):
         # in the Clara format with a '-h' option.
         generate_C_execs_rst(project)
 
-    # Generate documenation for Python code
+    # Generate documentation for Python code
     if(project.params['is_Python_project']):
         # Run 'sphinx-apidoc' to auto-generate the Python submodule API documentation
         # Arguments follwoing the source path (the first argument) will be ignored;

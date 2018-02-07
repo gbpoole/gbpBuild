@@ -21,7 +21,7 @@ import shutil
 import sys
 import git
 import glob
-import breathe
+import breathe # This is here so that pigar will catch it when generating requirements.txt
 
 from datetime import datetime
 from recommonmark.parser import CommonMarkParser
