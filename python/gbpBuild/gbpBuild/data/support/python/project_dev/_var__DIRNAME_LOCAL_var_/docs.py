@@ -1,8 +1,6 @@
 import os
 import pkgutil
-import re
 import subprocess
-import sys
 
 
 def _parse_cmake_local(
@@ -497,7 +495,7 @@ def list_submodules(package_name):
         list_name.append(module_name)
         module_name = __import__(module_name, fromlist='dummylist')
         if is_pkg:
-            list_submodules(list_name, module_name)
+            list_name+=list_submodules(module_name)
     return list_name
 
 
@@ -523,7 +521,7 @@ def generate_Python_API_rst(project):
     outFile.write("    :undoc-members:\n")
     outFile.write("    :show-inheritance:\n")
     outFile.write("\n")
-    outFile.write("Submodules\n")
+    outFile.write("Modules\n")
     outFile.write("``````````\n")
     outFile.write("\n")
     outFile.write(".. toctree::\n")
@@ -533,7 +531,8 @@ def generate_Python_API_rst(project):
     package = __import__(project.params['project_name'])
     submodule_list = list_submodules(package)
     for submodule_i in submodule_list:
-        outFile.write("   " + submodule_i + "\n")
+        if(not '.scripts.' in submodule_i):
+            outFile.write("   " + submodule_i + "\n")
 
     # Close output file
     outFile.close()
@@ -759,7 +758,7 @@ def generate_project_rsts(project):
                                "-o" + project.params['dir_docs_api_src'],
                                project.params['dir_python_pkg'],
                                project.params['dir_python_pkg'] + "/setup.py",
-                               project.params['dir_python_pkg'] + '/scripts/',
+                               project.params['dir_python_pkg'] + '/' + os.path.basename(project.params['dir_python_pkg']) + '/scripts/',
                                "-T",
                                "-e",
                                "-M",

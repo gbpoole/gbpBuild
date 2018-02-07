@@ -1,56 +1,39 @@
-# Makefile for Python code
+############################
+# Makefile for Python code #
+############################
 
 # Set default mode
 ifndef mode
     mode=release
 endif
 
+# Build a list of Python packages (omit the development package)
 PKGS:=$(shell find python -name 'setup.py' -not -path "python/*_dev/*" -exec dirname {} \;)
 
-BUILD_DIR:=$(PRJ_DIR)/python/build
-DOCS_BUILD_DIR:=$(PRJ_DIR)/docs/build
+# Set the build directory
+BUILD_DIR_PY:=$(PRJ_DIR)/python/build
 
-$(BUILD_DIR):
+############################################
+# Python build, install, docs, etc targets #
+############################################
+
+# Perform build
+.PHONY: build-py
+build-py: $(BUILD_DIR_PY) $(addsuffix .BUILD,$(PKGS))
+$(addsuffix .BUILD,$(PKGS)):
+	@$(ECHO) "Building python package {"$(basename $@)"}..."
+	@cd $(basename $@);python setup.py build
+	@$(ECHO) "Done."
+
+# Make the build directory
+$(BUILD_DIR_PY):
 ifeq (,$(wildcard $@))
 	@$(ECHO) -n "Making python build directory {"$@"}..."
 	@mkdir $@
 	@$(ECHO) "Done."
 endif
 
-$(DOCS_BUILD_DIR):
-ifeq (,$(wildcard $@))
-	@$(ECHO) -n "Making docs build directory {"$@"}..."
-	@mkdir $@
-	@$(ECHO) "Done."
-endif
-
-init-py:
-ifeq ($(shell which pip),)
-	@$(error 'pip' not in path.  Please (re)install and try command again.)
-else
-ifneq (,$(wildcard .requirements.txt))
-	@$(ECHO) "Ensuring that all required Python modules are installed..."
-	@pip install -r .requirements.txt
-	@$(ECHO) "Done."
-endif
-endif
-
-requirements:
-ifeq ($(shell which pigar),)
-	$(error Pigar not in path.  Please install it with 'pip install pigar' and try again.)
-else
-	@$(ECHO) "Building 'requirements.txt'..."
-	@pigar -p .requirements.txt -i extern
-	@$(ECHO) "Done."
-endif
-
-.PHONY: build-py 
-build-py: $(BUILD_DIR) $(addsuffix .BUILD,$(PKGS))
-$(addsuffix .BUILD,$(PKGS)):
-	@$(ECHO) "Building python package {"$(basename $@)"}..."
-	@cd $(basename $@);python setup.py build
-	@$(ECHO) "Done."
-
+# Perform installation of python package
 .PHONY: install-py
 install-py: build-py $(addsuffix .INSTALL,$(PKGS))
 $(addsuffix .INSTALL,$(PKGS)): 
@@ -64,33 +47,9 @@ else
 endif
 	@$(ECHO) "Done."
 
-.PHONY: test-py
-test-py: $(addsuffix .TEST,$(PKGS))
-$(addsuffix .TEST,$(PKGS)):
-	@$(ECHO) "Running tests for python package..."
-	@cd $(basename $@);python setup.py test
-ifeq ($(shell which tox),)
-	@$(warning 'tox' not in path.  Please (re)install and try command again if you want it's support.)
-else
-	@cd $(basename $@);tox
-endif
-	@$(ECHO) "Done."
-
-.PHONY: coverage-py
-coverage-py: test-py $(addsuffix .COV,$(PKGS))
-$(addsuffix .COV,$(PKGS)):
-	@$(ECHO) "Generating Python test coverage report for package {"$(basename $@)"}..."
-ifeq ($(shell which tox),)
-	@$(error 'coverage' not in path.  Please (re)install coverage.py and try command again if you want it's support.)
-else
-	@cd $(basename $@);coverage run setup.py test
-	@cd $(basename $@);coverage report -m
-	@cd $(basename $@);coverage html
-endif
-	@$(ECHO) "Done."
-
+# Clean-up Python packages
 .PHONY: clean-py
-clean-py: 
+clean-py:
 	@$(ECHO) -n "Cleaning-up Python debris..."
 	@rm -rf docs/build/
 	@rm -rf python/build/
@@ -105,6 +64,38 @@ clean-py:
 	@cd python;find . -name '*.egg-info' -exec rm -fr {} +
 	@$(ECHO) "Done."
 
+##################################
+# Python targets for developers  #
+##################################
+
+# Run Python tests
+.PHONY: test-py
+test-py: $(addsuffix .TEST,$(PKGS))
+$(addsuffix .TEST,$(PKGS)):
+	@$(ECHO) "Running tests for python package..."
+	@cd $(basename $@);python setup.py test
+ifeq ($(shell which tox),)
+	@$(warning 'tox' not in path.  Please (re)install and try command again if you want it's support.)
+else
+	@cd $(basename $@);tox
+endif
+	@$(ECHO) "Done."
+
+#Compute Python test coverage
+.PHONY: coverage-py
+coverage-py: test-py $(addsuffix .COV,$(PKGS))
+$(addsuffix .COV,$(PKGS)):
+	@$(ECHO) "Generating Python test coverage report for package {"$(basename $@)"}..."
+ifeq ($(shell which tox),)
+	@$(error 'coverage' not in path.  Please (re)install coverage.py and try command again if you want it's support.)
+else
+	@cd $(basename $@);coverage run setup.py test
+	@cd $(basename $@);coverage report -m
+	@cd $(basename $@);coverage html
+endif
+	@$(ECHO) "Done."
+
+# Check Python formating against PEP8 (exception: max line lengths are 120)
 .PHONY: lint-check-py
 lint-check-py: $(addsuffix .LINT-CHECK,$(PKGS))
 $(addsuffix .LINT-CHECK,$(PKGS)):
@@ -119,6 +110,7 @@ else
 endif
 	@$(ECHO) "Done."
 
+# Apply Python PEP8 formatting (exception: max line lengths are 120) suggestions in-place
 .PHONY: lint-fix-py
 lint-fix-py: $(addsuffix .LINT-FIX,$(PKGS))
 $(addsuffix .LINT-FIX,$(PKGS)):

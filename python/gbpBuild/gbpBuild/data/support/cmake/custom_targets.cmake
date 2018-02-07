@@ -10,14 +10,22 @@ list(APPEND ALL_FILES_PROJECT ${SRC_FILES_PROJECT} )
 macro(add_custom_clang)
     # Clang-format
     add_custom_target(
-        clang-format
+        clang-format-suggest
+        COMMAND clang-format
+        -style=file
+        ${ALL_FILES_PROJECT}
+    )
+    message(STATUS "   -> clang-format-suggest ; write clang-format suggestions to stdout")
+
+    add_custom_target(
+        clang-format-fix
         COMMAND clang-format
         -style=file
         -i
         ${ALL_FILES_PROJECT}
     )
-    message(STATUS "   -> clang-format       ; apply the project style standards using clang-format")
-    
+    message(STATUS "   -> clang-format-fix     ; apply the project style standards using clang-format")
+
     # Clang-tidy
     add_custom_target(
         clang-tidy-suggest
@@ -25,7 +33,7 @@ macro(add_custom_clang)
         -p ${CMAKE_CURRENT_BINARY_DIR}
         ${SRC_FILES_PROJECT}
     )
-    message(STATUS "   -> clang-tidy-suggest ; write clang-tidy suggestions to stdout")
+    message(STATUS "   -> clang-tidy-suggest   ; write clang-tidy suggestions to stdout")
     add_custom_target(
         clang-tidy-fix
         COMMAND clang-tidy
@@ -33,7 +41,7 @@ macro(add_custom_clang)
         -fix
         ${SRC_FILES_PROJECT}
     )
-    message(STATUS "   -> clang-tidy-fix     ; apply all clang-tidy suggestions in-place ... BE CAREFUL WITH THIS!")
+    message(STATUS "   -> clang-tidy-fix       ; apply all clang-tidy suggestions in-place ... BE CAREFUL WITH THIS!")
 endmacro()
 
 # Add the targets used to generate documentation
@@ -64,7 +72,7 @@ macro(add_custom_docs)
         add_custom_target(
             docs-api
             COMMENT "Generate API documentation files")
-        message(STATUS "   -> docs-api           ; generate API documentation files")
+        message(STATUS "   -> docs-api             ; generate API documentation files")
 
         # Set build dependancies for documentation
         add_dependencies(docs-breathe docs-doxygen )
@@ -74,4 +82,3 @@ macro(add_custom_docs)
         message(STATUS "   -> docs *NOT* added (needed libraries not found)")
     endif()
 endmacro()
-
