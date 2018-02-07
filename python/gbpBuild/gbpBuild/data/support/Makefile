@@ -157,14 +157,14 @@ endif
 ##########################
 # Print a status message #
 ##########################
-.print_status: .printed_status
-# Fetch the version from the .version file
 ifneq ($(wildcard .version),)
 	PRJ_VERSION:=`cat .version`
 	PRJ_VERSION:='v'$(PRJ_VERSION)
 else
 	PRJ_VERSION:=unset
 endif
+.print_status: .printed_status
+# Fetch the version from the .version file
 	@$(ECHO)
 	@$(ECHO) "Project information:"
 	@$(ECHO) "-------------------"

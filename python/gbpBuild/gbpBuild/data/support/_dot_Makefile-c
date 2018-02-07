@@ -2,18 +2,18 @@
 # Makefile for C/C++ code #
 ###########################
 
-# Set the build directory based on the variable 'mode'
-ifndef mode
-    mode=release
+# Set the build directory based on the variable 'config'
+ifndef config
+    config=release
 endif
-ifeq ($(mode),release)
+ifeq ($(config),release)
     BUILD_DIR_C:=build
-else ifeq ($(mode),debug)
+else ifeq ($(config),debug)
     BUILD_DIR_C:=build-debug
-else ifeq ($(mode),test)
+else ifeq ($(config),test)
     BUILD_DIR_C:=build-test
 else 
-    $(error Invalid build mode {$(mode)} specified.)
+    $(error Invalid build 'config' {$(config)} specified.)
 endif
 
 ###########################################
@@ -31,6 +31,8 @@ build-c: cmake
 .PHONY: cmake
 cmake:  $(BUILD_DIR_C).DIR
 	@$(ECHO) "Running 'cmake'..."
+# TODO: Check if this works
+#	@cd $(BUILD_DIR_C);cmake --config config ..
 	@cd $(BUILD_DIR_C);cmake ..
 	@$(ECHO) "Done."
 

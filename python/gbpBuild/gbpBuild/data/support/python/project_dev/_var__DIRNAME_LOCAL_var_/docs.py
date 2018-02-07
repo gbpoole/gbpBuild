@@ -240,7 +240,7 @@ def generate_C_API_rst(project):
     harvest_doxygen_groups(header_file_list, group_list)
 
     # copy header to output file
-    cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("API Documentation", '='))
+    cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("C/C++ API", '='))
 
     # ----------- Output logic for this file starts here -----------
 
@@ -531,7 +531,7 @@ def generate_Python_API_rst(project):
     package = __import__(project.params['project_name'])
     submodule_list = list_submodules(package)
     for submodule_i in submodule_list:
-        if(not '.scripts.' in submodule_i):
+        if (not '.scripts.' in submodule_i and submodule_i.strip('.script')==submodule_i):
             outFile.write("   " + submodule_i + "\n")
 
     # Close output file
@@ -548,7 +548,6 @@ def reformat_Click_help_to_rst(lines_in):
     flag_remove_top_blank_lines = True
     process_phase = 0
     lines_in_split = lines_in.split('\n')
-    i_opt = 0
     for line in lines_in_split:
         if(len(line) > 0 or not flag_remove_top_blank_lines):
             # Process usage line

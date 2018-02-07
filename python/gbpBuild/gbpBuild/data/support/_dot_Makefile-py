@@ -2,12 +2,12 @@
 # Makefile for Python code #
 ############################
 
-# Set default mode
-ifndef mode
-    mode=release
+# Set default config
+ifndef config
+    config=release
 endif
 
-# Build a list of Python packages (omit the development package)
+# Build a list of Python packages (omit the project development package)
 PKGS:=$(shell find python -name 'setup.py' -not -path "python/*_dev/*" -exec dirname {} \;)
 
 # Set the build directory
@@ -38,12 +38,12 @@ endif
 install-py: build-py $(addsuffix .INSTALL,$(PKGS))
 $(addsuffix .INSTALL,$(PKGS)): 
 	@$(ECHO) "Installing python package {"$(basename $@)"}..."
-ifeq ($(mode),release)
+ifeq ($(config),release)
 	@cd $(basename $@);python setup.py install
-else ifeq ($(mode),develop)
+else ifeq ($(config),develop)
 	@cd $(basename $@);python setup.py install develop
 else
-    $(error Invalid python build mode {$(mode)} specified for installation.)
+    $(error Invalid python build 'config' {$(config)} specified for installation.)
 endif
 	@$(ECHO) "Done."
 
