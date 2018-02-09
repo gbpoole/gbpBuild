@@ -1,7 +1,7 @@
 # *****************************************************
 # *** A 'local.cmake' file following this format    ***
 # *** should reside in every directory contributing ***
-# *** the C/C++ code of this project.               ***
+# *** to the C/C++ code of this project.            ***
 # *****************************************************
 
 # The following directive is used to organise
@@ -22,34 +22,34 @@ set(DATASUBDIR "" )
 
 # Add subdirectories that are roots to libraries
 # eg. list(APPEND LIBDIRS "dir" )
-# -- NONE FOR THIS DIR --
 
 # Add directories that contribute source files 
 # eg. list(APPEND SRCDIRS "dir" )
-# -- NONE FOR THIS DIR --
+
+# ** The template places all directories here, but some
+# ** may need to be manually placed in the LIBDIRS list
+list(APPEND SRCDIRS "%%%_DIRLIST_DIRS" )
 
 # Add header files
 # eg. list(APPEND INCFILES "file" )
-# -- NONE FOR THIS DIR --
+list(APPEND INCFILES "%%%_DIRLIST_FILES *.h,*.hh%%%" )
 
 # Add source files
 # eg. list(APPEND SRCFILES "file" )
-# -- NONE FOR THIS DIR --
+
+# ** The template places all source files here, but some
+# ** may need to be manually placed in the EXEFILES list
+list(APPEND SRCFILES "%%%_DIRLIST_FILES *.c,*.cc,*.cpp%%%" )
 
 # Add executable source files (those with a main())
 # eg. list(APPEND EXEFILES "file" )
-# -- NONE FOR THIS DIR --
 
 # Add data files
 # eg. list(APPEND DATAFILES "file" )
-# -- NONE FOR THIS DIR --
 
 # Set data subdirectory
 # eg. set(DATASUBDIR "dir" )
-# -- NONE FOR THIS DIR --
 
 # Add subdirectories that we want to decend into
 #   but which we won't scan for sources, etc
 # eg. list(APPEND PASSDIRS "dir" )
-# -- NONE FOR THIS DIR --
-
