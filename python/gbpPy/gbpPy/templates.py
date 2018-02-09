@@ -2,9 +2,11 @@ import filecmp
 import os
 import re
 import shutil
-import traceback
+import fnmatch
 
 import gbpPy.log as SID
+
+_regex_parameter_selector = "[^%/]*"
 
 # Helper functions
 # ----------------
@@ -38,8 +40,6 @@ def format_template_names(name_list):
         else:
             name_txt += ',' + name_i
     return name_txt
-
-_protected_inputs = ['_DIRNAME_LOCAL','_PARAMETERS.key','_PARAMETERS.value']
 
 # Define main classes
 # -------------------
@@ -131,64 +131,137 @@ class template:
         if(template_name!=None):
             self.add(template_name,path=path)
 
-    # This function locates all annotated parameter references in a line
-    def collect_parameter_references(self,line,delimiter="%%%"):
+    # This function locates all annotated parameter references in a string
+    def collect_parameter_references(self,string,delimiter="%%%"):
         if(delimiter==None):
             delimiter="%%%"
-        regex = re.compile("%s[\w:._]*%s"%(delimiter,delimiter))
-        for match in regex.finditer(line):
+        regex = re.compile("%s%s%s" % (delimiter,_regex_parameter_selector, delimiter))
+        for match in regex.finditer(string):
             # Check if there are any directives in the match
             directive = match.group()
             directive = directive[len(delimiter):len(directive) - len(delimiter)]
-            if(directive not in _protected_inputs):
+            if(not self.resolve_directive(None,directive,check=True)):
                 self.params_list.add(directive)
 
     def init_inputs(self,user_params):
 
-        # Create protected inputs
-        self.params = []
-        self.params.append({'name': '_PARAMETERS.key',   'input':[key for key in user_params.keys()]})
-        self.params.append({'name': '_PARAMETERS.value', 'input':[val for val in user_params.values()]})
+        self.params = user_params
 
-        # Add user-defined list
-        for param_i_key,param_i_value in user_params.items():
-            if(hasattr(param_i_value, '__iter__') and not isinstance(param_i_value, str)):
-                self.params.append({'name':param_i_key,'input':param_i_value})
-            else:    
-                self.params.append({'name':param_i_key,'input':[param_i_value]})
-
-        # Check that all the needed template parameters are in 
-        # either the protected or the given dictionary
+        # Check that all the needed template parameters can be resolved
         for param_i in user_params:
-            if not param_i in [d['name'] for d in self.params] and param_i not in _protected_inputs:
+            if not self.resolve_directive(None,param_i,check=True):
                 SID.log.error("Required parameter {%s} is not present in template installation dictionary."%(param_i))
 
-    def resolve_directive(self, element, directive):
-        if(directive=='_DIRNAME_LOCAL'):
-            if(element==None):
-                SID.log.error("No element passed to 'resolve_directive.")
-            if(element.dir_host!=None):
-                dir_path_out = self.template_path_out(element.dir_host)
-            else:
-                dir_path_out = self.dir_install
-            dirname = os.path.basename(dir_path_out)
-            input_return = {'name': '_DIRNAME_LOCAL', 'input': [dirname]}
+    def resolve_directive(self, element, directive, check=False):
+        input_return = None
+        # Directives starting with '_' are protected commands.
+        # Check to see if the directive is defined ...
+        if(directive[0:1]=='_'):
+            directive_words=directive[1:].split()
+            command=directive_words[0]
+            directive_args=directive_words[1:]
+            n_args=len(directive_args)
+            if(command=='DIRNAME_LOCAL'):
+                if(n_args!=0):
+                    SID.log.error("Syntax error in directive {%s}; no arguments allowed."%(directive))
+                if(check):
+                    input_return = True
+                else:
+                    if(element==None):
+                        SID.log.error("No element passed to 'resolve_directive()'.")
+                    if(element.dir_host!=None):
+                        dir_path_out = self.template_path_out(element.dir_host)
+                    else:
+                        dir_path_out = self.dir_install
+                    dirname = os.path.basename(dir_path_out)
+                    input_return = {'name': '_DIRNAME_LOCAL', 'input': [dirname]}
+            elif(command=="PARAMETERS.key"):
+                if(n_args!=0):
+                    SID.log.error("Syntax error in directive {%s}; no arguments allowed."%(directive))
+                if(check):
+                    input_return = True
+                else:
+                    input_return = {'name': '_PARAMETERS.key',   'input':[key for key in self.params.keys()]} 
+            elif(command=="PARAMETERS.value"):
+                if(n_args!=0):
+                    SID.log.error("Syntax error in directive {%s}; no arguments allowed."%(directive))
+                if(check):
+                    input_return = True
+                else:
+                    input_return = {'name': '_PARAMETERS.key',   'input':[key for key in self.params.values()]}
+            elif(command.startswith('DIRLIST')):
+                # The command can contain subdirectives, separated by underscores
+                # Parse this information to determine what sort of list we're making
+                command_words=command.split("_")
+                n_command_words=len(command_words)
+                if(n_command_words==1):
+                    list_mode='all'
+                elif(n_command_words==2):
+                    if(command_words[1]=='DIRS'):
+                        list_mode='dirs'
+                    elif(command_words[1]=='FILES'):
+                        list_mode='files'
+                    else:
+                        SID.log_error("Invalid directive syntax {%s}; word {%s} invalid."%(line,command_words[1]))
+                else:
+                    SID.log_error("Invalid directive syntax {%s}; too many command words." % (line))
+                if(check):
+                    input_return = True
+                else:
+                    # Because we can't be sure that all the files are present
+                    # either in the full input or output path, we need to
+                    # generate the list from the elements in the template
+                    template_element_list = []
+                    if(list_mode=='all' or list_mode=='files'):
+                        for file_i in element.dir_host.files:
+                            template_element_list.append(os.path.basename(self.full_path_out(file_i)))
+                    if(list_mode=='all' or list_mode=='dirs'):
+                        dir_host=self.full_path_out(element.dir_host)
+                        for dir_i in self.directories:
+                            dir_host_i=os.path.dirname(self.full_path_out(dir_i))
+                            if(dir_host==dir_host_i):
+                                template_element_list.append(os.path.basename(self.full_path_out(dir_i)))
+                    if(n_args==0):
+                        listing=template_element_list
+                    elif(n_args==1):
+                        flag_keep_list = [False] * len(template_element_list)
+                        for wildcard in directive_args[0].split(','):
+                            # If wildcard is prepended with '!', treat it as a negation search
+                            if(wildcard[0:1]=='!'):
+                                wildcard=wildcard[1:]
+                                flag_wildcard = False
+                            else:
+                                flag_wildcard = True
+                            for i_file,file_i in enumerate(template_element_list):
+                                if(fnmatch.fnmatch(file_i,wildcard)):
+                                    flag_keep_list[i_file]=flag_wildcard
+                        listing = [file_i for (file_i,flag) in zip(template_element_list,flag_keep_list) if flag]
+                    else:
+                        SID.log.error("Syntax error in directive {%s}; too many arguments."%(directive))
+                    input_return = {'name':command,'input':listing}
+
+        # ... else, look to see if it has been listed in the user parameters
         else:
-            # Find the entry
-            input_return = None
-            for input_i in self.params:
-                if(input_i['name']==directive):
-                    input_return = input_i
-                    break
+            if(self.params):
+                for param_i_key,param_i_value in self.params.items():
+                    if(directive==param_i_key):
+                        if(check):
+                            input_return = True
+                        else:
+                            if(hasattr(param_i_value, '__iter__') and not isinstance(param_i_value, str)):
+                                input_return = {'name':param_i_key,'input':param_i_value}
+                            else:
+                                input_return = {'name':param_i_key,'input':[param_i_value]}
+                        break
         return input_return
 
     def _perform_parameter_substitution_ith(self,element,line,idx=None,delimiter="%%%"):
         if(delimiter==None):
             delimiter="%%%"
         line_new = line
-        n_lines = 1
+        n_lines = -1
         if(self.params!=None):
-            regex = re.compile("%s[\w:._]*%s"%(delimiter,delimiter))
+            regex = re.compile("%s%s%s" % (delimiter, _regex_parameter_selector, delimiter))
             match = regex.search(line_new)
             while(match):
                 # Strip the delimiters from the match
@@ -202,17 +275,32 @@ class template:
                 else:
                     replace_with = [directive]
                 param_insert_size=len(replace_with)
-                if(param_insert_size>1):
-                    if(n_lines==1):
-                        n_lines=param_insert_size
-                    elif(param_insert_size!=1 and n_lines!=param_insert_size):
-                        SID.log.error("There is an input list size incompatibility (%d!=%d) in {%s}."%(n_lines,param_insert_size,line))
+                # This is just to prevent an infinite loop.  Since
+                # param_insert_size==0, this line should be thrown
+                # away anyways ... but we want to make sure there
+                # are no errors, so we'll substitute this for just
+                # to keep things going.
+                if(param_insert_size==0):
+                    replace_with=["---"]
+                # Record n_lines this way to make sure that
+                # all parameter substitutions result in the
+                # same number of lines
+                if(n_lines<0):
+                    n_lines=param_insert_size
+                elif(n_lines!=param_insert_size):
+                    SID.log.error("There is an input list size incompatibility (%d!=%d) in {%s}."%(n_lines,param_insert_size,line))
                 # Perform substitution
                 if(idx==None):
                     line_new = line_new[0:match.start()]+str(replace_with[0])+line_new[match.end():]
                 else:
+                    if(idx>len(replace_with)):
+                        SID.log_error("Indexing error (%d>%d)for input line {%s}."%(idx,len(replace_with),line))
                     line_new = line_new[0:match.start()]+str(replace_with[idx])+line_new[match.end():]
                 match = regex.search(line_new)
+        # If n_lines<0, then no parameter substitution has occurred
+        # and we will just be returning the input line
+        if(n_lines<0):
+            n_lines=1
         if(idx==None):
             return n_lines,line_new
         else:
@@ -231,7 +319,7 @@ class template:
         if(n_lines>1):
             for idx in range(n_lines):
                 lines_new.append(self._perform_parameter_substitution_ith(element,line,idx=idx))
-        else:
+        elif(n_lines==1):
             lines_new.append(line_new)
         return lines_new
     
@@ -244,7 +332,7 @@ class template:
 
         # Check that we haven't used an iterable for the substitution
         if(n_lines!=1):
-            SID.log.error("An invalid filename parameter substitution has occured for {%s} (n_lines=%d)."%(filename_in,n_lines))
+            SID.log.error("An invalid filename parameter substitution has occured for {%s} (n_lines=%d)."%(element.full_path_in(),n_lines))
     
         return filename_out
 
@@ -304,7 +392,6 @@ class template:
         # Then prioritize anyhting in the environment path 
         path_env=os.environ.get('GBPPY_TEMPLATE_PATH')
         if(path_env!=None):
-            print("test:",path_env)
             for path_i in [p for p in path_env.split(':') if p!=None]:
                 path_list.append(path_i)
 
@@ -653,8 +740,7 @@ class template:
         # Set the current install directory
         self.dir_install=dir_out
 
-        # Create a list of project parameters, which includes the user parameters
-        # we've been passed as well as the protected variables
+        # Create a list of project parameters
         self.init_inputs(params_raw)
 
         # Perform install
@@ -669,8 +755,7 @@ class template:
         # Set the current install directory
         self.dir_install=dir_out
 
-        # Create a list of project parameters, which includes the user parameters
-        # we've been passed as well as the protected variables
+        # Create a list of project parameters
         self.init_inputs(params_raw)
 
         # Perform uninstall

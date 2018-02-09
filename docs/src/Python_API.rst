@@ -12,4 +12,7 @@ Submodules
 
    gbpPy.cmdl
    gbpPy.log
+   gbpPy.scripts
+   gbpPy.scripts.gbpPy_info
+   gbpPy.scripts.gbpPy_info
    gbpPy.templates
