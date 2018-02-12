@@ -26,7 +26,7 @@ set(DATASUBDIR "" )
 
 # Add directories that contribute source files 
 # eg. list(APPEND SRCDIRS "dir" )
-list(APPEND SRCDIRS "src" )
+# -- NONE FOR THIS DIR --
 
 # Add header files
 # eg. list(APPEND INCFILES "file" )
@@ -51,5 +51,4 @@ list(APPEND SRCDIRS "src" )
 # Add subdirectories that we want to decend into
 #   but which we won't scan for sources, etc
 # eg. list(APPEND PASSDIRS "dir" )
-# -- NONE FOR THIS DIR --
-
+list(APPEND PASSDIRS "src" )

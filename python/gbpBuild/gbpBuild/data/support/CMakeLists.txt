@@ -46,17 +46,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 # (needed by things like clang - tidy)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Initialize &/or build any needed external libraries.  This
-# needs to be done before including 'project.cmake' because we
-# need to make sure that 'gbpBuild' has been cloned, for example.
-process_externs( ${CMAKE_SOURCE_DIR} )
-
 # ===========================================
 # Execute all project specific configurations
 # (set options, library dependencies, etc.)
 # ===========================================
 project_options_and_dependancies()
 # ===========================================
+
+# Initialize &/or build any needed external libraries.
+process_externs( ${CMAKE_SOURCE_DIR} )
 
 # ============= Process the project =============
 # (look in cmake/build.cmake for these functions)

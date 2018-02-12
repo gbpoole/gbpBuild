@@ -26,9 +26,11 @@ set(DATASUBDIR "" )
 # Add directories that contribute source files 
 # eg. list(APPEND SRCDIRS "dir" )
 
-# ** The template places all directories here, but some
+# **********************************************************
+# ** The template places all directories here, but some/all
 # ** may need to be manually placed in the LIBDIRS list
-list(APPEND SRCDIRS "%%%_DIRLIST_DIRS" )
+list(APPEND SRCDIRS "%%%_DIRLIST_DIRS%%%" )
+# **********************************************************
 
 # Add header files
 # eg. list(APPEND INCFILES "file" )
@@ -37,9 +39,11 @@ list(APPEND INCFILES "%%%_DIRLIST_FILES *.h,*.hh%%%" )
 # Add source files
 # eg. list(APPEND SRCFILES "file" )
 
-# ** The template places all source files here, but some
+# **********************************************************
+# ** The template places all source files here, but some/all
 # ** may need to be manually placed in the EXEFILES list
 list(APPEND SRCFILES "%%%_DIRLIST_FILES *.c,*.cc,*.cpp%%%" )
+# **********************************************************
 
 # Add executable source files (those with a main())
 # eg. list(APPEND EXEFILES "file" )

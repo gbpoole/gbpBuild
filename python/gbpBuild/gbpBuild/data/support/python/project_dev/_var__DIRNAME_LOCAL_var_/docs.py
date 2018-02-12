@@ -439,6 +439,8 @@ def generate_C_execs_rst(project):
     # ----------- Output logic for this file starts here -----------
 
     # Loop over the modules, adding each in turn to the API docs
+    if(module_list == []):
+        module_list = [[None,""]]
     for module_i in module_list:
         exe_list = []
         parse_cmake_project(
@@ -456,7 +458,7 @@ def generate_C_execs_rst(project):
                     project,
                     filename_root,
                     '.' +
-                    module_i[0] +
+                    str(module_i[0]) +
                     ".header",
                     outFile,
                     default_text=underlined_text(
@@ -473,7 +475,7 @@ def generate_C_execs_rst(project):
 
         # Add the footer if there is material for this module
         if(not flag_write_header):
-            cat_project_file(project, filename_root, '.' + module_i[0] + ".footer", outFile)
+            cat_project_file(project, filename_root, '.' + str(module_i[0]) + ".footer", outFile)
 
     # ---------------------------------------------------------------
 
