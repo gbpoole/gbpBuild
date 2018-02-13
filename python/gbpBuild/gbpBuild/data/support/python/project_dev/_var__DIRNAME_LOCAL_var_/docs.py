@@ -707,8 +707,8 @@ def generate_index_rst(project):
         doc_order.append('src/C_execs.rst')
         doc_order.append('src/C_API.rst')
 
-    # Check if there is a 'doc_order.txt' file and over-write the defaults with it if so
-    filename_in = os.path.join(project.params['dir_docs'], "index_order.txt")
+    # Check if there is a 'docs_order.txt' file and over-write the defaults with it if so
+    filename_in = os.path.join(project.params['dir_docs'], "docs_order.txt")
     if(os.path.isfile(filename_in)):
         with open(filename_in, "r") as inFile:
             doc_order = []

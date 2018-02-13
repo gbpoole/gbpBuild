@@ -28,7 +28,7 @@ def gbpBuild(template_name,project_dir,template_path,flag_uninstall,flag_silent,
 
     # Process inputs
     project_dir_abs = os.path.abspath(project_dir)
-    project_name    = tmp.get_base_name(project_dir_abs)
+    project_name    = tmp.get_base_name(project_dir_abs).replace("-", "_")
 
     # Create list of input templates
     template_list=template_name.split(',')

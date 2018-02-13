@@ -10,7 +10,6 @@ include(${CMAKE_SOURCE_DIR}/project.cmake)
 
 # Add the 'cmake' directory in the project directory to the module path
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR};${CMAKE_SOURCE_DIR}/.cmake")
-message(STATUS "${CMAKE_MODULE_PATH}")
 
 # Load and run a macro to validate the initialization
 include ("init_validate")

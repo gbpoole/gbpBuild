@@ -7,7 +7,7 @@ default: all
 
 # Extract the project name from the parent directory
 PRJ_DIR=$(PWD)
-PRJ_NAME=$(shell basename $(PRJ_DIR))
+PRJ_NAME=`grep project_name .project.yml | awk '{print $$3}'`
 
 # Get git hash
 GIT_HASH=$(shell git rev-parse --short HEAD)
