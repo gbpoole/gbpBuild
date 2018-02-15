@@ -10,8 +10,11 @@ dir_root = git_repo.git.rev_parse("--show-toplevel")
 dir_python = os.path.abspath(os.path.join(dir_root, "python"))
 
 # Include the paths to local python projects (including the _dev package)
+# Make sure we prepend to the list to make sure that we don't use an
+# installed version.  We need access to the information in the
+# project directory here.
 for setup_py_i in glob.glob(dir_python + "/**/setup.py", recursive=True):
-    sys.path.append(os.path.abspath(os.path.dirname(setup_py_i)))
+    sys.path.insert(0,os.path.abspath(os.path.dirname(setup_py_i)))
 
 # Import the project development module
 import gbpPy_dev.project as prj

@@ -4,4 +4,4 @@
 - project_email: gbpoole@gmail.com
 - project_description: One line description of project.
 - kcov_token: unset
-- gbpbuild_rel_path: extern/gbpBuild
+- gbpbuild_rel_path: .

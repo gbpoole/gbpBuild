@@ -210,17 +210,33 @@ class template:
                 else:
                     # Because we can't be sure that all the files are present
                     # either in the full input or output path, we need to
-                    # generate the list from the elements in the template
+                    # generate the list from the elements in the template.  We
+                    # may also have some files/directories preexisiting this
+                    # template run, and we want to add those as well, so we have
+                    # listings which actually represent the current state
                     template_element_list = []
+                    dir_host = self.full_path_out(element.dir_host)
+                    listing_host = os.listdir(dir_host)
                     if(list_mode=='all' or list_mode=='files'):
                         for file_i in element.dir_host.files:
                             template_element_list.append(os.path.basename(self.full_path_out(file_i)))
+                        for element_i in listing_host:
+                            if(os.path.isfile(element_i)):
+                                if(element_i not in template_element_list):
+                                    template_element_list.append(element_i)
                     if(list_mode=='all' or list_mode=='dirs'):
-                        dir_host=self.full_path_out(element.dir_host)
                         for dir_i in self.directories:
                             dir_host_i=os.path.dirname(self.full_path_out(dir_i))
                             if(dir_host==dir_host_i):
                                 template_element_list.append(os.path.basename(self.full_path_out(dir_i)))
+                            for element_i in listing_host:
+                                if (os.path.isdir(element_i)):
+                                    if (element_i not in template_element_list):
+                                        template_element_list.append(element_i)
+
+                    # Sort the element list
+                    template_element_list=sorted(template_element_list)
+
                     if(n_args==0):
                         listing=template_element_list
                     elif(n_args==1):

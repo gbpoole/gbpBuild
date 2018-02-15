@@ -1,8 +1,6 @@
 import os
 import pkgutil
-import re
 import subprocess
-import sys
 
 
 def _parse_cmake_local(
@@ -242,7 +240,7 @@ def generate_C_API_rst(project):
     harvest_doxygen_groups(header_file_list, group_list)
 
     # copy header to output file
-    cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("API Documentation", '='))
+    cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("C/C++ API", '='))
 
     # ----------- Output logic for this file starts here -----------
 
@@ -441,6 +439,8 @@ def generate_C_execs_rst(project):
     # ----------- Output logic for this file starts here -----------
 
     # Loop over the modules, adding each in turn to the API docs
+    if(module_list == []):
+        module_list = [[None,""]]
     for module_i in module_list:
         exe_list = []
         parse_cmake_project(
@@ -458,7 +458,7 @@ def generate_C_execs_rst(project):
                     project,
                     filename_root,
                     '.' +
-                    module_i[0] +
+                    str(module_i[0]) +
                     ".header",
                     outFile,
                     default_text=underlined_text(
@@ -475,7 +475,7 @@ def generate_C_execs_rst(project):
 
         # Add the footer if there is material for this module
         if(not flag_write_header):
-            cat_project_file(project, filename_root, '.' + module_i[0] + ".footer", outFile)
+            cat_project_file(project, filename_root, '.' + str(module_i[0]) + ".footer", outFile)
 
     # ---------------------------------------------------------------
 
@@ -523,7 +523,7 @@ def generate_Python_API_rst(project):
     outFile.write("    :undoc-members:\n")
     outFile.write("    :show-inheritance:\n")
     outFile.write("\n")
-    outFile.write("Submodules\n")
+    outFile.write("Modules\n")
     outFile.write("``````````\n")
     outFile.write("\n")
     outFile.write(".. toctree::\n")
@@ -533,7 +533,8 @@ def generate_Python_API_rst(project):
     package = __import__(project.params['project_name'])
     submodule_list = list_submodules(package)
     for submodule_i in submodule_list:
-        outFile.write("   " + submodule_i + "\n")
+        if (not '.scripts.' in submodule_i and submodule_i.strip('.script')==submodule_i):
+            outFile.write("   " + submodule_i + "\n")
 
     # Close output file
     outFile.close()
@@ -549,7 +550,6 @@ def reformat_Click_help_to_rst(lines_in):
     flag_remove_top_blank_lines = True
     process_phase = 0
     lines_in_split = lines_in.split('\n')
-    i_opt = 0
     for line in lines_in_split:
         if(len(line) > 0 or not flag_remove_top_blank_lines):
             # Process usage line
@@ -707,8 +707,8 @@ def generate_index_rst(project):
         doc_order.append('src/C_execs.rst')
         doc_order.append('src/C_API.rst')
 
-    # Check if there is a 'doc_order.txt' file and over-write the defaults with it if so
-    filename_in = os.path.join(project.params['dir_docs'], "index_order.txt")
+    # Check if there is a 'docs_order.txt' file and over-write the defaults with it if so
+    filename_in = os.path.join(project.params['dir_docs'], "docs_order.txt")
     if(os.path.isfile(filename_in)):
         with open(filename_in, "r") as inFile:
             doc_order = []
