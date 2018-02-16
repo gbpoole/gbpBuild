@@ -419,6 +419,7 @@ class template:
         path_list = self._build_path_list(path)
 
         # Search the path
+        template_dir_abs=None
         for path_i in path_list:
             dir_test  = os.path.join(path_i,template_name)
             if(os.path.isdir(dir_test)):
