@@ -8,7 +8,7 @@ import re
 import os
 import git
 
-def package_files(directory='data'):
+def package_files(directory='gbpBuild/data'):
     """
     Generate a list of non-code files to be included in the package.
 
