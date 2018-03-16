@@ -8,9 +8,9 @@ import re, os
 import git
 
 # Generate a list of package files
-def package_files(directory='data'):
+def package_files(directory='gbpBuild/data'):
     paths = []
-    for (path, directories, filenames) in os.walk(directory):
+    for (path, directories, filenames) in os.walk(directory,followlinks=True):
         for filename in filenames:
             paths.append(os.path.join('..', path, filename))
     return paths
