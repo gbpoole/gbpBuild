@@ -34,20 +34,21 @@ def _parse_cmake_local(
                     # Remove '()'s and '"'s and split into words
                     words = line.replace('(', " ").replace(')', " ").replace('"', " ").split()
                     # If this is an append line, then we have an item to keep
-                    if(words[1].strip() == "APPEND" and len(words) == 4):
-                        if(words[2].strip() == search_string):
-                            item = words[3].strip()
-                            # If we've asked to strip extensions, do so
-                            if(strip_ext):
-                                item = os.path.splitext(item)[0]
-                            # If we've asked to prepend paths, do so
-                            if(prepend_path):
-                                item = cur_dir + '/' + item
-                            # Append to the result
-                            if(module_select is None or (module_select is not None and active_API_module[0] == module_select)):
-                                result_list.append(item)
-                                if(module_list is not None):
-                                    module_list.append(active_API_module.copy())
+                    if(len(words) == 4):
+                        if(words[1].strip() == "APPEND"):
+                            if(words[2].strip() == search_string):
+                                item = words[3].strip()
+                                # If we've asked to strip extensions, do so
+                                if(strip_ext):
+                                    item = os.path.splitext(item)[0]
+                                # If we've asked to prepend paths, do so
+                                if(prepend_path):
+                                    item = cur_dir + '/' + item
+                                # Append to the result
+                                if(module_select is None or (module_select is not None and active_API_module[0] == module_select)):
+                                    result_list.append(item)
+                                    if(module_list is not None):
+                                        module_list.append(active_API_module.copy())
                 # Else we may have a Doxygen module directive.  Check for it
                 else:
                     words = line[1:].strip().split()
@@ -470,7 +471,7 @@ def generate_C_execs_rst(project):
             # Send output of executable to the output file
             outFile.write(exec_i + '\n')
             outFile.write('-' * len(exec_i) + '\n')
-            out = subprocess.check_output([project.dir_root + "/build/" + exec_i, "-h"]).decode("utf-8")
+            out = subprocess.check_output([project.params['dir_build'] + "/" + exec_i, "-h"]).decode("utf-8")
             outFile.write(reformat_Clara_help_to_rst(out))
 
         # Add the footer if there is material for this module
@@ -707,8 +708,8 @@ def generate_index_rst(project):
         doc_order.append('src/C_execs.rst')
         doc_order.append('src/C_API.rst')
 
-    # Check if there is a 'docs_order.txt' file and over-write the defaults with it if so
-    filename_in = os.path.join(project.params['dir_docs'], "docs_order.txt")
+    # Check if there is a 'doc_order.txt' file and over-write the defaults with it if so
+    filename_in = os.path.join(project.params['dir_docs'], "index_order.txt")
     if(os.path.isfile(filename_in)):
         with open(filename_in, "r") as inFile:
             doc_order = []

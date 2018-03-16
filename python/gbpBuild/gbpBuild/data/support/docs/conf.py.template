@@ -17,6 +17,7 @@
 # documentation root, use os.path.abspath to make it absolute
 
 import os
+import subprocess
 import sys
 import git
 import glob
@@ -45,6 +46,18 @@ this_project = prj.project()
 breathe_directory = "%s/breathe/" % (this_project.params['dir_docs_build'])
 sys.path.append(breathe_directory)
 
+# If the is a Readthedocs build, then we need to run Doxygen
+if (os.environ.get('READTHEDOCS', None) == 'True'):
+    path_doxyfile=os.path.join(this_project.params['dir_docs'],"Doxyfile")
+    dir_doxy_xml=os.path.join(this_project.params['dir_docs'],"xml")
+    with open(path_doxyfile,"w") as fp_out:
+        fp_out.write("OUTPUT_DIRECTORY=docs\n")
+        fp_out.write("GENERATE_XML=YES\n")
+        fp_out.write("RECURSIVE=YES\n")
+    subprocess.call("cd ..; doxygen %s"%(path_doxyfile), shell=True)
+else:
+    dir_doxy_xml=os.path.join(this_project.params['dir_docs_build'],"doxygen/xml")
+
 # -- General configuration ------------------------------------------------
 
 # Set minimal Sphinx version
@@ -63,7 +76,7 @@ extensions = ['sphinx.ext.autodoc',
               'breathe']
 
 # Some things that Breathe needs
-breathe_projects = {this_project.params['project_name']: "%s/doxygen/xml/" % (this_project.params['dir_docs_build'])}
+breathe_projects = {this_project.params['project_name']: dir_doxy_xml}
 breathe_default_project = this_project.params['project_name']
 
 # Add any paths that contain templates here, relative to this directory.
@@ -112,7 +125,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['build*', '**/extern']
+exclude_patterns = ['build*', '_build*', '**/extern']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

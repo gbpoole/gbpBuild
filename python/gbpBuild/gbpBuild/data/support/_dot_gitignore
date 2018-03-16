@@ -16,9 +16,14 @@ __pycache__
 # .vi swap files
 *.*.swp
 
+# cmake stuff
+.cmake-tmp*
+
 # Common names for out-of-source build directories
 cmake-build-*
-build*
+build-*
+build
+_build
 
 # Used for testing
 mpich
