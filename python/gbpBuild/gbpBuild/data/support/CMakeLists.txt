@@ -15,47 +15,100 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR};${CMAKE_SOURCE_D
 include ("init_validate")
 init_validate()
 
-# Declare the project name
-project (${GBP_PROJECT_NAME})
-
 # Clear default install directory (user should use
 # DESTDIR with make to set installation directory)
 set( CMAKE_INSTALL_PREFIX "./" )
 
-# Set default compilers(must come before project line)
-set(CMAKE_C_COMPILER   "gcc")
-set(CMAKE_CXX_COMPILER "g++")
+# Set default compilers (must come before project line)
+# By checking ENV, we can alter compiler versions in CI
+# environments (for example)
+message(STATUS "")
+message(STATUS "--- Configuring compiler ---")
+message(STATUS "")
+if(DEFINED ENV{CXX} AND DEFINED ENV{CC})
+    set(CMAKE_C_COMPILER $ENV{CC})
+    set(CMAKE_CXX_COMPILER $ENV{CXX})
+    message(STATUS "C   compiler set from environment: ${CMAKE_C_COMPILER}")
+    message(STATUS "C++ compiler set from environment: ${CMAKE_CXX_COMPILER}")
+else()
+    set(CMAKE_C_COMPILER   "clang")
+    set(CMAKE_CXX_COMPILER "clang++")
+    message(STATUS "C   compiler set from default: ${CMAKE_C_COMPILER}")
+    message(STATUS "C++ compiler set from default: ${CMAKE_CXX_COMPILER}")
+endif()
+
+# Declare the project name
+project (${GBP_PROJECT_NAME})
 
 # Compiler flags
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu99 -Wextra")
 set(CMAKE_CXX_STANDARD 11)
+
+# Check for minimum versions of compilers to avoid ABI conflicts
+# -- C --
+message(STATUS "Checking c compiler version:")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    set(VERSION_MIN "5.0.0")
+    if(CMAKE_C_COMPILER_VERSION VERSION_LESS ${VERSION_MIN})
+        message(FATAL_ERROR "Insufficient gcc version (${CMAKE_C_COMPILER_VERSION}<${VERSION_MIN})")
+    endif()
+elseif((CMAKE_C_COMPILER_ID STREQUAL "Clang") OR (CMAKE_C_COMPILER_ID STREQUAL "AppleClang"))
+    set(VERSION_MIN "3.9.0")
+    if(CMAKE_C_COMPILER_VERSION VERSION_LESS ${VERSION_MIN})
+        message(FATAL_ERROR "Insufficient Clang version (${CMAKE_C_COMPILER_VERSION}<${VERSION_MIN})")
+    endif()
+else()
+    message(FATAL_ERROR "Unsupported compiler or platform (${CMAKE_CXX_COMPILER_ID})")
+endif()
+message(STATUS "   ID     : ${CMAKE_C_COMPILER_ID}")
+message(STATUS "   VERSION: ${CMAKE_C_COMPILER_VERSION}")
+# -- C++ --
+message(STATUS "Checking c++ compiler version:")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(VERSION_MIN "5.0.0")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${VERSION_MIN})
+        message(FATAL_ERROR "Insufficient gcc version (${CMAKE_CXX_COMPILER_VERSION}<${VERSION_MIN})")
+    endif()
+elseif((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
+    set(VERSION_MIN "3.9.0")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${VERSION_MIN})
+        message(FATAL_ERROR "Insufficient Clang version (${CMAKE_CXX_COMPILER_VERSION}<${VERSION_MIN})")
+    endif()
+else()
+    message(FATAL_ERROR "Unsupported compiler or platform (${CMAKE_CXX_COMPILER_ID})")
+endif()
+message(STATUS "   ID     : ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "   VERSION: ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "")
+message(STATUS "--- Finished configuring compiler ---")
+message(STATUS "")
 
 # Load all macros and functions
 message(STATUS "Loading macros & functions...")
 include ("build")          # Main build macros
-include ("3rd_party")      # Party library support functions
+include ("3rd_party")      # 3rd party library support functions
 include ("custom_targets") # Custom-target macros
 message(STATUS "Done.")
 
-# The following line is needed to deal with this annoying problem:
-# https: // developers.redhat.com/blog/2015/02/05/gcc5-and-the-c11-abi/
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
-
 # Generate compile commands.json file
-# (needed by things like clang - tidy)
+# (needed by things like 'clang-tidy')
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ===========================================
 # Execute all project specific configurations
 # (set options, library dependencies, etc.)
 # ===========================================
-project_options_and_dependancies()
-# ===========================================
+project_options_and_dependencies()
 
+# ====================================================
 # Initialize &/or build any needed external libraries.
+# ====================================================
 process_externs( ${CMAKE_SOURCE_DIR} )
 
-# ============= Process the project =============
+# ===================
+# Process the project
+# ===================
 # (look in cmake/build.cmake for these functions)
 
 # Generate the list of directories where header files
@@ -65,7 +118,12 @@ process_headers( ${CMAKE_SOURCE_DIR} )
 # Generate all library and executable targets
 process_targets( ${CMAKE_SOURCE_DIR} )
 
-# ============= Add custom targets ==============
+# Enable testing (defined in 'tests.cmake'; no tests if absent)
+process_tests()
+
+# ==================
+# Add custom targets 
+# ==================
 # (look in cmake/custom_targets.cmake for these functions)
 
 # Print status message
