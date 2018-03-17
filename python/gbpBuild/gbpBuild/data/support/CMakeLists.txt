@@ -99,7 +99,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Execute all project specific configurations
 # (set options, library dependencies, etc.)
 # ===========================================
+message(STATUS "")
+message(STATUS "--- Configuring project ---")
+message(STATUS "")
 project_options_and_dependencies()
+message(STATUS "")
+message(STATUS "--- Finished configuring project ---")
+message(STATUS "")
 
 # ====================================================
 # Initialize &/or build any needed external libraries.
