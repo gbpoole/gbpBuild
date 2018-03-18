@@ -1,37 +1,24 @@
-# Define these outside any macros or functions
-set(GBP_PROJECT_NAME  "%%%project_name%%%")
+macro(project_init)
+    set(_PROJECT_NAME  "%%%project_name%%%")
+endmacro()
 
-# Set options and dependencies
-macro(project_options_and_dependancies)
-
+macro(project_options)
     #========= Set project-specific options ========
-    # eg. option(SID_DEBUG "Enable SID debugging information" OFF)
-    # eg. option(USE_DOUBLE "Use double liberally" OFF)
-    #     if(USE_DOUBE)
-    #         add_definitions(-DUSE_DOUBLE)
-    #     endif()
-    
+    # The following macro should be used to add
+    # compile-options to the project.  They can
+    # be set VIA the environment.  After the
+    # description, the default value needs to be
+    # given then an optional list of allowed
+    # values.
+    define_project_env_variable(MY_VAR "An environment settable variable"  OFF ON OFF)
+endmacro()
+
+macro(project_dependancies)
     #=========== Add 3rd-party libraries ===========
     # (look in gbpBuild/cmake/3rd_party.cmake for a list of supported libraries)
-    message(STATUS "")
-    message(STATUS "Initializing 3rd-party libraries...")
     
     # The following three macros have been set-up for automating
-    # 3rd-party library configuration  The folling libraries are
-    # supported at the moment:
-    #    - CFITSIO
-    #    - CUDA
-    #    - CUFFT
-    #    - FFTW
-    #    - GBP_DOCS_BUILD
-    #    - GD
-    #    - GSL
-    #    - HDF5
-    #    - MPI
-    #    - MPI_IO
-    #    - OpenMP
-    #
-    # List the following (one-per line):
+    # 3rd-party library configuration:
     
     # 1) *required* 3rd-Party libraries.
     #
@@ -57,7 +44,4 @@ macro(project_options_and_dependancies)
     # The build will succeed if any of these are switched off but
     # will fail if they are turned on and fail to configure.
     #set_3rd_party_optional("XXX" ON)
-
-    # Print status message
-    message(STATUS "Finished initializing 3rd-party libraries.")
 endmacro()

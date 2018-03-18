@@ -1,95 +1,41 @@
 # This is the CMakeList.txt file used to build the project
 #    - We use this old version because it is the  -
 #    -   latest version availale on Travis CI     -
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.8)
 
-# Read the file with the macro definitions which specify
-# the behaviour specific to this project and then run
-# the initialization macro
-include(${CMAKE_SOURCE_DIR}/project.cmake)
-
+# ==== Set paths ====
 # Add the 'cmake' directory in the project directory to the module path
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR};${CMAKE_SOURCE_DIR}/.cmake")
-
-# Load and run a macro to validate the initialization
-include ("init_validate")
-init_validate()
 
 # Clear default install directory (user should use
 # DESTDIR with make to set installation directory)
 set( CMAKE_INSTALL_PREFIX "./" )
-
-# Set default compilers (must come before project line)
-# By checking ENV, we can alter compiler versions in CI
-# environments (for example)
-message(STATUS "")
-message(STATUS "--- Configuring compiler ---")
-message(STATUS "")
-if(DEFINED ENV{CXX} AND DEFINED ENV{CC})
-    set(CMAKE_C_COMPILER $ENV{CC})
-    set(CMAKE_CXX_COMPILER $ENV{CXX})
-    message(STATUS "C   compiler set from environment: ${CMAKE_C_COMPILER}")
-    message(STATUS "C++ compiler set from environment: ${CMAKE_CXX_COMPILER}")
-else()
-    set(CMAKE_C_COMPILER   "clang")
-    set(CMAKE_CXX_COMPILER "clang++")
-    message(STATUS "C   compiler set from default: ${CMAKE_C_COMPILER}")
-    message(STATUS "C++ compiler set from default: ${CMAKE_CXX_COMPILER}")
-endif()
-
-# Declare the project name
-project (${GBP_PROJECT_NAME})
-
-# Compiler flags
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wextra")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu99 -Wextra")
-set(CMAKE_CXX_STANDARD 11)
-
-# Check for minimum versions of compilers to avoid ABI conflicts
-# -- C --
-message(STATUS "Checking c compiler version:")
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    set(VERSION_MIN "5.0.0")
-    if(CMAKE_C_COMPILER_VERSION VERSION_LESS ${VERSION_MIN})
-        message(FATAL_ERROR "Insufficient gcc version (${CMAKE_C_COMPILER_VERSION}<${VERSION_MIN})")
-    endif()
-elseif((CMAKE_C_COMPILER_ID STREQUAL "Clang") OR (CMAKE_C_COMPILER_ID STREQUAL "AppleClang"))
-    set(VERSION_MIN "3.9.0")
-    if(CMAKE_C_COMPILER_VERSION VERSION_LESS ${VERSION_MIN})
-        message(FATAL_ERROR "Insufficient Clang version (${CMAKE_C_COMPILER_VERSION}<${VERSION_MIN})")
-    endif()
-else()
-    message(FATAL_ERROR "Unsupported compiler or platform (${CMAKE_CXX_COMPILER_ID})")
-endif()
-message(STATUS "   ID     : ${CMAKE_C_COMPILER_ID}")
-message(STATUS "   VERSION: ${CMAKE_C_COMPILER_VERSION}")
-# -- C++ --
-message(STATUS "Checking c++ compiler version:")
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(VERSION_MIN "5.0.0")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${VERSION_MIN})
-        message(FATAL_ERROR "Insufficient gcc version (${CMAKE_CXX_COMPILER_VERSION}<${VERSION_MIN})")
-    endif()
-elseif((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
-    set(VERSION_MIN "3.9.0")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${VERSION_MIN})
-        message(FATAL_ERROR "Insufficient Clang version (${CMAKE_CXX_COMPILER_VERSION}<${VERSION_MIN})")
-    endif()
-else()
-    message(FATAL_ERROR "Unsupported compiler or platform (${CMAKE_CXX_COMPILER_ID})")
-endif()
-message(STATUS "   ID     : ${CMAKE_CXX_COMPILER_ID}")
-message(STATUS "   VERSION: ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "")
-message(STATUS "--- Finished configuring compiler ---")
-message(STATUS "")
+# ===================
 
 # Load all macros and functions
 message(STATUS "Loading macros & functions...")
-include ("build")          # Main build macros
-include ("3rd_party")      # 3rd party library support functions
-include ("custom_targets") # Custom-target macros
+include ("validate_project") # Project validation and initialization macros
+include ("compilers")        # Compiler set-up macros
+include ("3rd_party")        # 3rd party library support functions
+include ("build")            # Main build macros
+include ("custom_targets")   # Custom-target macros
 message(STATUS "Done.")
+
+# Initialize this project
+include ("project")
+validate_project( )
+
+# Set default compilers; must come before project()
+init_compilers()
+
+# Declare the project name
+project (${_PROJECT_NAME})
+
+# Validate compilers (minimum versions, etc)
+validate_compilers()
+
+# Compiler flags
+set_compiler_flags()
 
 # Generate compile commands.json file
 # (needed by things like 'clang-tidy')
@@ -98,14 +44,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ===========================================
 # Execute all project specific configurations
 # (set options, library dependencies, etc.)
+# These are defined in 'project.cmake' files.
 # ===========================================
-message(STATUS "")
-message(STATUS "--- Configuring project ---")
-message(STATUS "")
-project_options_and_dependencies()
-message(STATUS "")
-message(STATUS "--- Finished configuring project ---")
-message(STATUS "")
+process_options( ${CMAKE_SOURCE_DIR} )
+process_dependencies( ${CMAKE_SOURCE_DIR} )
 
 # ====================================================
 # Initialize &/or build any needed external libraries.

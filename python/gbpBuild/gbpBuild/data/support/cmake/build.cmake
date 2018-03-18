@@ -5,6 +5,18 @@
 # Macro to get all the information we
 #    need about a given directory
 macro(set_dir_state cur_dir)
+    # Check optional arguments to see if we've been asked to scan all directories
+    set (optional_args ${ARGN})
+    list(LENGTH optional_args n_optional_args)
+    set(SCAN_ALL_DIRS FALSE)
+    if(${n_optional_args} EQUAL 1)
+        if(optional_args)
+            set(SCAN_ALL_DIRS TRUE)
+        endif()
+    elseif(NOT ${n_optional_args} EQUAL 0)
+        message(STATUS "Invalid number of optional arguments (${n_optional_args}) passed to set_dir_state().")
+    endif()
+
     # Read a file which specifies the content
     #   and subdirectory structure of the
     #   given directory.
@@ -227,6 +239,62 @@ macro(build_data_files cur_dir )
     endforeach()
 endmacro()
 
+# Macro for initializing environment-settable options for the whole project
+macro(process_options cur_dir )
+
+    if( ${cur_dir} STREQUAL ${CMAKE_SOURCE_DIR} )
+        message(STATUS "" )
+        message(STATUS "Checking for project options..." )
+        set(project_variable_names  "")
+        set(project_variable_values "")
+    endif()
+
+    # Check if the current directory has a 'project.cmake' file
+    # If it does, validate it and then run the project_options()
+    # macro that dhould be defined within it.
+    if(EXISTS "${cur_dir}/project.cmake")
+        include( ${cur_dir}/project.cmake )
+        project_options( ${cur_dir} )
+    endif()
+
+    # Recurse through all directories
+    set_dir_state(${cur_dir} TRUE)
+    foreach(_dir_name ${ALLDIRS} )
+        process_options( ${cur_dir}/${_dir_name} ) 
+    endforeach()
+
+    if( ${cur_dir} STREQUAL ${CMAKE_SOURCE_DIR} )
+        message(STATUS "Done." )
+    endif()
+endmacro()
+
+# Macro for initializing 3rd-party dependencies for the whole project
+macro(process_dependencies cur_dir )
+
+    if( ${cur_dir} STREQUAL ${CMAKE_SOURCE_DIR} )
+        message(STATUS "" )
+        message(STATUS "Checking for project dependencies..." )
+    endif()
+
+    # Check if the current directory has a 'project.cmake' file
+    # If it does, validate it and then run the project_options()
+    # macro that dhould be defined within it.
+    if(EXISTS "${cur_dir}/project.cmake")
+        include( ${cur_dir}/project.cmake )
+        project_dependencies( ${cur_dir} )
+    endif()
+
+    # Recurse through all directories
+    set_dir_state(${cur_dir} TRUE)
+    foreach(_dir_name ${ALLDIRS} )
+        process_options( ${cur_dir}/${_dir_name} ) 
+    endforeach()
+
+    if( ${cur_dir} STREQUAL ${CMAKE_SOURCE_DIR} )
+        message(STATUS "Done." )
+    endif()
+endmacro()
+
 # Macro for initializing &/or building external dependencies
 macro(process_externs cur_dir )
 
@@ -319,41 +387,47 @@ endmacro()
 
 # Process an environment variable
 macro(define_project_env_variable variableName description default_value )
-    # Check to see if the variable has been defined in the environment
-    if (NOT "$ENV{${variableName}}" STREQUAL "")
-        set(${variableName} "$ENV{${variableName}}" CACHE INTERNAL "Copied from environment variable")
-        message(STATUS "${variableName} set to {${${variableName}}} from environment.")
-    # ... if not, set it to the given default
-    else()
-        set(${variableName} "${default_value}" CACHE INTERNAL "Set from default")
-        message(STATUS "${variableName} set to {${${variableName}}} from default.")
-    endif()
+    # Check to see if this varaible has already been defined
+    if(NOT "${variableName}" IN_LIST project_variable_names)
+        # Check to see if the variable has been defined in the environment
+        if (DEFINED ENV{${variableName}})
+            set(${variableName} "$ENV{${variableName}}" CACHE INTERNAL "Copied from environment variable")
+            message(STATUS "   -> ${variableName} set to {${${variableName}}} from environment.")
+        # ... if not, set it to the given default
+        else()
+            set(${variableName} "${default_value}" CACHE INTERNAL "Set from default")
+            message(STATUS "   -> ${variableName} set to {${${variableName}}} from default.")
+        endif()
 
-    # Check for optional arguments.  They will be allowed values.
-    set (allowed_values ${ARGN})
-    list(LENGTH allowed_values n_allowed_values)
+        # Check for optional arguments.  They will be allowed values.
+        set (allowed_values ${ARGN})
+        list(LENGTH allowed_values n_allowed_values)
 
-    # If any allowed values are given, make sure that the set value is one of them
-    if(${n_allowed_values} GREATER 0)
-        list (FIND allowed_values "${${variableName}}" _index)
-        if (${_index} EQUAL -1)
-            message(FATAL_ERROR "Value assigned to ${variableName} (${${variableName}}) is not a member of the given allowed list (${allowed_values}).")
-        endif()        
-    endif()
+        # If any allowed values are given, make sure that the set value is one of them
+        if(${n_allowed_values} GREATER 0)
+            list (FIND allowed_values "${${variableName}}" _index)
+            if (${_index} EQUAL -1)
+                message(FATAL_ERROR "Value assigned to ${variableName} (${${variableName}}) is not a member of the given allowed list (${allowed_values}).")
+            endif()        
+        endif()
 
-    # Define a compile option from the variable if it is clearly boolean
-    if(${n_allowed_values} EQUAL 2)
-        list (FIND allowed_values "ON"  _index1)
-        list (FIND allowed_values "OFF" _index2)
-        if(_index1 GREATER -1 AND _index2 GREATER -1)
-            option(${variableName} ${description} ${${variableName}})
-            if(${${variableName}})
-                message(STATUS "Adding compile definition: ${variableName}")
-                add_definitions(-D${variableName})
+        # Define a compile option from the variable if it is clearly boolean
+        if(${n_allowed_values} EQUAL 2)
+            list (FIND allowed_values "ON"  _index1)
+            list (FIND allowed_values "OFF" _index2)
+            if(_index1 GREATER -1 AND _index2 GREATER -1)
+                option(${variableName} ${description} ${${variableName}})
+                if(${${variableName}})
+                    message(STATUS "   -> Adding compile definition: ${variableName}")
+                    add_definitions(-D${variableName})
+                endif()
             endif()
         endif()
-    endif()
 
+        # Add the variable to the project list
+        list(APPEND project_variable_names  ${variableName})
+        list(APPEND project_variable_values ${allowed_values})
+    endif()
 endmacro()
 
 # Add tests (optionally give test filename; else 'tests.cmake' is default)
@@ -389,4 +463,3 @@ macro(print_all_variables)
     endforeach()
     message(STATUS "print_all_variables------------------------------------------}")
 endmacro()
-
