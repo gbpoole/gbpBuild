@@ -17,7 +17,7 @@ def package_files(directory='gbpBuild/data'):
     :return: a list of filenames.
     """
     paths = []
-    for (path, directories, filenames) in os.walk(directory):
+    for (path, directories, filenames) in os.walk(directory,followlinks=True):
         for filename in filenames:
             paths.append(os.path.join('..', path, filename))
     return paths
