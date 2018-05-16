@@ -16,9 +16,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('template_name',default=None,type=str)
 @click.argument('project_dir',default=None,type=str)
 @click.option('-d','--path','template_path', help='Path to template directory',    type=str,default=None)
-@click.option('-r',         'flag_uninstall',help='Remove template',                        default=False)
-@click.option('-s',         'flag_silent',   help='Silent/test run',                        default=False)
-@click.option('-f',         'flag_force',    help='Force write for existing files',         default=False)
+@click.option('-r',         'flag_uninstall',help='Remove template',                        default=False,is_flag=True)
+@click.option('-s',         'flag_silent',   help='Silent/test run',                        default=False,is_flag=True)
+@click.option('-f',         'flag_force',    help='Force write for existing files',         default=False,is_flag=True)
 @click.option('-u',         'update_element',help='Update single element only',    type=str,default=None)
 def gbpBuild(template_name,project_dir,template_path,flag_uninstall,flag_silent,flag_force,update_element):
 

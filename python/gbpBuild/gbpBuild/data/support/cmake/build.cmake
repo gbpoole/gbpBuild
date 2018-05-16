@@ -151,6 +151,24 @@ macro(collect_data_files_recurse cur_dir )
     endforeach()
 endmacro()
 
+# Macros for adding sources to a library build
+macro(collect_tests cur_dir )
+    set(TESTS_LIST "" )
+    collect_tests_recurse( ${cur_dir} )
+endmacro()
+macro(collect_tests_recurse cur_dir )
+    # Add any executables in this directory to the list
+    set_dir_state( ${cur_dir} )
+    foreach(_test ${TESTS_WITH_PATH} )
+        list(APPEND TESTS_LIST ${_test} )
+    endforeach()
+
+    # Recurse over the source directories 
+    foreach( _dir_name ${SRCDIRS} )
+        collect_tests_recurse( ${cur_dir}/${_dir_name}  )
+    endforeach()
+endmacro()
+
 # Macro for initializing a specific library
 macro(build_library lib_name cur_dir )
 
@@ -299,6 +317,23 @@ macro(process_dependencies cur_dir )
     endif()
 endmacro()
 
+# Add tests (optionally give test filename; else 'tests.cmake' is default)
+macro(process_tests)
+    # Collect the tests for this directory
+    collect_tests( ${cur_dir} )
+    if(TESTS_LIST)
+        enable_testing()
+        foreach(test ${TESTS_LIST})
+            add_test(NAME ${test} COMMAND ${test})
+            set_target_properties(${test} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+        endforeach(test)
+        # Configure test properties
+        set_target_properties(tests PROPERTIES LINKER_LANGUAGE CXX)
+    else()
+        message(STATUS "No tests have been specified for this project.")
+    endif()
+endmacro()
+
 # Macro for initializing &/or building external dependencies
 macro(process_externs cur_dir )
 
@@ -438,27 +473,6 @@ macro(define_project_env_variable variableName description default_value )
         add_definitions(-D${variableName}=${${variableName}})
     endif()
 
-endmacro()
-
-# Add tests (optionally give test filename; else 'tests.cmake' is default)
-macro(process_tests)
-    # Check for optional arguments
-    set (optional_args ${ARGN})
-    list(LENGTH optional_args n_optional_args)
-    # Find the file
-    if(${n_optional_args} EQUAL 0)
-        find_path(TEST_FILE_PATH tests.cmake)
-    elseif(${n_optional_args} EQUAL 1)
-        find_path(TEST_FILE_PATH ${optional_args})
-    else()
-        message(FATAL_ERROR "Too many optional arguments (${n_optional_args}; 0 or 1 allowed) sent to add_tests().")
-    endif()
-    if(TEST_FILE_PATH)
-        enable_testing()
-        include(TEST_FILE_PATH)
-    else()
-        message(STATUS "No tests have been specified for this project.")
-    endif()
 endmacro()
 
 # Macro for printing variables
