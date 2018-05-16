@@ -17,6 +17,9 @@ macro(set_dir_state cur_dir)
         message(STATUS "Invalid number of optional arguments (${n_optional_args}) passed to set_dir_state().")
     endif()
 
+    # Initialize defaults
+    set(DATASUBDIR "" )
+
     # Read a file which specifies the content
     #   and subdirectory structure of the
     #   given directory.
@@ -55,9 +58,9 @@ macro(set_dir_state cur_dir)
     list(APPEND ALLDIRS ${SRCDIRS} )
     list(APPEND ALLDIRS ${PASSDIRS} )
 
-    # Set the full path to the final 
+    # Set the full path to the final
     # data directory install destination
-    set(DATADIR ${CMAKE_INSTALL_PREFIX}/data/${DATASUBDIR} )
+    set(DATADIR ${DESTDIR}/share/${DATASUBDIR} )
 endmacro()
 
 # Macro which adds a directory to the project's
@@ -217,8 +220,9 @@ macro(build_executables cur_dir )
         target_compile_options(${_exe_name} PRIVATE -DGBP_DATA_DIR=\"${DATADIR}\" )
         install(TARGETS ${_exe_name} DESTINATION bin )
 
-        # Add dependencies. 
+        # Add dependencies (including the math library)
         target_link_libraries(${_exe_name} ${_DEPLIST_REV})
+        target_link_libraries(${_exe_name} m)
         if(DEPLIST)
             add_dependencies(${_exe_name} ${DEPLIST})
         endif()
@@ -235,7 +239,7 @@ macro(build_data_files cur_dir )
     foreach( _data_file ${DATAFILE_LIST} )
         get_filename_component( _data_name ${_data_file} NAME )
         message(STATUS "Adding data file " ${_data_name} )
-        configure_file( ${_data_file} data/${DATASUBDIR}/${_data_name} COPYONLY )
+        install(FILES ${_data_file} DESTINATION share/${DATASUBDIR} )
     endforeach()
 endmacro()
 
@@ -260,7 +264,7 @@ macro(process_options cur_dir )
     # Recurse through all directories
     set_dir_state(${cur_dir} TRUE)
     foreach(_dir_name ${ALLDIRS} )
-        process_options( ${cur_dir}/${_dir_name} ) 
+        process_options( ${cur_dir}/${_dir_name} )
     endforeach()
 
     if( ${cur_dir} STREQUAL ${CMAKE_SOURCE_DIR} )
@@ -287,7 +291,7 @@ macro(process_dependencies cur_dir )
     # Recurse through all directories
     set_dir_state(${cur_dir} TRUE)
     foreach(_dir_name ${ALLDIRS} )
-        process_options( ${cur_dir}/${_dir_name} ) 
+        process_options( ${cur_dir}/${_dir_name} )
     endforeach()
 
     if( ${cur_dir} STREQUAL ${CMAKE_SOURCE_DIR} )
@@ -387,47 +391,53 @@ endmacro()
 
 # Process an environment variable
 macro(define_project_env_variable variableName description default_value )
-    # Check to see if this varaible has already been defined
-    if(NOT "${variableName}" IN_LIST project_variable_names)
-        # Check to see if the variable has been defined in the environment
-        if (DEFINED ENV{${variableName}})
-            set(${variableName} "$ENV{${variableName}}" CACHE INTERNAL "Copied from environment variable")
-            message(STATUS "   -> ${variableName} set to {${${variableName}}} from environment.")
-        # ... if not, set it to the given default
-        else()
+    # Check to see if the variable has been defined in the environment
+    if (NOT "$ENV{${variableName}}" STREQUAL "")
+        set(${variableName} "$ENV{${variableName}}" CACHE INTERNAL "Copied from environment variable")
+        message(STATUS "${variableName} set to {${${variableName}}} from environment.")
+    # ... if not, set it to the given default
+    else()
+        if (NOT "${default_value}" STREQUAL "NO_DEFAULT")
             set(${variableName} "${default_value}" CACHE INTERNAL "Set from default")
-            message(STATUS "   -> ${variableName} set to {${${variableName}}} from default.")
+            message(STATUS "${variableName} set to {${${variableName}}} from default.")
+        else()
+            message(FATAL_ERROR "A required project environmnet variable {${variableName}} has not been set.")
         endif()
-
-        # Check for optional arguments.  They will be allowed values.
-        set (allowed_values ${ARGN})
-        list(LENGTH allowed_values n_allowed_values)
-
-        # If any allowed values are given, make sure that the set value is one of them
-        if(${n_allowed_values} GREATER 0)
-            list (FIND allowed_values "${${variableName}}" _index)
-            if (${_index} EQUAL -1)
-                message(FATAL_ERROR "Value assigned to ${variableName} (${${variableName}}) is not a member of the given allowed list (${allowed_values}).")
-            endif()        
-        endif()
-
-        # Define a compile option from the variable if it is clearly boolean
-        if(${n_allowed_values} EQUAL 2)
-            list (FIND allowed_values "ON"  _index1)
-            list (FIND allowed_values "OFF" _index2)
-            if(_index1 GREATER -1 AND _index2 GREATER -1)
-                option(${variableName} ${description} ${${variableName}})
-                if(${${variableName}})
-                    message(STATUS "   -> Adding compile definition: ${variableName}")
-                    add_definitions(-D${variableName})
-                endif()
-            endif()
-        endif()
-
-        # Add the variable to the project list
-        list(APPEND project_variable_names  ${variableName})
-        list(APPEND project_variable_values ${allowed_values})
     endif()
+
+    # Check for optional arguments.  They will be allowed values.
+    set (allowed_values ${ARGN})
+    list(LENGTH allowed_values n_allowed_values)
+
+    # If any allowed values are given, make sure that the set value is one of them
+    if(${n_allowed_values} GREATER 0)
+        list (FIND allowed_values "${${variableName}}" _index)
+        if (${_index} EQUAL -1)
+            message(FATAL_ERROR "Value assigned to ${variableName} (${${variableName}}) is not a member of the given allowed list (${allowed_values}).")
+        endif()
+    endif()
+
+    # Define an appropriate compile option from the variable (boolean if clearly indicated as such by the defaults)
+    if(${n_allowed_values} EQUAL 2)
+        list (FIND allowed_values "ON"  _index1)
+        list (FIND allowed_values "OFF" _index2)
+        if(_index1 GREATER -1 AND _index2 GREATER -1)
+            option(${variableName} ${description} ${${variableName}})
+            if(${${variableName}})
+                #message(STATUS "Adding compile definition: ${variableName}")
+                add_definitions(-D${variableName}=1)
+            else()
+                add_definitions(-D${variableName}=0)
+            endif()
+        else()
+            #message(STATUS "Adding compile definition: ${variableName}=${${variableName}}")
+            add_definitions(-D${variableName}=${${variableName}})
+        endif()
+    else()
+        #message(STATUS "Adding compile definition: ${variableName}=${${variableName}}")
+        add_definitions(-D${variableName}=${${variableName}})
+    endif()
+
 endmacro()
 
 # Add tests (optionally give test filename; else 'tests.cmake' is default)

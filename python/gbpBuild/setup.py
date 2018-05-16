@@ -70,7 +70,8 @@ setup(name=package_name,
       package_data={'gbpBuild': package_files()},
       entry_points={
           'console_scripts': [
-              'gbpBuild_info=%s.scripts.gbpBuild_info:gbpBuild_info' % (package_name)
+              'gbpBuild_info=%s.scripts.gbpBuild_info:gbpBuild_info' % (package_name),
+              'gbpBuild=%s.scripts.gbpBuild:gbpBuild' % (package_name)
           ]
       },
       packages=find_packages(),

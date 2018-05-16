@@ -7,6 +7,18 @@ cmake_minimum_required(VERSION 3.8)
 # Add the 'cmake' directory in the project directory to the module path
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR};${CMAKE_SOURCE_DIR}/.cmake")
 
+# For some reason, find_library does not search these paths(!) ... add them.
+# n.b.: On OSX, LD_LIBRARY_PATH can't be used, check PATH instead
+if(${APPLE})
+    list(APPEND CMAKE_LIBRARY_PATH $ENV{PATH})
+else()
+    list(APPEND CMAKE_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+endif()
+
+# For some reason, find_path does not search these paths(!) ... add them.
+list(APPEND CMAKE_INCLUDE_PATH $ENV{CPATH})
+list(APPEND CMAKE_INCLUDE_PATH $ENV{INCLUDE})
+
 # Clear default install directory (user should use
 # DESTDIR with make to set installation directory)
 set( CMAKE_INSTALL_PREFIX "./" )
@@ -44,7 +56,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ===========================================
 # Execute all project specific configurations
 # (set options, library dependencies, etc.)
-# These are defined in 'project.cmake' files.
+# These should be defined in a 'project.cmake'
+# file.
 # ===========================================
 process_options( ${CMAKE_SOURCE_DIR} )
 process_dependencies( ${CMAKE_SOURCE_DIR} )
