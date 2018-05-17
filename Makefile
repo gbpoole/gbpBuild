@@ -3,7 +3,7 @@
 
 # Set the default target to 'build'
 .PHONY: default
-default: all
+default: help
 
 # This ensures that we use standard (what is used in interactive shells) version of echo.
 ECHO = /bin/echo
@@ -61,6 +61,15 @@ endif
 #############################
 # Targets for project users #
 #############################
+
+# Help
+help:
+	@$(ECHO) 
+	@$(ECHO) "The following targets are available:"
+	@$(ECHO) "	build   - build all software for this project"
+	@$(ECHO) "	install - install all software for this project"
+	@$(ECHO) "	etc.  ... finish this help"
+	@$(ECHO) 
 
 # One-time initialization
 .PHONY: init
