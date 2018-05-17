@@ -4,6 +4,9 @@ import git
 import glob
 import click
 
+import gbpBuild.project as prj
+import gbpBuild.docs as docs
+
 # Find the project root directory
 git_repo = git.Repo(os.path.realpath(__file__), search_parent_directories=True)
 dir_root = git_repo.git.rev_parse("--show-toplevel")
@@ -16,13 +19,7 @@ dir_python = os.path.abspath(os.path.join(dir_root, "python"))
 for setup_py_i in glob.glob(dir_python + "/**/setup.py", recursive=True):
     sys.path.insert(0,os.path.abspath(os.path.dirname(setup_py_i)))
 
-# Import the project development module
-import gbpBuild_dev.project as prj
-import gbpBuild_dev.docs as docs
-
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-
-
 @click.command(context_settings=CONTEXT_SETTINGS)
 def gbpBuild_params():
     """
@@ -34,7 +31,6 @@ def gbpBuild_params():
 
     # Print project information
     project.print()
-
 
 # Permit script execution
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import re
 import shutil
 import fnmatch
 
-import gbpPy.log as SID
+import gbpBuild.log as SID
 
 _regex_parameter_selector = "[^%/]*"
 

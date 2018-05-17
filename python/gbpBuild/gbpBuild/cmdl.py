@@ -1,17 +1,12 @@
 """Code for parsing cmd-line arguments
 
-Developed with the following library versions:
-
-    python:        3.5.2
+This code has been rendered obsolute by Click.  Kept for legacy reasons.
 """
 
 import optparse
 import os
-# imports
 import sys
-
-import gbpPy.log as SID
-
+import gbpBuild.log as SID
 
 class parser:
     """

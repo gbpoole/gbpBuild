@@ -4,11 +4,9 @@ import sys
 
 import click
 
-import gbpPy.cmdl as cmdl
-import gbpPy.log as SID
-import gbpPy.templates as tmp
-
 import gbpBuild as bld
+import gbpBuild.log as SID
+import gbpBuild.templates as tmp
 
 # Main function
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
