@@ -80,7 +80,7 @@ process_headers( ${CMAKE_SOURCE_DIR} )
 process_targets( ${CMAKE_SOURCE_DIR} )
 
 # Enable testing (defined in 'tests.cmake'; no tests if absent)
-process_tests()
+process_tests( ${CMAKE_SOURCE_DIR} )
 
 # ==================
 # Add custom targets 

@@ -12,21 +12,21 @@ import gbpBuild.templates as tmp
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('template_name',default=None,type=str)
-@click.argument('project_dir',default=None,type=str)
+@click.argument('output_dir',default=None,type=str)
 @click.option('-d','--path','template_path', help='Path to template directory',    type=str,default=None)
 @click.option('-r',         'flag_uninstall',help='Remove template',                        default=False,is_flag=True)
 @click.option('-s',         'flag_silent',   help='Silent/test run',                        default=False,is_flag=True)
 @click.option('-f',         'flag_force',    help='Force write for existing files',         default=False,is_flag=True)
 @click.option('-u',         'update_element',help='Update single element only',    type=str,default=None)
-def gbpBuild(template_name,project_dir,template_path,flag_uninstall,flag_silent,flag_force,update_element):
+def gbpBuild(template_name,output_dir,template_path,flag_uninstall,flag_silent,flag_force,update_element):
 
     # Validate inputs
-    if(not os.path.isdir(project_dir)):
-        SID.log.error("Given project directory (%s) is not a valid directory."%(project_dir))
+    if(not os.path.isdir(output_dir)):
+        SID.log.error("Given project directory (%s) is not a valid directory."%(output_dir))
 
     # Process inputs
-    project_dir_abs = os.path.abspath(project_dir)
-    project_name    = tmp.get_base_name(project_dir_abs).replace("-", "_")
+    output_dir_abs = os.path.abspath(output_dir)
+    project_name    = tmp.get_base_name(output_dir_abs).replace("-", "_")
 
     # Create list of input templates
     template_list=template_name.split(',')
@@ -44,7 +44,7 @@ def gbpBuild(template_name,project_dir,template_path,flag_uninstall,flag_silent,
 
     ## Process the template
     if(flag_uninstall):
-        template.uninstall(project_dir_abs,params_raw=params,silent=flag_silent,update=update_element)
+        template.uninstall(output_dir_abs,params_raw=params,silent=flag_silent,update=update_element)
     else:
         ## Generate parameter dictionary
         params = {}
@@ -54,7 +54,7 @@ def gbpBuild(template_name,project_dir,template_path,flag_uninstall,flag_silent,
         params['description'] = 'One line description of project.'
 
         ## Install template
-        template.install(project_dir_abs, params_raw=params, silent=flag_silent,update=update_element,force=flag_force)
+        template.install(output_dir_abs, params_raw=params, silent=flag_silent,update=update_element,force=flag_force)
 
     SID.log.close("Done")
 
