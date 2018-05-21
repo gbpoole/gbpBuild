@@ -50,7 +50,7 @@ def gbpBuild(template_name,output_dir,template_path,flag_uninstall,flag_silent,f
         params = {}
         params['name'] = project_name
         params['author'] = 'Gregory B. Poole'
-        params['email'] = 'gbpoole@gmail.com'
+        params['author_email'] = 'gbpoole@gmail.com'
         params['description'] = 'One line description of project.'
 
         ## Install template
