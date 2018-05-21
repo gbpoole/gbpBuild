@@ -48,12 +48,10 @@ def gbpBuild(template_name,project_dir,template_path,flag_uninstall,flag_silent,
     else:
         ## Generate parameter dictionary
         params = {}
-        params['project_name'] = project_name
-        params['project_author'] = 'Gregory B. Poole'
-        params['project_email'] = 'gbpoole@gmail.com'
-        params['project_description'] = 'One line description of project.'
-        params['kcov_token'] = 'unset'
-        params['gbpbuild_rel_path'] = os.path.relpath(os.getcwd(),project_dir_abs)
+        params['name'] = project_name
+        params['author'] = 'Gregory B. Poole'
+        params['email'] = 'gbpoole@gmail.com'
+        params['description'] = 'One line description of project.'
 
         ## Install template
         template.install(project_dir_abs, params_raw=params, silent=flag_silent,update=update_element,force=flag_force)
