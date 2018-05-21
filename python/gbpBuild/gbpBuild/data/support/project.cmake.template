@@ -1,5 +1,5 @@
 macro(project_init)
-    set(_PROJECT_NAME  "%%%project_name%%%")
+    set(_PROJECT_NAME  "%%%name%%%")
 endmacro()
 
 macro(project_options)

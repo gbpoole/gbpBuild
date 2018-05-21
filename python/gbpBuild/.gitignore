@@ -1,7 +1,3 @@
-# Build products
-*.o
-*.a
-
 # Some annoying Apple stuff
 .DS_Store
 *.dSYM
@@ -14,20 +10,13 @@
 __pycache__
 .idea
 
+# Temporary install products
+.project.yml
+.project_aux.yml
+.package.yml
+
 # .vi swap files
 *.*.swp
-
-# cmake stuff
-.cmake-tmp*
-
-# Common names for out-of-source build directories
-cmake-build-*
-build-*
-build
-_build
-
-# Used for testing
-mpich
 
 #Miscillaneous
 .install*

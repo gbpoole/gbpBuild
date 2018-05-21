@@ -7,7 +7,7 @@ import gbpBuild.docs as docs
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
-def gbpBuild_info():
+def %%%name%%%_info():
     """
     Print the dictionary of project parameters stored in the project (.project.yml) and package (.package.yml) files.
     :return: None
@@ -22,5 +22,5 @@ def gbpBuild_info():
 
 # Permit script execution
 if __name__ == '__main__':
-    status = gbpBuild_info()
+    status = %%%name%%%_params()
     sys.exit(status)

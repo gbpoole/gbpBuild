@@ -10,4 +10,9 @@ Modules
 
 .. toctree::
 
-   gbpBuild.unnamed_module
+   gbpBuild.cmdl
+   gbpBuild.docs
+   gbpBuild.log
+   gbpBuild.package
+   gbpBuild.project
+   gbpBuild.templates

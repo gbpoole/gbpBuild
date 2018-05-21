@@ -20,7 +20,7 @@ Alternatively (an prehaps more-often-than-not), you may want to add *gbpSID* as 
 Acquireing the code
 -------------------
 
-*gbpSID* is a "live-at-head" project.  In other words, it is intended that the latest commit on the 'master' branch will always be the best version to develop with.  To aquire it, simply clone it from *GitHub*::
+It is intended that the latest commit on the 'master' branch will always be the best version to develop with.  To aquire it, simply clone it from *GitHub*::
 
     git clone https://github.com/gbpoole/gbpSID.git
 

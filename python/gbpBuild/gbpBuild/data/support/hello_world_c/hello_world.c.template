@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SENDER_DEFAULT "%%%project_name%%%\0"
+#define SENDER_DEFAULT "%%%name%%%\0"
 #define ERROR_SYNTAX 1
 
 void print_help(int argc, char *argv[], _Bool flag_description);

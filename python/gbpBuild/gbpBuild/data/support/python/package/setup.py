@@ -28,13 +28,6 @@ package_scripts.append("update_gbpBuild_docs")
 #    2) the script name matches the file name
 entry_points = [ "%s=%s.scripts.%s:%s"%(script_i,this_package.params['name'],script_i,script_i) for script_i in package_scripts ]
 
-# Report the list of Click executables to be generated
-SID.log.open("The following Click entry-points will be created:")
-for script in package_scripts:
-    SID.log.comment(script)
-SID.log.close(None)    
-
-SID.log.comment("Running setup.py...")    
 setup(
     name=this_package.params['name'],
     version=this_project.params['version'],
@@ -48,4 +41,3 @@ setup(
     entry_points={'console_scripts': entry_points},
     package_data={this_package.params['name']: this_package.package_files},
 )
-SID.log.comment("Success.")    
