@@ -3,7 +3,9 @@ macro(local_extern cur_dir )
     # Include external libraries added as submodules to the build here, by
     # using 'add_external_submodule' like follows:
     #
-    #    add_external_submodule( ${cur_dir} "library_name" ${cur_dir}"/library_name/file_to_check" )
+    #    add_external_submodule( ${relative_path_to_extern} "extern_name" "file_to_check" TRUE)
     #
-    # where file to check is a file that will always be in the project (eg. README.md)
+    # where 'file_to_check' is a file that will always be in the project (eg. README.md) and
+    # the final parameter is a boolean flag indicating whether the project should be processed
+    # as a gbpBuild project, with it's targets added as dependancies to this project, etc.
 endmacro()
