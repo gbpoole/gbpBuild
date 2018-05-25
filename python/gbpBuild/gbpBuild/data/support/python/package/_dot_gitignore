@@ -13,7 +13,6 @@ __pycache__
 # Temporary install products
 .project.yml
 .project_aux.yml
-.package.yml
 
 # .vi swap files
 *.*.swp
