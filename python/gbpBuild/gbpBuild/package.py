@@ -1,8 +1,15 @@
-import os
 import yaml
 import shutil
 import git
 import filecmp
+
+import os
+import sys
+
+# Make sure that what's in this path takes precidence
+# over an installed version of the project
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
+
 import gbpBuild as bld
 import gbpBuild.log as SID
 
@@ -40,7 +47,7 @@ class package:
     file and make/update a local copy.  If we are not in a git repo, then we are in an installed
     version of the package.  Either way, all parameters are read from this local copy.
 
-    Inputs: path_call; this needs to be the path to a file or directory living somewhere in the package
+    Inputs: path_call; this needs to be the FULL (i.e. absolute) path to a file or directory living somewhere in the package
     """
     def __init__(self,path_call):
 
@@ -49,7 +56,7 @@ class package:
         self.path_package_root = find_in_parent_path(path_call,"setup.py")
 
         # Assume that the tail of the root path is the package name
-        self.package_name = os.path.dirname(self.path_package_root)
+        self.package_name = os.path.basename(self.path_package_root)
 
         # Assume that all package modules, etc are in a directory off the root with the package name
         self.path_package = os.path.join(self.path_package_root,self.package_name)
@@ -71,8 +78,9 @@ class package:
         """
         paths = []
         for (path, directories, filenames) in os.walk(os.path.join(self.path_package,directory),followlinks=True):
-            for filename in filenames:
-                paths.append(os.path.join('..', path, filename))
+            if(path!="__pycache__"):
+                for filename in filenames:
+                    paths.append(os.path.join('..', path, filename))
         return paths
 
     def __str__(self):

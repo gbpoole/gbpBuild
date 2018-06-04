@@ -2,7 +2,6 @@ import os
 import pkgutil
 import subprocess
 
-
 def _parse_cmake_local(
         cur_dir,
         search_string,

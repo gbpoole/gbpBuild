@@ -1,8 +1,15 @@
-import os
 import yaml
 import shutil
 import git
 import filecmp
+
+import os
+import sys
+
+# Make sure that what's in this path takes precidence
+# over an installed version of the project
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
+
 import gbpBuild as bld
 import gbpBuild.log as SID
 
