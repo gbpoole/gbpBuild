@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# %%%name%%% documentation build configuration file
+# Project documentation build configuration file
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -33,6 +33,9 @@ from recommonmark.parser import CommonMarkParser
 # Include the project development module
 import gbpBuild.project as prj
 import gbpBuild.docs as docs
+
+# Include all python packages from this project
+prj.import_packages()
 
 # Parse the project directory to learn what we need about the project
 this_project = prj.project(os.path.abspath(__file__))
