@@ -363,38 +363,42 @@ class template:
                 template_path_parent='.'
             dir_new = template_directory(full_path_template,full_path_element,template_path_dir,self.get_directory(template_path_parent))
 
-            # Add directory to the list
-            self.add_directory(dir_new)
+            # Ignore '__pycache__' direcories that can get annoyingly created automatically when templates are installed by setuptools.
+            if(os.path.basename(full_path_element)!="__pycache__"):
+                # Add directory to the list
+                self.add_directory(dir_new)
 
-            # Check for symlinks to directories.  This is necessary
-            # because os.walk() does not list symlinks to directories (by default)
-            # and it is less work (I think) to look for them manually then to
-            # walk the tree with them and weed-out everything under
-            # them which we may not (often don't) want to consider at all.
-            for test_dir_i in os.listdir(root):
-                full_path_element=os.path.join(dir_new.full_path_in(),test_dir_i)
-                if(os.path.islink(full_path_element) and os.path.isdir(full_path_element)):
-                    # Sort-out some paths for the link
-                    full_path_element=os.path.abspath(os.path.join(root,os.readlink(full_path_element)))
-                    template_path_element = os.path.join(template_path_dir,test_dir_i)
-                    template_path_parent = os.path.dirname(template_path_element)
-                    # Process paths underneath sym-linked template directories
-                    # if they are not marked as being links
-                    dir_link = template_directory(full_path_template, full_path_element, template_path_element, self.get_directory(template_path_parent))
-                    if(not dir_link.is_link):
-                        n_template_files=self._process_directory_recursive(full_path_template,full_path_element,template_path_element,n_template_files)
-                    # ...else, just add the path
-                    else:
-                        self.add_directory(dir_link)
+                # Check for symlinks to directories.  This is necessary
+                # because os.walk() does not list symlinks to directories (by default)
+                # and it is less work (I think) to look for them manually then to
+                # walk the tree with them and weed-out everything under
+                # them which we may not (often don't) want to consider at all.
+                for test_dir_i in os.listdir(root):
+                    # Ignore '__pycache__' direcories that can get annoyingly created automatically when templatess are installed by setuptools.
+                    if(os.path.basename(test_dir_i)!="__pycache__"):
+                        full_path_element=os.path.join(dir_new.full_path_in(),test_dir_i)
+                        if(os.path.islink(full_path_element) and os.path.isdir(full_path_element)):
+                            # Sort-out some paths for the link
+                            full_path_element=os.path.abspath(os.path.join(root,os.readlink(full_path_element)))
+                            template_path_element = os.path.join(template_path_dir,test_dir_i)
+                            template_path_parent = os.path.dirname(template_path_element)
+                            # Process paths underneath sym-linked template directories
+                            # if they are not marked as being links
+                            dir_link = template_directory(full_path_template, full_path_element, template_path_element, self.get_directory(template_path_parent))
+                            if(not dir_link.is_link):
+                                n_template_files=self._process_directory_recursive(full_path_template,full_path_element,template_path_element,n_template_files)
+                            # ...else, just add the path
+                            else:
+                                self.add_directory(dir_link)
 
-            # Add files
-            for file_i in files:
-                template_path = os.path.normpath(os.path.join(template_path_start,os.path.relpath(root,full_path_recurse_start),file_i))
-                full_path_element = os.path.join(root,file_i)
-                file_new=template_file(full_path_template, full_path_element, template_path, dir_new)
-                if(file_new.is_template):
-                    n_template_files+=1
-                self.add_file(file_new)
+                # Add files
+                for file_i in files:
+                    template_path = os.path.normpath(os.path.join(template_path_start,os.path.relpath(root,full_path_recurse_start),file_i))
+                    full_path_element = os.path.join(root,file_i)
+                    file_new=template_file(full_path_template, full_path_element, template_path, dir_new)
+                    if(file_new.is_template):
+                        n_template_files+=1
+                    self.add_file(file_new)
 
         return(n_template_files)
 
