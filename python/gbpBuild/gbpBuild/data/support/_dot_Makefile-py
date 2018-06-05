@@ -52,16 +52,17 @@ endif
 clean-py:
 	@$(ECHO) -n "Cleaning-up Python debris..."
 	@rm -rf docs/build/
-	@rm -rf python/build/
-	@rm -rf python/dist/
-	@rm -rf python/.tox/
-	@rm -f  python/.coverage
-	@rm -rf python/htmlcov/
 	@cd python;find . -name '*.pyc' -exec rm -f {} +
 	@cd python;find . -name '*.pyo' -exec rm -f {} +
 	@cd python;find . -name '*~' -exec rm -f {} +
-	@cd python;find . -name '__pycache__' -exec rm -fr {} +
-	@cd python;find . -name '*.egg-info' -exec rm -fr {} +
+	@cd python;find . -name '__pycache__' -exec rm -rf {} +
+	@cd python;find . -name '*.egg-info' -exec rm -rf {} +
+	@cd python;find . -name '*.eggs' -exec rm -rf {} +
+	@cd python;find . -name 'build' -exec rm -rf {} +
+	@cd python;find . -name 'dist' -exec rm -rf {} +
+	@cd python;find . -name '.tox' -exec rm -rf {} +
+	@cd python;find . -name '.coverage' -exec rm -rf {} +
+	@cd python;find . -name 'htmlcov' -exec rm -rf {} +
 	@$(ECHO) "Done."
 
 ##################################

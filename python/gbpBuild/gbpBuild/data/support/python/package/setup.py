@@ -6,8 +6,8 @@ import gbpBuild.package as pkg
 import gbpBuild.log as SID
 
 # Fetch all the meta data for the project & package
-this_project = prj.project(__file__)
-this_package = pkg.package(__file__)
+this_project = prj.project(os.path.abspath(__file__))
+this_package = pkg.package(os.path.abspath(__file__))
 
 # Print project and package meta data to stdout
 SID.log.comment('')
