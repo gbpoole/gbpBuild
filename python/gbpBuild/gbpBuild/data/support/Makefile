@@ -24,6 +24,28 @@ else
 	PRJ_VERSION:=unset
 endif
 
+# Determine what sort of environment we're in (eg. OSX or Linux)
+OSTYPE := $(word 1,$(shell uname -msr))
+_MAC_BUILD=0
+_TRAVIS_BUILD=0
+ifdef TRAVIS_OS_NAME
+    ifeq ($(TRAVIS_OS_NAME),'osx')
+        _MAC_BUILD=1
+    endif
+    _TRAVIS_BUILD=1
+else
+    ifeq (${OSTYPE},Darwin)
+        _MAC_BUILD=1
+    endif
+endif
+export KCOV_EXE
+export _MAC_BUILD
+export _TRAVIS_BUILD
+
+# Coverage paths
+KCOV_DIR='tests/kcov-master'
+KCOV_EXE=$(KCOV_DIR)'/build/src/Release/kcov'
+
 # The build directory for documentation ('_build' to avoid breaking Readthedocs builds)
 BUILD_DIR_DOCS:=$(PRJ_DIR)/docs/_build
 
@@ -170,6 +192,33 @@ else
 endif
 	@$(ECHO) "Done."
 
+# Generate coverage information for executable tests
+.PHONY: tests-init
+tests-init:
+	@rm -rf tests ; mkdir tests
+tests/kcov.tgz:
+	@$(ECHO) -n "Downloading kcov code..."
+	@wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz -O tests/kcov.tgz
+	@tar xfz tests/kcov.tgz -C tests
+	@$(ECHO) "Done."
+$(KCOV_EXE): tests-init tests/kcov.tgz
+ifeq ($(_MAC_BUILD),1)
+	@cd $(KCOV_DIR);mkdir build;cd build;cmake -G Xcode .. ;xcodebuild -configuration Release
+else
+	@cd $(KCOV_DIR);mkdir build;cd build;cmake .. ;make
+endif
+$(TEST_LIST): $(KCOV_EXE)
+	@$(ECHO) -n "Generating coverage report for execution tests: "$@"..."
+	@$(KCOV_EXE) tests/coverage $@
+	@$(ECHO) "Done."
+kcov_exe: $(EXE_TESTS)
+
+# Generate and upload all coverage information
+kcov: kcov_exe
+	@$(ECHO) -n "Finalizing Codecov integration..."
+	@bash -c "bash <(curl -s https://codecov.io/bash) -t $(TOKEN_KCOV)"
+	@$(ECHO) "Done."
+
 ##########################
 # Print a status message #
 ##########################
@@ -181,7 +230,19 @@ endif
 	@$(ECHO) "Project name:     "$(PRJ_NAME)
 	@$(ECHO) "Project version:  "$(PRJ_VERSION)
 	@$(ECHO) "Git hash (short): "$(GIT_HASH)
-	@$(ECHO)
+ifeq ($(_MAC_BUILD),1)
+ifeq ($(_TRAVIS_BUILD),1)
+	@$(ECHO) "Detected system:  Mac on Travis"
+else
+	@$(ECHO) "Detected system:  Mac"
+endif
+else
+ifeq ($(_TRAVIS_BUILD),1)
+	@$(ECHO) "Detected system:  Travis"
+else
+	@$(ECHO) "Detected system:  Default (Linux assumed)"
+endif
+endif
 	@rm -rf .printed_status
 .printed_status:
 	@touch .printed_status

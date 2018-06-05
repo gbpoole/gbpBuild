@@ -72,17 +72,17 @@ clean-c: .print_status
 #################################
 
 # Run C tests
-.PHONY:	test-c
-test-c: .print_status build-c
+.PHONY:	tests-c
+tests-c: .print_status build-c
 	@$(ECHO) "Running C/C++ tests..."
-	@make -f test/Makefile tests
+	@make -f tests/Makefile tests
 	@$(ECHO) "Done."
 
 # Compute C/C++ test coverage
 .PHONY:	coverage-c
 coverage-c: .print_status build-c
 	@$(ECHO) "Generating C/C++ test coverage report..."
-	@make -f test/Makefile kcov
+	@make -f tests/Makefile kcov
 	@$(ECHO) "Done."
 
 # Report C/C++ linting issues

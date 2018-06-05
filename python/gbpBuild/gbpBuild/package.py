@@ -1,6 +1,5 @@
 import yaml
 import shutil
-import git
 import filecmp
 
 import os
@@ -41,11 +40,6 @@ def find_in_parent_path(path_start,filename_search,check=True):
 class package:
     """
     This class provides a package object, storing package parameters which describe the package.
-
-    No arguments are needed.  It will scan backwards from the location of this source file
-    to the first encountered .git directory.  In that directory, it will look for a .package.yml
-    file and make/update a local copy.  If we are not in a git repo, then we are in an installed
-    version of the package.  Either way, all parameters are read from this local copy.
 
     Inputs: path_call; this needs to be the FULL (i.e. absolute) path to a file or directory living somewhere in the package
     """

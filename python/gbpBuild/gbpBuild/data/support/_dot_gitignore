@@ -26,8 +26,8 @@ build-*
 build
 _build
 
-# Used for testing
-mpich
+# Scratch directory used for testing
+./tests
 
 #Miscillaneous
 .install*

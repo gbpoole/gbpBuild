@@ -69,8 +69,8 @@ clean-py:
 ##################################
 
 # Run Python tests
-.PHONY: test-py
-test-py: $(addsuffix .TEST,$(PKGS))
+.PHONY: tests-py
+tests-py: $(addsuffix .TEST,$(PKGS))
 $(addsuffix .TEST,$(PKGS)):
 	@$(ECHO) "Running tests for python package..."
 	@cd $(basename $@);python setup.py test
@@ -83,7 +83,7 @@ endif
 
 #Compute Python test coverage
 .PHONY: coverage-py
-coverage-py: test-py $(addsuffix .COV,$(PKGS))
+coverage-py: tests-py $(addsuffix .COV,$(PKGS))
 $(addsuffix .COV,$(PKGS)):
 	@$(ECHO) "Generating Python test coverage report for package {"$(basename $@)"}..."
 ifeq ($(shell which tox),)

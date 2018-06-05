@@ -17,11 +17,6 @@ class project:
     """
     This class provides a project object, storing project parameters which describe the project.
 
-    No arguments are needed.  It will scan backwards from the location of this source file
-    to the first encountered .git directory.  In that directory, it will look for a .project.yml
-    file and make/update a local copy.  If we are not in a git repo, then we are in an installed
-    version of the project.  Either way, all parameters are read from this local copy.
-
     Inputs: path_call; this needs to be the path to a file or directory living somewhere in the project
     """
     def __init__(self,path_call):
@@ -42,6 +37,8 @@ class project:
         with git.Repo(os.path.realpath(self.path_call), search_parent_directories=True) as git_repo:
             self.path_project_root = git_repo.git.rev_parse("--show-toplevel")
             self.filename_project_file_source = os.path.normpath(os.path.join(self.path_project_root,self.filename_project_filename))
+        except InvalidGitRepositoryError:
+            print("Installed environment will be assumed.")
 
         # Read the project file
         with open_project_file(self) as file_in:
