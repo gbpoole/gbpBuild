@@ -143,6 +143,7 @@ endif
 # Remove the documenation build directory
 .PHONY: docs-clean
 docs-clean:
+	@rm -rf docs/__pycache__
 	@rm -rf $(BUILD_DIR_DOCS)
 
 ##################################

@@ -51,7 +51,6 @@ endif
 .PHONY: clean-py
 clean-py:
 	@$(ECHO) -n "Cleaning-up Python debris..."
-	@rm -rf docs/build/
 	@cd python;find . -name '*.pyc' -exec rm -f {} +
 	@cd python;find . -name '*.pyo' -exec rm -f {} +
 	@cd python;find . -name '*~' -exec rm -f {} +

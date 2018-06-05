@@ -117,7 +117,7 @@ class project_file():
             aux_params = []
             aux_params.append({'dir_docs': os.path.abspath(os.path.join(self.project.path_project_root, "docs"))})
             aux_params.append({'dir_docs_api_src': os.path.abspath(os.path.join(self.project.path_project_root, "docs/src"))})
-            aux_params.append({'dir_docs_build': os.path.abspath(os.path.join(self.project.path_project_root, "docs/build"))})
+            aux_params.append({'dir_docs_build': os.path.abspath(os.path.join(self.project.path_project_root, "docs/_build"))})
             aux_params.append({'dir_python': os.path.abspath(os.path.join(self.project.path_project_root, "python"))})
             aux_params.append({'dir_python_pkg': os.path.abspath(os.path.join(self.project.path_project_root, 'python/gbpBuild/'))})
 
