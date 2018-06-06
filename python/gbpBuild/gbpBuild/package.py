@@ -45,24 +45,20 @@ class package:
     """
     def __init__(self,path_call):
 
-
-        # Scan upwards from the given path until 'setup.py' is found.  That will be the package root.
-        self.path_package_root = find_in_parent_path(path_call,"setup.py")
+        # Scan upwards from the given path until 'setup.py' is found.  That will be the package parent directory.
+        self.path_package_parent = find_in_parent_path(path_call,"setup.py")
 
         # Assume that the tail of the root path is the package name
-        self.package_name = os.path.basename(self.path_package_root)
-
-        # Assume that all package modules, etc are in a directory off the root with the package name
-        self.path_package = os.path.join(self.path_package_root,self.package_name)
+        self.package_name = os.path.basename(bld._PACKAGE_ROOT)
 
         # Read the package file
-        with open_package_file(self.path_package_root) as file_in:
+        with open_package_file(self.path_package_parent) as file_in:
             self.params = file_in.load()
         
         # Assemble a list of data files to bundle with the package
         self.package_files = self.collect_package_files()
 
-    def collect_package_files(self,directory='data'):
+    def collect_package_files(self):
         """
         Generate a list of non-code files to be included in the package.
     
@@ -71,7 +67,15 @@ class package:
         :return: a list of filenames.
         """
         paths = []
-        for (path, directories, filenames) in os.walk(os.path.join(self.path_package,directory),followlinks=True):
+        # Add the .project.yml and .package.yml files.  There are instances where these
+        # don't get installed by default (tox virtual envs, for example) and we need
+        # to make sure they are present
+        paths.append(os.path.abspath(os.path.join(self.path_package_parent,".project.yml")))
+        paths.append(os.path.abspath(os.path.join(self.path_package_parent,".project_aux.yml")))
+        paths.append(os.path.abspath(os.path.join(self.path_package_parent,".package.yml")))
+
+        # Add the given directory now
+        for (path, directories, filenames) in os.walk(os.path.join(bld._PACKAGE_ROOT,"data"),followlinks=True):
             if(path!="__pycache__"):
                 for filename in filenames:
                     paths.append(os.path.join('..', path, filename))
@@ -90,7 +94,7 @@ class package:
         return result
 
 class package_file():
-    def __init__(self,path_package_root):
+    def __init__(self,path_package_parent):
         # File pointer
         self.fp = None
 
@@ -98,7 +102,7 @@ class package_file():
         self.filename_package_filename = '.package.yml'
 
         # Set the filename of the package copy of the package file
-        self.filename_package_file = os.path.join(path_package_root,self.filename_package_filename)
+        self.filename_package_file = os.path.join(path_package_parent,self.filename_package_filename)
 
     def open(self):
         try:

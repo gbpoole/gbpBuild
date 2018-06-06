@@ -209,7 +209,7 @@ else
 endif
 $(TEST_LIST): $(KCOV_EXE)
 	@$(ECHO) -n "Generating coverage report for execution tests: "$@"..."
-	@$(KCOV_EXE) tests/coverage $@
+#	@$(KCOV_EXE) tests/coverage $@
 	@$(ECHO) "Done."
 kcov_exe: $(EXE_TESTS)
 

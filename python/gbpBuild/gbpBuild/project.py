@@ -28,17 +28,18 @@ class project:
         self.filename_auxiliary_filename = '.project_aux.yml'
 
         # Set the filename of the package copy of the project file
-        self.filename_project_file = os.path.join(bld._PACKAGE_ROOT,self.filename_project_filename)
-        self.filename_auxiliary_file = os.path.join(bld._PACKAGE_ROOT,self.filename_auxiliary_filename)
+        self.filename_project_file = os.path.abspath(os.path.join(bld._PACKAGE_ROOT,'..',self.filename_project_filename))
+        self.filename_auxiliary_file = os.path.abspath(os.path.join(bld._PACKAGE_ROOT,'..',self.filename_auxiliary_filename))
 
         # Determine if we are in a project repository.  Set to None if not.
         self.path_project_root = None
         self.filename_project_file_source = None
-        with git.Repo(os.path.realpath(self.path_call), search_parent_directories=True) as git_repo:
-            self.path_project_root = git_repo.git.rev_parse("--show-toplevel")
-            self.filename_project_file_source = os.path.normpath(os.path.join(self.path_project_root,self.filename_project_filename))
-        except InvalidGitRepositoryError:
-            print("Installed environment will be assumed.")
+        try:
+            with git.Repo(os.path.realpath(self.path_call), search_parent_directories=True) as git_repo:
+                self.path_project_root = git_repo.git.rev_parse("--show-toplevel")
+                self.filename_project_file_source = os.path.normpath(os.path.join(self.path_project_root,self.filename_project_filename))
+        except:
+            SID.log.comment("Installed environment will be assumed.")
 
         # Read the project file
         with open_project_file(self) as file_in:
@@ -146,10 +147,9 @@ class project_file():
             with open(self.project.filename_auxiliary_file, 'w') as outfile:
                 yaml.dump(aux_params, outfile, default_flow_style=False)
 
-
     def open(self):
         try:
-            SID.log.open("Opening project...")
+            SID.log.open("Opening project {%s}..."%(self.project.filename_project_file))
             self.fp_prj=open(self.project.filename_project_file)
             self.fp_aux=open(self.project.filename_auxiliary_file)
             SID.log.close("Done.")
@@ -159,8 +159,10 @@ class project_file():
 
     def close(self):
         try:
-            self.fp_prj.close()
-            self.fp_aux.close()
+            if(self.fp_prj!=None):
+                self.fp_prj.close()
+            if(self.fp_aux!=None):
+                self.fp_aux.close()
         except:
             SID.log.error("Could not close project file {%s}."%(self.project.filename))
             raise
