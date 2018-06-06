@@ -7,7 +7,9 @@ default: build
 
 # This ensures that we use standard (what is used in interactive shells) version of echo.
 ECHO = /bin/echo
+ECHO_NNL = /bin/echo -n
 export ECHO
+export ECHO_N
 
 # Extract the project name from the parent directory
 PRJ_DIR=$(PWD)
@@ -38,13 +40,17 @@ else
         _MAC_BUILD=1
     endif
 endif
-export KCOV_EXE
 export _MAC_BUILD
 export _TRAVIS_BUILD
 
+# A directory for storing stuff related to testing
+TESTS_DIR = '.tests'
+
 # Coverage paths
-KCOV_DIR='tests/kcov-master'
-KCOV_EXE=$(KCOV_DIR)'/build/src/Release/kcov'
+KCOV_DIR=$(TESTS_DIR)'/kcov-master'
+KCOV_EXE=${PWD}'/'$(KCOV_DIR)'/build/src/Release/kcov'
+export KCOV_EXE
+export KCOV_DIR
 
 # The build directory for documentation ('_build' to avoid breaking Readthedocs builds)
 BUILD_DIR_DOCS:=$(PRJ_DIR)/docs/_build
@@ -54,6 +60,7 @@ BUILD_LIST =
 DOCS_LIST = 
 INSTALL_LIST = 
 TEST_LIST = 
+COVERAGE_LIST = 
 CLEAN_LIST = 
 LINT_LIST = 
 
@@ -64,6 +71,7 @@ ifneq ($(wildcard .Makefile-c),)
 	DOCS_LIST := $(DOCS_LIST) build docs-c
 	INSTALL_LIST := $(INSTALL_LIST) install-c
 	TEST_LIST := $(TEST_LIST) tests-c
+	COVERAGE_LIST := $(COVERAGE_LIST) coverage-c
 	CLEAN_LIST := $(CLEAN_LIST) clean-c
 	LINT_CHECK_LIST := $(LINT_CHECK_LIST) lint-check-c
 	LINT_FIX_LIST := $(LINT_FIX_LIST) lint-fix-c
@@ -75,6 +83,7 @@ ifneq ($(wildcard .Makefile-py),)
 	BUILD_LIST := $(BUILD_LIST) build-py
 	INSTALL_LIST := $(INSTALL_LIST) install-py
 	TEST_LIST := $(TEST_LIST) tests-py
+	COVERAGE_LIST := $(COVERAGE_LIST) coverage-py
 	CLEAN_LIST := $(CLEAN_LIST) clean-py
 	LINT_CHECK_LIST := $(LINT_CHECK_LIST) lint-check-py
 	LINT_FIX_LIST := $(LINT_FIX_LIST) lint-fix-py
@@ -111,27 +120,27 @@ all:	.print_status init build install
 
 # Clean project
 .PHONY: clean
-clean:	 .print_status docs-clean $(CLEAN_LIST)
+clean:	 .print_status $(CLEAN_LIST) project-clean
 
 # Make sure all submodules are installed
 .PHONY: submodules
 submodules:
-	@$(ECHO) "Checking that all git submodules are up-to-date..."
+	@$(ECHO_NNL) "Checking that all git submodules are up-to-date..."
 	@git submodule update --recursive
 	@$(ECHO) "Done."
 
 # Make sure all needed Python code has been installed into the current environment
 .PHONY: requirements
 requirements:
-	@$(ECHO) "Making sure that all needed Python modules are present..."
+	@$(ECHO_NNL) "Making sure that all needed Python modules are present..."
 ifeq ($(shell which python),)
 	@$(error "'python' not in path.  Please install it or fix your environment and try again.)
 endif
 ifeq ($(shell which pip),)
 	@$(error "'pip' not in path.  Please install it or fix your environment and try again.)
 endif
-	@pip -q install -r .requirements.txt
-	@pip -q install -r .requirements_dev.txt
+	@pip -q install --src .src -r .requirements.txt
+	@pip -q install --src .src -r .requirements_dev.txt
 	@$(ECHO) "Done."
 
 ########################################
@@ -141,7 +150,7 @@ endif
 # Build the project documentation
 .PHONY: docs
 docs: $(DOCS_LIST) docs-update
-	@$(ECHO) "Building documenation..."
+	@$(ECHO_NNL) "Building documenation..."
 	@cd docs;sphinx-build . _build
 	@$(ECHO) "Done."
 
@@ -150,17 +159,22 @@ docs: $(DOCS_LIST) docs-update
 #       in order to generate executable syntax documentation.
 .PHONY: docs-update
 docs-update: build $(BUILD_DIR_DOCS)
-	@$(ECHO) "Updating API documenation..."
+	@$(ECHO_NNL) "Updating API documenation..."
 	@update_gbpBuild_docs $(PWD)
 	@$(ECHO) "Done."
 
 # Make the documentation build directory
 $(BUILD_DIR_DOCS):
 ifeq (,$(wildcard $@))
-	@$(ECHO) -n "Making docs build directory {"$@"}..."
+	@$(ECHO_NNL) -n "Making docs build directory {"$@"}..."
 	@mkdir $@
 	@$(ECHO) "Done."
 endif
+
+# Perform all build-system cleaning
+.PHONY: project-clean
+project-clean: docs-clean tests-clean
+	@$(ECHO) "Build system cleaned."
 
 # Remove the documenation build directory
 .PHONY: docs-clean
@@ -168,12 +182,20 @@ docs-clean:
 	@rm -rf docs/__pycache__
 	@rm -rf $(BUILD_DIR_DOCS)
 
+# Remove the tests directory
+.PHONY: docs-clean
+tests-clean:
+	@rm -rf $(TESTS_DIR)
+
 ##################################
 # Targets for project developers #
 ##################################
 
 # Run tests
 tests:	.print_status build $(TEST_LIST)
+
+# Generate code coverage reports
+coverage:	.print_status build $(COVERAGE_LIST)
 
 # Make liniting suggestions
 lint-check:	.print_status $(LINT_CHECK_LIST)
@@ -184,7 +206,7 @@ lint-fix:	.print_status $(LINT_FIX_LIST)
 # Update the pip python requirements files for the project.
 .PHONY: requirements-update
 requirements-update: .print_status
-	@$(ECHO) "Updating project Python requirements..."
+	@$(ECHO_NNL) "Updating project Python requirements..."
 ifeq ($(shell which pigar),)
 	@$(error "'pigar' not in path.  Please install it with 'pip install pigar' and try again.)
 else
@@ -192,30 +214,30 @@ else
 endif
 	@$(ECHO) "Done."
 
-# Generate coverage information for executable tests
-.PHONY: tests-init
-tests-init:
-	@rm -rf tests ; mkdir tests
-tests/kcov.tgz:
-	@$(ECHO) -n "Downloading kcov code..."
-	@wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz -O tests/kcov.tgz
-	@tar xfz tests/kcov.tgz -C tests
+# Download kcov
+.PHONY: $(TESTS_DIR)/kcov.tgz
+$(TESTS_DIR)/kcov.tgz:
+	@$(ECHO_NNL) "Downloading kcov code..."
+ifneq ($(wildcard $(TESTS_DIR)/.),)	
+	@mkdir $(TESTS_DIR)
+endif
+	@wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz -O $(TESTS_DIR)/kcov.tgz
+	@tar xfz $(TESTS_DIR)/kcov.tgz -C $(TESTS_DIR)
 	@$(ECHO) "Done."
-$(KCOV_EXE): tests-init tests/kcov.tgz
+
+# Build kcov
+.PHONY: $(KCOV_EXE)
+$(KCOV_EXE): $(TESTS_DIR)/kcov.tgz
 ifeq ($(_MAC_BUILD),1)
 	@cd $(KCOV_DIR);mkdir build;cd build;cmake -G Xcode .. ;xcodebuild -configuration Release
 else
 	@cd $(KCOV_DIR);mkdir build;cd build;cmake .. ;make
 endif
-$(TEST_LIST): $(KCOV_EXE)
-	@$(ECHO) -n "Generating coverage report for execution tests: "$@"..."
-#	@$(KCOV_EXE) tests/coverage $@
-	@$(ECHO) "Done."
-kcov_exe: $(EXE_TESTS)
 
-# Generate and upload all coverage information
-kcov: kcov_exe
-	@$(ECHO) -n "Finalizing Codecov integration..."
+# Generate and upload coverage information
+.PHONY: kcov
+kcov: $(KCOV_EXE) $(COVERAGE_LIST)
+	@$(ECHO_NNL) "Finalizing Codecov integration..."
 	@bash -c "bash <(curl -s https://codecov.io/bash) -t $(TOKEN_KCOV)"
 	@$(ECHO) "Done."
 
@@ -243,6 +265,7 @@ else
 	@$(ECHO) "Detected system:  Default (Linux assumed)"
 endif
 endif
+	@$(ECHO)
 	@rm -rf .printed_status
 .printed_status:
 	@touch .printed_status

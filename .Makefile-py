@@ -28,7 +28,7 @@ $(addsuffix .BUILD,$(PKGS)):
 # Make the build directory
 $(BUILD_DIR_PY):
 ifeq (,$(wildcard $@))
-	@$(ECHO) -n "Making python build directory {"$@"}..."
+	@$(ECHO_NNL) "Making python build directory {"$@"}..."
 	@mkdir $@
 	@$(ECHO) "Done."
 endif
@@ -50,7 +50,7 @@ endif
 # Clean-up Python packages
 .PHONY: clean-py
 clean-py:
-	@$(ECHO) -n "Cleaning-up Python debris..."
+	@$(ECHO_NNL) "Cleaning-up Python debris..."
 	@cd python;find . -name '*.pyc' -exec rm -f {} +
 	@cd python;find . -name '*.pyo' -exec rm -f {} +
 	@cd python;find . -name '*~' -exec rm -f {} +
@@ -60,6 +60,7 @@ clean-py:
 	@cd python;find . -name 'build' -exec rm -rf {} +
 	@cd python;find . -name 'dist' -exec rm -rf {} +
 	@cd python;find . -name '.tox' -exec rm -rf {} +
+	@cd python;find . -name '.pytest_cache' -exec rm -f {} +
 	@cd python;find . -name '.coverage' -exec rm -rf {} +
 	@cd python;find . -name 'htmlcov' -exec rm -rf {} +
 	@$(ECHO) "Done."
@@ -73,9 +74,9 @@ clean-py:
 tests-py: $(addsuffix .TEST,$(PKGS))
 $(addsuffix .TEST,$(PKGS)):
 	@$(ECHO) "Running tests for python package..."
-	@cd $(basename $@);python setup.py test
 ifeq ($(shell which tox),)
 	@$(warning 'tox' not in path.  Please (re)install and try command again if you want it's support.)
+	@cd $(basename $@);python setup.py test
 else
 	@cd $(basename $@);tox
 endif
@@ -85,13 +86,13 @@ endif
 .PHONY: coverage-py
 coverage-py: tests-py $(addsuffix .COV,$(PKGS))
 $(addsuffix .COV,$(PKGS)):
-	@$(ECHO) "Generating Python test coverage report for package {"$(basename $@)"}..."
+	@$(ECHO_NNL) "Generating Python test coverage report for package {"$(basename $@)"}..."
 ifeq ($(shell which tox),)
 	@$(error 'coverage' not in path.  Please (re)install coverage.py and try command again if you want it's support.)
 else
-	@cd $(basename $@);coverage run setup.py test
-	@cd $(basename $@);coverage report -m
-	@cd $(basename $@);coverage html
+	@cd $(basename $@);$(KCOV_EXE) python setup.py test
+	@cd $(basename $@);$(KCOV_EXE) report -m
+	@cd $(basename $@);$(KCOV_EXE) html
 endif
 	@$(ECHO) "Done."
 
@@ -99,7 +100,7 @@ endif
 .PHONY: lint-check-py
 lint-check-py: $(addsuffix .LINT-CHECK,$(PKGS))
 $(addsuffix .LINT-CHECK,$(PKGS)):
-	@$(ECHO) -n "Linting python package {"$(basename $@)"}..."
+	@$(ECHO_NNL) "Linting python package {"$(basename $@)"}..."
 ifeq ($(shell which autopep8),)
 	@$(error 'autopep8' not in path.  Please (re)install with 'pip install autopep8' and try command again.)
 else ifeq ($(shell which docformatter),)
@@ -114,7 +115,7 @@ endif
 .PHONY: lint-fix-py
 lint-fix-py: $(addsuffix .LINT-FIX,$(PKGS))
 $(addsuffix .LINT-FIX,$(PKGS)):
-	@$(ECHO) -n "Applying linting suggestions to python package {"$(basename $@)"}..."
+	@$(ECHO_NNL) "Applying linting suggestions to python package {"$(basename $@)"}..."
 ifeq ($(shell which autopep8),)
 	@$(error 'autopep8' not in path.  Please (re)install with 'pip install autopep8' and try command again.)
 else ifeq ($(shell which docformatter),)

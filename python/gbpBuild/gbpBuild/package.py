@@ -63,8 +63,7 @@ class package:
         Generate a list of non-code files to be included in the package.
     
         By default, all files in the 'data' directory in the package root will be added.
-        :param directory: The path to walk to generate the file list.
-        :return: a list of filenames.
+        :return: a list of absolute paths.
         """
         paths = []
         # Add the .project.yml and .package.yml files.  There are instances where these
@@ -74,11 +73,38 @@ class package:
         paths.append(os.path.abspath(os.path.join(self.path_package_parent,".project_aux.yml")))
         paths.append(os.path.abspath(os.path.join(self.path_package_parent,".package.yml")))
 
-        # Add the given directory now
+        # Add the data directory
         for (path, directories, filenames) in os.walk(os.path.join(bld._PACKAGE_ROOT,"data"),followlinks=True):
             if(path!="__pycache__"):
                 for filename in filenames:
                     paths.append(os.path.join('..', path, filename))
+        return paths
+
+    def collect_package_scripts(self):
+        """
+        Generate a list of script files associated with this package.
+    
+        By default, all files in the 'scripts' directory in the package root will be added.
+        :return: a list of absolute paths.
+        """
+        paths = []
+
+        # Add the scripts directory
+        path_start = os.path.join(bld._PACKAGE_ROOT,"scripts")
+        for (path, directories, filenames) in os.walk(path_start,followlinks=True):
+            for filename in filenames:
+                filename_base = os.path.basename(filename)
+                script_name,filename_extension = os.path.splitext(filename_base)
+                if(filename_extension=='.py'):
+                    if(script_name!='__init__'):
+                        path_relative=os.path.relpath(path,path_start)
+                        script_pkg_path=path_relative.replace("/",".")
+                        if(script_pkg_path=='.'):
+                            script_pkg_path=''
+                        else:
+                            script_pkg_path+='.'
+                        script_pkg_path+=script_name
+                        paths.append([script_name,script_pkg_path])
         return paths
 
     def __str__(self):

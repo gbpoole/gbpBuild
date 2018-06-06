@@ -1,6 +1,11 @@
-from distutils.core import setup
-from setuptools import setup, find_packages
 import os
+import sys
+from setuptools import setup, find_packages
+
+# Make sure that what's in this path takes precidence
+# over an installed version of the project
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
+
 import gbpBuild.project as prj
 import gbpBuild.package as pkg
 import gbpBuild.log as SID
@@ -14,20 +19,14 @@ SID.log.comment('')
 SID.log.comment(this_project)
 SID.log.comment(this_package)
 
-# Initialize the list of package scripts with a script which can be
-# run to query the build parameters, version, etc. of the package.
-package_scripts = ["%s_info"%(this_package.params['name'])]
-
-# Add aditional package scripts here
-package_scripts.append("gbpBuild")
-package_scripts.append("update_gbpBuild_docs")
-
 # This line converts the package_scripts list above into the entry point 
 # list needed by Click, provided that: 
 #    1) each script is in its own file
 #    2) the script name matches the file name
-entry_points = [ "%s=%s.scripts.%s:%s"%(script_i,this_package.params['name'],script_i,script_i) for script_i in package_scripts ]
+#    3) There is only one script per file
+entry_points = [ "%s=%s.scripts.%s:%s"%(script_name_i,this_package.params['name'],script_pkg_path_i,script_name_i) for script_name_i,script_pkg_path_i in this_package.collect_package_scripts() ]
 
+# Execute setup
 setup(
     name=this_package.params['name'],
     version=this_project.params['version'],

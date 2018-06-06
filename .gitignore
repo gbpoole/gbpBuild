@@ -12,6 +12,10 @@
 *.eggs
 *.egg-info
 __pycache__
+.pytest_cache
+.src
+
+# JetBrains stuff
 .idea
 
 # .vi swap files
@@ -27,8 +31,7 @@ build
 _build
 
 # Scratch directory used for testing
-./tests
-./tests/*
+.tests
 
 #Miscillaneous
 .install*

@@ -5,9 +5,11 @@ Developed with the following library versions:
     python:        3.5.2
 """
 
+# For legacy-Python compatability
+from __future__ import print_function
+
 import sys
 import time
-
 
 class log_stream(object):
     """This class  manages the formatting of log output."""
@@ -36,33 +38,38 @@ class log_stream(object):
 
     def indent(self):
         """Compute the next indent."""
-        print (self.indent_size*self.n_indent*' ',end='',flush=True, file=self.fp)
+        print (self.indent_size*self.n_indent*' ',end='', file=self.fp)
+        sys.stdout.flush()
         
     def open(self,msg):
         """Open a new indent bracket for the log."""
         self.unhang()
         self.indent()
-        print(msg,end='',flush=True, file=self.fp)
+        print(msg,end='', file=self.fp)
+        sys.stdout.flush()
         self.hanging=True
         self.n_indent+=1
         self.t_last=time.time()
     
     def append(self,msg):
         """Add to the end of the current line in the log."""
-        print (msg,end='',flush=True, file=self.fp)
+        print (msg,end='', file=self.fp)
+        sys.stdout.flush()
         self.hanging=True
 
     def comment(self,msg):
         """Add a one-line comment to the log."""
         self.unhang()
         self.indent()
-        print (msg,end='\n',flush=True, file=self.fp)
+        print (msg,end='\n', file=self.fp)
+        sys.stdout.flush()
         self.hanging=False
 
     def raw(self,msg):
         """Print raw, unformatted text to the log."""
         self.unhang()
-        print (msg,flush=True, file=self.fp)
+        print (msg, file=self.fp)
+        sys.stdout.flush()
         self.hanging=False
     
     def close(self,msg=None,time_elapsed=False):
@@ -77,7 +84,8 @@ class log_stream(object):
                 msg_time   =" (%d seconds)"%(dt)
             else:
                 msg_time=''
-            print (msg+msg_time, end='\n',flush=True, file=self.fp)
+            print (msg+msg_time, end='\n', file=self.fp)
+            sys.stdout.flush()
             self.hanging=False
     
     def error(self,err_msg,code=None):

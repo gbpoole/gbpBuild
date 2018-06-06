@@ -149,7 +149,7 @@ class project_file():
 
     def open(self):
         try:
-            SID.log.open("Opening project {%s}..."%(self.project.filename_project_file))
+            SID.log.open("Opening project...")
             self.fp_prj=open(self.project.filename_project_file)
             self.fp_aux=open(self.project.filename_auxiliary_file)
             SID.log.close("Done.")
