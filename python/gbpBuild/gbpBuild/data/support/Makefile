@@ -172,9 +172,12 @@ ifeq (,$(wildcard $@))
 endif
 
 # Perform all build-system cleaning
-.PHONY: project-clean
-project-clean: docs-clean tests-clean
-	@$(ECHO) "Build system cleaned."
+.PHONY: project-clean project-clean-start project-clean-stop
+project-clean-start:
+	@$(ECHO_NNL) "Cleaning-up project debris..."
+project-clean-stop:
+	@$(ECHO) "Done."
+project-clean: project-clean-start docs-clean tests-clean project-clean-stop
 
 # Remove the documenation build directory
 .PHONY: docs-clean

@@ -60,7 +60,7 @@ clean-py:
 	@cd python;find . -name 'build' -exec rm -rf {} +
 	@cd python;find . -name 'dist' -exec rm -rf {} +
 	@cd python;find . -name '.tox' -exec rm -rf {} +
-	@cd python;find . -name '.pytest_cache' -exec rm -f {} +
+	@cd python;find . -name '.pytest_cache' -exec rm -rf {} +
 	@cd python;find . -name '.coverage' -exec rm -rf {} +
 	@cd python;find . -name 'htmlcov' -exec rm -rf {} +
 	@$(ECHO) "Done."
