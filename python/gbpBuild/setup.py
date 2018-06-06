@@ -33,7 +33,7 @@ setup(
     description=this_package.params['description'],
     author=this_project.params['author'],
     author_email=this_project.params['author_email'],
-    install_requires=['Click'],
+    install_requires=['Click','gbpBuild','PyYAML'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     packages=find_packages(),
