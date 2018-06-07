@@ -13,6 +13,12 @@ sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 import gbpBuild as bld
 import gbpBuild.log as SID
 
+# This hack deals with a python2.7 error with PyYaml, See here:
+# https://stackoverflow.com/questions/27518976/how-can-i-get-pyyaml-safe-load-to-handle-python-unicode-tag
+def constructor(loader, node):
+    return node.value
+yaml.SafeLoader.add_constructor("tag:yaml.org,2002:python/unicode", constructor)
+
 class project:
     """
     This class provides a project object, storing project parameters which describe the project.
@@ -119,7 +125,6 @@ class project_file():
                     SID.log.close("Up-to-date.")
             except:
                 SID.log.error("Could not update package's project file.")
-                raise
 
             # Create a dictionary of a bunch of auxiliary project information
 
@@ -157,7 +162,7 @@ class project_file():
 
             # Write auxiliary parameters file
             with open(self.project.filename_auxiliary_file, 'w') as outfile:
-                yaml.dump(aux_params, outfile, default_flow_style=False)
+                yaml.dump(aux_params, outfile, default_flow_style=False, encoding='utf-8') # UTF-8 to ensure compatability between py27 and py3X
 
     def open(self):
         try:
