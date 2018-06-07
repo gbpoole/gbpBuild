@@ -1,5 +1,10 @@
 import sys
+import os
 import click
+
+# Make sure that what's in this path takes precidence
+# over an installed version of the project
+sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import gbpBuild.project as prj
 import gbpBuild.package as pkg
@@ -13,12 +18,13 @@ def gbpBuild_info():
     :return: None
     """
     # Set/fetch all the project details we need
-    project = prj.project(__file__)
-    package = pkg.package(__file__)
+    project = prj.project(os.path.abspath(__file__))
+    package = pkg.package(os.path.abspath(__file__))
 
     # Print project & package information
-    print(project)
-    print(package)
+    SID.log.comment('')
+    SID.log.comment(project)
+    SID.log.comment(package)
 
 # Permit script execution
 if __name__ == '__main__':

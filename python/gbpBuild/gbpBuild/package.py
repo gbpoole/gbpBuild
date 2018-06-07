@@ -12,31 +12,6 @@ sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 import gbpBuild as bld
 import gbpBuild.log as SID
 
-def find_in_parent_path(path_start,filename_search,check=True):
-    # Initialize the start
-    path_result = None
-    if(os.path.isdir(path_start)):
-        cur_dir = path_start
-    else:
-        cur_dir = os.path.dirname(path_start)
-
-    # Scan upwards until we find the file or run out of path
-    while(True):
-        filename_test = os.path.join(cur_dir,filename_search)
-        if(os.path.isfile(filename_test)):
-            path_result = cur_dir
-            break
-        elif (cur_dir == os.sep):
-            break
-        else:
-            cur_dir = os.path.dirname(cur_dir)
-
-    # Check if the file has been found
-    if(check and path_result == None):
-        SID.log.error("Could not find {%s} in parent directories of path {%s}."%(filename_search,path_start))
-
-    return path_result
-
 class package:
     """
     This class provides a package object, storing package parameters which describe the package.
@@ -46,10 +21,13 @@ class package:
     def __init__(self,path_call):
 
         # Scan upwards from the given path until 'setup.py' is found.  That will be the package parent directory.
-        self.path_package_parent = find_in_parent_path(path_call,"setup.py")
+        self.path_package_parent = bld.find_in_parent_path(path_call,".package.yml")
 
         # Assume that the tail of the root path is the package name
-        self.package_name = os.path.basename(bld._PACKAGE_ROOT)
+        self.package_name = os.path.basename(self.path_package_parent)
+
+        # Set the path where all the package modules start
+        self.path_package_root = os.path.join(self.path_package_parent,self.package_name)
 
         # Read the package file
         with open_package_file(self.path_package_parent) as file_in:
@@ -74,7 +52,7 @@ class package:
         paths.append(os.path.abspath(os.path.join(self.path_package_parent,".package.yml")))
 
         # Add the data directory
-        for (path, directories, filenames) in os.walk(os.path.join(bld._PACKAGE_ROOT,"data"),followlinks=True):
+        for (path, directories, filenames) in os.walk(os.path.join(self.path_package_root,"data"),followlinks=True):
             if(path!="__pycache__"):
                 for filename in filenames:
                     paths.append(os.path.join('..', path, filename))
@@ -90,7 +68,7 @@ class package:
         paths = []
 
         # Add the scripts directory
-        path_start = os.path.join(bld._PACKAGE_ROOT,"scripts")
+        path_start = os.path.join(self.path_package_root,"scripts")
         for (path, directories, filenames) in os.walk(path_start,followlinks=True):
             for filename in filenames:
                 filename_base = os.path.basename(filename)
@@ -132,9 +110,7 @@ class package_file():
 
     def open(self):
         try:
-            SID.log.open("Opening package...")
             self.fp=open(self.filename_package_file)
-            SID.log.close("Done.")
         except:
             SID.log.error("Could not open package file {%s}."%(self.filename))
             raise
@@ -163,7 +139,7 @@ class open_package_file:
 
     def __enter__(self):
         # Open the package's copy of the file
-        SID.log.open("Opening package file...")
+        SID.log.open("Opening package...")
         try:
             self.file_in = package_file(self.path_call)
             self.file_in.open()

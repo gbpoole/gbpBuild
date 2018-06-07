@@ -28,16 +28,27 @@ class project:
         self.filename_auxiliary_filename = '.project_aux.yml'
 
         # Set the filename of the package copy of the project file
-        self.filename_project_file = os.path.abspath(os.path.join(bld._PACKAGE_ROOT,'..',self.filename_project_filename))
-        self.filename_auxiliary_file = os.path.abspath(os.path.join(bld._PACKAGE_ROOT,'..',self.filename_auxiliary_filename))
+        package_root = bld.find_in_parent_path(self.path_call,self.filename_project_filename)
+        if(package_root!=None):
+            self.filename_project_file = os.path.join(package_root,self.filename_project_filename)
+            self.filename_auxiliary_file = os.path.abspath(os.path.join(os.path.dirname(self.filename_project_file),self.filename_auxiliary_filename))
+        else:
+            self.filename_project_file = ''
+            self.filename_auxiliary_file = ''
 
         # Determine if we are in a project repository.  Set to None if not.
         self.path_project_root = None
         self.filename_project_file_source = None
         try:
             with git.Repo(os.path.realpath(self.path_call), search_parent_directories=True) as git_repo:
-                self.path_project_root = git_repo.git.rev_parse("--show-toplevel")
-                self.filename_project_file_source = os.path.normpath(os.path.join(self.path_project_root,self.filename_project_filename))
+                path_project_root_test = git_repo.git.rev_parse("--show-toplevel")
+                # Check that there is a .project.yml file here.  Otherwise, we may be sitting in the path
+                # of some other repo, and not a project repo
+                if(not os.path.isfile(os.path.join(path_project_root_test,self.filename_project_filename))):
+                    raise Exception("No project file found.")
+                else:
+                    self.path_project_root = path_project_root_test
+                    self.filename_project_file_source = os.path.normpath(os.path.join(self.path_project_root,self.filename_project_filename))
         except:
             SID.log.comment("Installed environment will be assumed.")
 
@@ -76,6 +87,7 @@ class project:
 
 class project_file():
     def __init__(self,project):
+        # Keep a record of inputs
         self.project=project
 
         # File pointer
@@ -92,7 +104,7 @@ class project_file():
             # ... if so, update the package's copy of the project file.  This is needed because if
             #    this is being run from an installed package, then there is no access to files outside
             #    of the package, and we need to work with an up-to-date copy instead.
-            SID.log.open("Validating package's project file...")
+            SID.log.open("Validating package's project files...")
             try:
                 flag_update=False
                 if(not os.path.isfile(self.project.filename_project_file)):
@@ -149,10 +161,8 @@ class project_file():
 
     def open(self):
         try:
-            SID.log.open("Opening project...")
             self.fp_prj=open(self.project.filename_project_file)
             self.fp_aux=open(self.project.filename_auxiliary_file)
-            SID.log.close("Done.")
         except:
             SID.log.error("Could not open project file {%s}."%(self.project.filename))
             raise
@@ -191,7 +201,7 @@ class open_project_file:
 
     def __enter__(self):
         # Open the package's copy of the file
-        SID.log.open("Opening project file...")
+        SID.log.open("Opening project...")
         try:
             self.file_in = project_file(self.project)
             self.file_in.open()

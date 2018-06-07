@@ -39,14 +39,14 @@ class log_stream(object):
     def indent(self):
         """Compute the next indent."""
         print (self.indent_size*self.n_indent*' ',end='', file=self.fp)
-        sys.stdout.flush()
+        self.fp.flush()
         
     def open(self,msg):
         """Open a new indent bracket for the log."""
         self.unhang()
         self.indent()
         print(msg,end='', file=self.fp)
-        sys.stdout.flush()
+        self.fp.flush()
         self.hanging=True
         self.n_indent+=1
         self.t_last=time.time()
@@ -54,22 +54,22 @@ class log_stream(object):
     def append(self,msg):
         """Add to the end of the current line in the log."""
         print (msg,end='', file=self.fp)
-        sys.stdout.flush()
+        self.fp.flush()
         self.hanging=True
 
     def comment(self,msg):
         """Add a one-line comment to the log."""
         self.unhang()
         self.indent()
-        print (msg,end='\n', file=self.fp)
-        sys.stdout.flush()
-        self.hanging=False
+        print (msg,end='', file=self.fp)
+        self.fp.flush()
+        self.hanging=True
 
     def raw(self,msg):
         """Print raw, unformatted text to the log."""
         self.unhang()
         print (msg, file=self.fp)
-        sys.stdout.flush()
+        self.fp.flush()
         self.hanging=False
     
     def close(self,msg=None,time_elapsed=False):
@@ -85,18 +85,17 @@ class log_stream(object):
             else:
                 msg_time=''
             print (msg+msg_time, end='\n', file=self.fp)
-            sys.stdout.flush()
+            self.fp.flush()
             self.hanging=False
     
     def error(self,err_msg,code=None):
         """Emit an error message and exit."""
         self.unhang()
         if(code):
-            print (('\nERROR %d: %s\n')%(code,err_msg), file=self.fp)
+            message = err_msg+" [code="+code+"]"
         else:
-            print (('\nERROR: %s\n') % (err_msg), file=self.fp)
-            code=1
-        exit(code)
+            message = err_msg
+        raise Exception(message)
 
 # Initialize the log stream
 log=log_stream()

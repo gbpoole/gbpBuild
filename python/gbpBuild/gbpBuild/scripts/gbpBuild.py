@@ -4,6 +4,10 @@ import sys
 
 import click
 
+# Make sure that what's in this path takes precidence
+# over an installed version of the project
+sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import gbpBuild as bld
 import gbpBuild.log as SID
 import gbpBuild.templates as tmp
