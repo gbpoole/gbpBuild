@@ -461,7 +461,7 @@ class template:
             SID.log.close("Done")
 
         # Print the contents of the template
-        self.print()
+        SID.log.comment(self)
 
         SID.log.close("Done")
 
@@ -573,20 +573,18 @@ class template:
             SID.log.error("Failed write template file {%s}."%(element.template_path_in()))
 
     # Print the template contents
-    def print(self):
-        SID.log.open("Template contents:")
-        SID.log.comment("n_directories=%d"%(len(self.directories)))
-        SID.log.comment("n_files      =%d"%(    self.n_files()))
-        SID.log.comment("n_parameters =%d"%(len(self.params_list)))
+    def __str__(self):
+        result="Template contents:"
+        result+="n_directories=%d"%(len(self.directories))
+        result+="n_files      =%d"%(    self.n_files())
+        result+="n_parameters =%d"%(len(self.params_list))
         for param_ref_i in self.params_list:
-            SID.log.comment("   --> %s" % (param_ref_i))
+            result+="   --> %s"%(param_ref_i)
 
         for dir_i in sorted(self.directories, key=lambda dir_j: len(self.template_path_out(dir_j))):
-            SID.log.open("Directory {%s}:"%(dir_i.template_path_in()))
+            result+="Directory {%s}:"%(dir_i.template_path_in())
             for file_i in sorted(dir_i.files, key=lambda file_j: self.template_path_out(file_j)):
-                SID.log.comment("--> %s"%(file_i.template_path_in()))
-            SID.log.close()
-        SID.log.close()
+                result+="   --> %s"%(file_i.template_path_in())
 
     # Install or uninstall a template
     def _process_template(self, params=None, uninstall=False, silent=False, update=None, force=False):
