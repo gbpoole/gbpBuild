@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 
 import gbpBuild as bld
-import gbpBuild.log as SID
+from . import log as SID
 
 class package:
     """

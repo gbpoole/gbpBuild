@@ -6,7 +6,7 @@ This code has been rendered obsolute by Click.  Kept for legacy reasons.
 import optparse
 import os
 import sys
-import gbpBuild.log as SID
+from . import log as SID
 
 class parser:
     """

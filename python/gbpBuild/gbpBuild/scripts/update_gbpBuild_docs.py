@@ -5,8 +5,8 @@ import glob
 import click
 
 # Import the project development module
-import gbpBuild.project as prj
-import gbpBuild.docs as docs
+from .. import project as prj
+from .. import docs as docs
 
 ## Include the paths to local python projects (including the _dev package)
 ## Make sure we prepend to the list to make sure that we don't use an

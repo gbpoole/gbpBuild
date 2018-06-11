@@ -4,11 +4,12 @@ import click
 
 # Make sure that what's in this path takes precidence
 # over an installed version of the project
-sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.join(os.path.abspath(__file__),'..'))))
 
-import gbpBuild.project as prj
-import gbpBuild.package as pkg
-import gbpBuild.docs as docs
+from .. import project as prj
+from .. import package as pkg
+from .. import docs as docs
+from .. import log as SID
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)

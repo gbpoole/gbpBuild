@@ -1,10 +1,15 @@
 import filecmp
 import os
+import sys
 import re
 import shutil
 import fnmatch
 
-import gbpBuild.log as SID
+# Make sure that what's in this path takes precidence
+# over an installed version of the project
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
+
+from . import log as SID
 
 _regex_parameter_selector = "[^%/]*"
 

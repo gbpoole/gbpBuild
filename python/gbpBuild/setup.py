@@ -24,7 +24,7 @@ SID.log.comment(this_package)
 #    1) each script is in its own file
 #    2) the script name matches the file name
 #    3) There is only one script per file
-SID.log.comment("Click scripts:")
+SID.log.comment("Executable scripts:")
 package_scripts = this_package.collect_package_scripts()
 entry_points = []
 for script_name_i,script_pkg_path_i in package_scripts:
@@ -39,7 +39,7 @@ setup(
     description=this_package.params['description'],
     author=this_project.params['author'],
     author_email=this_project.params['author_email'],
-    install_requires=['Click','gbpBuild','PyYAML'],
+    install_requires=['Click'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     packages=find_packages(),

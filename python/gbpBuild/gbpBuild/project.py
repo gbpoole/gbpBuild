@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 
 import gbpBuild as bld
-import gbpBuild.log as SID
+from . import log as SID
 
 # This hack deals with a python2.7 error with PyYaml, See here:
 # https://stackoverflow.com/questions/27518976/how-can-i-get-pyyaml-safe-load-to-handle-python-unicode-tag

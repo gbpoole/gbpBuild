@@ -1,9 +1,15 @@
 import sys
+import os
 import click
 
-import gbpBuild.project as prj
-import gbpBuild.package as pkg
-import gbpBuild.docs as docs
+# Make sure that what's in this path takes precidence
+# over an installed version of the project
+sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.join(os.path.abspath(__file__),'..'))))
+
+from .. import project as prj
+from .. import package as pkg
+from .. import docs as docs
+from .. import log as SID
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -13,14 +19,15 @@ def %%%name%%%_info():
     :return: None
     """
     # Set/fetch all the project details we need
-    project = prj.project(__file__)
-    package = pkg.package(__file__)
+    project = prj.project(os.path.abspath(__file__))
+    package = pkg.package(os.path.abspath(__file__))
 
     # Print project & package information
-    print(project)
-    print(package)
+    SID.log.comment('')
+    SID.log.comment(project)
+    SID.log.comment(package)
 
 # Permit script execution
 if __name__ == '__main__':
-    status = %%%name%%%_params()
+    status = %%%name%%%_info()
     sys.exit(status)
