@@ -42,7 +42,7 @@ setup(
     install_requires=['Click'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
-    packages=find_packages(),
+    packages=find_packages(exclude=['scripts']),
     entry_points={'console_scripts': entry_points},
     package_data={this_package.params['name']: this_package.package_files},
 )

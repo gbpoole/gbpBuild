@@ -4,9 +4,13 @@ import sys
 
 import click
 
+# Make sure that what's in this path takes precidence
+# over an installed version of the project
+sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.join(os.path.abspath(__file__),'..'))))
+
 import gbpBuild as bld
-from .. import templates as tmp
-from .. import log as SID
+import gbpBuild.templates as tmp
+import gbpBuild.log as SID
 
 # Main function
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])

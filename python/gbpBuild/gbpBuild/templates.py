@@ -9,7 +9,7 @@ import fnmatch
 # over an installed version of the project
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 
-from . import log as SID
+import gbpBuild.log as SID
 
 _regex_parameter_selector = "[^%/]*"
 

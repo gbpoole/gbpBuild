@@ -1,5 +1,5 @@
 import os
-from . import log as SID
+import gbpBuild.log as SID
 
 _PACKAGE_ROOT = os.path.abspath(os.path.dirname(__file__))
 def full_path_datafile(path):
