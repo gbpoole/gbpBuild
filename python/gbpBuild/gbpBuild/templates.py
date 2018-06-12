@@ -579,17 +579,19 @@ class template:
 
     # Print the template contents
     def __str__(self):
-        result="Template contents:"
-        result+="n_directories=%d"%(len(self.directories))
-        result+="n_files      =%d"%(    self.n_files())
-        result+="n_parameters =%d"%(len(self.params_list))
+        result="Template contents:\n"
+        result+="n_directories=%d\n"%(len(self.directories))
+        result+="n_files      =%d\n"%(    self.n_files())
+        result+="n_parameters =%d\n"%(len(self.params_list))
         for param_ref_i in self.params_list:
-            result+="   --> %s"%(param_ref_i)
+            result+="   --> %s\n"%(param_ref_i)
 
         for dir_i in sorted(self.directories, key=lambda dir_j: len(self.template_path_out(dir_j))):
-            result+="Directory {%s}:"%(dir_i.template_path_in())
+            result+="Directory {%s}:\n"%(dir_i.template_path_in())
             for file_i in sorted(dir_i.files, key=lambda file_j: self.template_path_out(file_j)):
-                result+="   --> %s"%(file_i.template_path_in())
+                result+="   --> %s\n"%(file_i.template_path_in())
+
+        return result
 
     # Install or uninstall a template
     def _process_template(self, params=None, uninstall=False, silent=False, update=None, force=False):

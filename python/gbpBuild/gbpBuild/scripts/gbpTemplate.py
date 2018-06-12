@@ -6,7 +6,7 @@ import click
 
 # Make sure that what's in this path takes precidence
 # over an installed version of the project
-sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.join(os.path.abspath(__file__),'..'))))
+sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.join(os.path.abspath(__file__),'..','..'))))
 
 import gbpBuild as bld
 import gbpBuild.templates as tmp
@@ -22,7 +22,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-s',         'flag_silent',   help='Silent/test run',                        default=False,is_flag=True)
 @click.option('-f',         'flag_force',    help='Force write for existing files',         default=False,is_flag=True)
 @click.option('-u',         'update_element',help='Update single element only',    type=str,default=None)
-def gbpBuild(template_name,output_dir,template_path,flag_uninstall,flag_silent,flag_force,update_element):
+def gbpTemplate(template_name,output_dir,template_path,flag_uninstall,flag_silent,flag_force,update_element):
 
     # Validate inputs
     if(not os.path.isdir(output_dir)):
@@ -64,5 +64,5 @@ def gbpBuild(template_name,output_dir,template_path,flag_uninstall,flag_silent,f
 
 # Permit script execution
 if __name__ == '__main__':
-    status = gbpBuild()
+    status = gbpTemplate()
     sys.exit(status)
