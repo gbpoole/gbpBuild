@@ -134,7 +134,15 @@ class project_file():
             aux_params.append({'dir_docs_api_src': os.path.abspath(os.path.join(self.project.path_project_root, "docs/src"))})
             aux_params.append({'dir_docs_build': os.path.abspath(os.path.join(self.project.path_project_root, "docs/_build"))})
             aux_params.append({'dir_python': os.path.abspath(os.path.join(self.project.path_project_root, "python"))})
-            aux_params.append({'dir_python_pkg': os.path.abspath(os.path.join(self.project.path_project_root, 'python/gbpBuild/'))})
+
+            # Get a list of python packages
+            python_path      = aux_params[-1]['dir_python']
+            python_path_dirs = os.listdir(python_path)
+            python_pkgs      = []
+            for python_path_dir_i in python_path_dirs:
+                if(python_path_dir_i!='build' and python_path_dir_i!='_build'):
+                    python_pkgs.append(python_path_dir_i)
+            aux_params.append({'python_packages': python_pkgs})
 
             # Check if this is a C-project (the appropriate makefile will be present if so)
             if(os.path.isfile(os.path.join(self.project.path_project_root, ".Makefile-c"))):
