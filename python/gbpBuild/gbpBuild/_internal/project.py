@@ -8,8 +8,8 @@ import yaml
 import git
 
 # Infer the name of this package from the path of __file__
-package_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-package_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+package_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+package_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 package_name = os.path.basename(package_root_dir)
 
 # Make sure that what's in this path takes precidence

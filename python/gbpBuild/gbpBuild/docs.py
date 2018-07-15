@@ -610,32 +610,35 @@ def generate_Python_execs_rst(project):
     """
     filename_root = "Python_execs"
 
-    # Proceed only if the executable directory exists
-    dir_exec = os.path.join(project.params['path_project_root'], "python/bin")
-    flag_execs_present = False
-    if(os.path.isdir(dir_exec)):
+    # Loop over all packages
+    for package in project.packages:
 
-        # Create list of python executables
-        exe_list = [exec_i for exec_i in os.listdir(dir_exec) if exec_i.endswith(".py")]
+        # Proceed only if the executable directory exists
+        dir_exec = os.path.join(project.params['path_project_root'], "python/bin")
+        flag_execs_present = False
+        if(os.path.isdir(dir_exec)):
 
-        # Generate output for each executable in turn
-        for exec_i in exe_list:
-            if(not flag_execs_present):
-                # Open the output file for writing and write a header
-                if(not os.path.isdir(project.params['dir_docs_api_src'])):
-                    os.makedirs(project.params['dir_docs_api_src'])
-                outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
-                outFile.write(underlined_text("Python Executables", '-'))
-                flag_execs_present = True
+            # Create list of python executables
+            exe_list = [exec_i for exec_i in os.listdir(dir_exec) if exec_i.endswith(".py")]
 
-            # Send output of executable to the output file
-            outFile.write(underlined_text(exec_i, '`'))
-            out = subprocess.check_output(['python', os.path.join(dir_exec, exec_i), "-h"]).decode("utf-8")
-            outFile.write(reformat_Click_help_to_rst(out))
+            # Generate output for each executable in turn
+            for exec_i in exe_list:
+                if(not flag_execs_present):
+                    # Open the output file for writing and write a header
+                    if(not os.path.isdir(project.params['dir_docs_api_src'])):
+                        os.makedirs(project.params['dir_docs_api_src'])
+                    outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
+                    outFile.write(underlined_text("Python Executables", '-'))
+                    flag_execs_present = True
 
-        # copy footer to output file
-        if(flag_execs_present):
-            cat_project_file(project, filename_root, ".footer", outFile)
+                # Send output of executable to the output file
+                outFile.write(underlined_text(exec_i, '`'))
+                out = subprocess.check_output(['python', os.path.join(dir_exec, exec_i), "-h"]).decode("utf-8")
+                outFile.write(reformat_Click_help_to_rst(out))
+
+            # copy footer to output file
+            if(flag_execs_present):
+                cat_project_file(project, filename_root, ".footer", outFile)
 
     # Close output file
     if(flag_execs_present):
