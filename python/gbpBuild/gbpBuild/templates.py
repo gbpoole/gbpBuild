@@ -17,10 +17,24 @@ _regex_parameter_selector = "[^%/]*"
 # ----------------
 
 def rreplace(s, old, new, occurrence):
+    """
+    This function performs a search-and-replace on a string for a given number of occurrences, but works from the back to the front.
+    :param s: string to manipulate
+    :param old: substring to search for
+    :param new: substring to replace with
+    :param occurrence: number of occurrences
+    :return: Modified string.
+    """
     li = s.rsplit(old, occurrence)
     return new.join(li)
 
 def check_and_remove_trailing_occurance(txt_in, occurance):
+    """
+    Check if a string ends with a given substring.  Remove it if so.
+    :param txt_in: Input string
+    :param occurance: Substring to search for
+    :return: Tuple of modified string and bool indicating if occurrence was found
+    """
     n_occurance = len(occurance)
     if (txt_in[-n_occurance:] == occurance):
         txt_out = txt_in[0:-n_occurance]
@@ -30,14 +44,23 @@ def check_and_remove_trailing_occurance(txt_in, occurance):
         flag_found = False
     return txt_out, flag_found
 
-# Get project name from given project directory
 def get_base_name(project_dir_abs):
+    """
+    Get project name from given project directory.
+    :param project_dir_abs: Absolute path to project
+    :return: Name of project
+    """
     head, tail = os.path.split(project_dir_abs)
     if (tail == ''):
         head, tail = os.path.split(head)
     return (tail)
 
 def format_template_names(name_list):
+    """
+    Create a comma-separated list of template names
+    :param name_list: Input list of names
+    :return: Comma-separated string
+    """
     name_txt = ''
     for i_name, name_i in enumerate(name_list):
         if (i_name == 0):
@@ -50,12 +73,22 @@ def format_template_names(name_list):
 # -------------------
 
 class template_element(object):
+    """
+    This is the base class for template objects (directories or files).
+    :param full_path_in_template_root: Full input path to the root of the template
+    :param full_path_in: Full input path to the template element
+    :param template_path:
+    :param dir_host:
+    :param is_directory: Bool indicating if this element is a directory
+    :param is_file: Bool indicating if this element is a file
+    """
     def __init__(self, full_path_in_template_root, full_path_in, template_path, dir_host,is_directory=False,is_file=False):
-
         # Set basic properties
         self.dirname_template = full_path_in_template_root
         self._full_path_in = full_path_in
         self._template_path_in = template_path
+
+        # Parse the input template name of the element -> output name
         self.parse_name(self._template_path_in)
 
         # Set the host directory
@@ -74,7 +107,11 @@ class template_element(object):
             self._full_path_in = os.path.realpath(self._full_path_in)
 
     def parse_name(self, template_path_in):
+        """
 
+        :param template_path_in:
+        :return:
+        """
         self.name_in = os.path.basename(template_path_in)
 
         # Remove any leading '_dot_'s from the output file name
@@ -84,13 +121,28 @@ class template_element(object):
         self.name_out, self.is_link = check_and_remove_trailing_occurance(self.name_out, '.link')
 
     def full_path_in(self):
+        """
+
+        :return:
+        """
         return os.path.normpath(os.path.abspath(self._full_path_in))
 
     def template_path_in(self):
+        """
+
+        :return:
+        """
         return self._template_path_in
 
 
 class template_directory(template_element):
+    """
+
+    :param full_path_in_template_root:
+    :param full_path_dir:
+    :param template_path:
+    :param dir_host:
+    """
     def __init__(self, full_path_in_template_root, full_path_dir, template_path, dir_host):
         # Verify that full_path_in points to a directory
         if (not os.path.isdir(full_path_dir)):
@@ -109,6 +161,13 @@ class template_directory(template_element):
 
 
 class template_file(template_element):
+    """
+
+    :param full_path_in_template_root:
+    :param full_path_file:
+    :param template_path:
+    :param dir_host:
+    """
     def __init__(self, full_path_in_template_root, full_path_file, template_path, dir_host):
         # Verify that full_path_in points to a file
         if (not os.path.isfile(full_path_file)):
@@ -122,8 +181,12 @@ class template_file(template_element):
         self.name_out, self.is_template = check_and_remove_trailing_occurance(self.name_out, '.template')
 
 class template:
-    def __init__(self,template_name=None,path=None):
+    """
 
+    :param template_name:
+    :param path:
+    """
+    def __init__(self,template_name=None,path=None):
         self.path = []
         self.dir = []
         self.name = []
@@ -136,8 +199,14 @@ class template:
         if(template_name!=None):
             self.add(template_name,path=path)
 
-    # This function locates all annotated parameter references in a string
+    # This method locates all annotated parameter references in a string
     def collect_parameter_references(self,string,delimiter="%%%"):
+        """
+
+        :param string:
+        :param delimiter:
+        :return:
+        """
         if(delimiter==None):
             delimiter="%%%"
         regex = re.compile("%s%s%s" % (delimiter,_regex_parameter_selector, delimiter))
@@ -149,6 +218,11 @@ class template:
                 self.params_list.add(directive)
 
     def init_inputs(self,user_params):
+        """
+
+        :param user_params:
+        :return:
+        """
 
         self.params = user_params
 
@@ -158,6 +232,13 @@ class template:
                 SID.log.error("Required parameter {%s} is not present in template installation dictionary."%(param_i))
 
     def resolve_directive(self, element, directive, check=False):
+        """
+
+        :param element:
+        :param directive:
+        :param check:
+        :return:
+        """
         input_return = None
         # Directives starting with '_' are protected commands.
         # Check to see if the directive is defined ...
@@ -277,6 +358,14 @@ class template:
         return input_return
 
     def _perform_parameter_substitution_ith(self,element,line,idx=None,delimiter="%%%"):
+        """
+
+        :param element:
+        :param line:
+        :param idx:
+        :param delimiter:
+        :return:
+        """
         if(delimiter==None):
             delimiter="%%%"
         line_new = line
@@ -328,6 +417,12 @@ class template:
             return line_new
     
     def perform_parameter_substitution(self,element,line):
+        """
+
+        :param element:
+        :param line:
+        :return:
+        """
         # As a first attempt, assume all subsitutions are of scalars.
         # If in the course of trying to do this, >=1 subsitution(s)
         # is/are a list, then subsequently deal with that.  If the
@@ -345,6 +440,12 @@ class template:
         return lines_new
     
     def perform_parameter_substitution_filename(self,element,name_out=False):
+        """
+
+        :param element:
+        :param name_out:
+        :return:
+        """
         # Finally, perform substitution
         if(name_out):
             n_lines,filename_out = self._perform_parameter_substitution_ith(element,element.name_out,delimiter="_var_")
@@ -358,6 +459,14 @@ class template:
         return filename_out
 
     def _process_directory_recursive(self, full_path_template, full_path_recurse_start, template_path_start, n_template_files):
+        """
+
+        :param full_path_template:
+        :param full_path_recurse_start:
+        :param template_path_start:
+        :param n_template_files:
+        :return:
+        """
         # Parse the given template directory
         for root, dirs, files in os.walk(full_path_recurse_start):
             # Create directory from directory name
@@ -408,7 +517,11 @@ class template:
         return(n_template_files)
 
     def _build_path_list(self,path=None):
+        """
 
+        :param path:
+        :return:
+        """
         # Priority goes to the list of paths passed by the call
         path_list = []
         for path_i in [p for p in path if p!=None]:
@@ -423,7 +536,12 @@ class template:
         return(path_list) 
 
     def add(self,template_name,path=None):
+        """
 
+        :param template_name:
+        :param path:
+        :return:
+        """
         # Build a list of priority-ordered paths to search
         path_list = self._build_path_list(path)
 
@@ -471,6 +589,12 @@ class template:
         SID.log.close("Done")
 
     def update_element(self,element,update):
+        """
+
+        :param element:
+        :param update:
+        :return:
+        """
         # If no update element is given, then we're updating everything
         if(update==None):
             return True
@@ -492,12 +616,22 @@ class template:
         return (is_in_update_path)
 
     def get_directory(self,template_path_in):
+        """
+
+        :param template_path_in:
+        :return:
+        """
         for dir_i in self.directories:
             if(dir_i.template_path_in()==template_path_in):
                 return dir_i
         return None
 
     def get_file(self,template_path_in):
+        """
+
+        :param template_path_in:
+        :return:
+        """
         for dir_i in self.directories:
             for file_i in dir_i.files:
                 if(file_i.template_path_in()==template_path_in):
@@ -505,11 +639,21 @@ class template:
         return None
 
     def add_directory(self,dir_add):
+        """
+
+        :param dir_add:
+        :return:
+        """
         dir_check = self.get_directory(dir_add.template_path_in())
         if(dir_check==None):
             self.directories.append(dir_add)
 
     def add_file(self, file_add):
+        """
+
+        :param file_add:
+        :return:
+        """
         # Prevent the addition of files to sym-linked directories
         if (file_add.dir_host.is_symlink):
             raise Exception("Can not add file {%s} to sym-linked directory {%s}." % (file_add.name_in, file_add.dir_host.name_in))
@@ -538,12 +682,21 @@ class template:
 
     # Count the number of files in the template
     def n_files(self):
+        """
+
+        :return:
+        """
         n_files =0
         for dir_i in self.directories:
             n_files += len(dir_i.files)
         return n_files
 
     def full_path_out(self, element):
+        """
+
+        :param element:
+        :return:
+        """
         if (element.dir_host == None):
             dir_host = self.dir_install
         else:
@@ -552,6 +705,11 @@ class template:
         return os.path.normpath(os.path.abspath(os.path.join(dir_host, name_out)))
 
     def template_path_out(self, element):
+        """
+
+        :param element:
+        :return:
+        """
         if (element.dir_host == None):
             dir_host = "."
         else:
@@ -560,6 +718,11 @@ class template:
         return os.path.normpath(os.path.join(dir_host, name_out))
 
     def write_with_substitution(self, file_in):
+        """
+
+        :param file_in:
+        :return:
+        """
         if(not file_in.is_file):
             SID.log.error("Something other than a file {%s} has been passed to the 'write_with_substitution' template method." % (self.name_in))
         try:
@@ -577,8 +740,11 @@ class template:
         except:
             SID.log.error("Failed write template file {%s}."%(element.template_path_in()))
 
-    # Print the template contents
     def __str__(self):
+        """
+        Generate a string representation of the template.
+        :return: string
+        """
         result="Template contents:\n"
         result+="n_directories=%d\n"%(len(self.directories))
         result+="n_files      =%d\n"%(    self.n_files())
@@ -595,6 +761,15 @@ class template:
 
     # Install or uninstall a template
     def _process_template(self, params=None, uninstall=False, silent=False, update=None, force=False):
+        """
+
+        :param params:
+        :param uninstall:
+        :param silent:
+        :param update:
+        :param force:
+        :return:
+        """
         name_txt = format_template_names(self.name)
         if (not uninstall):
             if(len(self.name)>1):
@@ -636,6 +811,13 @@ class template:
         SID.log.close("Done.")
 
     def install_directory(self, directory, silent=False, force=None):
+        """
+
+        :param directory:
+        :param silent:
+        :param force:
+        :return:
+        """
         full_path_out = self.full_path_out(directory)
         try:
             if( not directory.is_root()):
@@ -674,6 +856,12 @@ class template:
             SID.log.error("Failed to install directory {%s}."%(full_path_out))
 
     def uninstall_directory(self, directory, silent=False):
+        """
+
+        :param directory:
+        :param silent:
+        :return:
+        """
         full_path_out = self.full_path_out(directory)
         try:
             if( not directory.is_root()):
@@ -698,6 +886,13 @@ class template:
             SID.log.error("Failed to uninstall directory {%s}."%(directory.name_out))
 
     def install_file(self, file_install, silent=False, force=False):
+        """
+
+        :param file_install:
+        :param silent:
+        :param force:
+        :return:
+        """
         full_path_in  = file_install.full_path_in()
         full_path_out = self.full_path_out(file_install)
         try:
@@ -740,6 +935,12 @@ class template:
             SID.log.error("Failed to install file {%s}."%(full_path_out))
 
     def uninstall_file(self, file_install, silent=False):
+        """
+        Uninstall a specific template file.
+        :param file_install:
+        :param silent:
+        :return:
+        """
         full_path_out = self.full_path_out(file_install)
         try:
             if( not os.path.isfile(full_path_out)):
@@ -761,8 +962,16 @@ class template:
             SID.log.error("Failed to uninstall file {%s}."%(full_path_out))
 
 
-    # Install template
     def install(self,dir_out,params_raw=None,silent=False,update=None,force=False):
+        """
+        Install template.
+        :param dir_out: Output template directory
+        :param params_raw: Raw (unprocessed) list of input parameters
+        :param silent: Bool indicating if this is a dry run (report only; no file operations performed)
+        :param update: String specifying a specific element to update
+        :param force: Bool indicating that existing files should be overwritten
+        :return:
+        """
         # Set the current install directory
         self.dir_install=dir_out
 
@@ -776,8 +985,15 @@ class template:
         self.dir_install = "."
 
 
-    # Uninstall template
     def uninstall(self,dir_out,params_raw=None,silent=False,update=None):
+        """
+        Uninstall template.
+        :param dir_out: Output template directory
+        :param params_raw: Raw (unprocessed) list of input parameters
+        :param silent: Bool indicating if this is a dry run (report only; no file operations performed)
+        :param update: String indicating a specific element to update
+        :return:
+        """
         # Set the current install directory
         self.dir_install=dir_out
 
