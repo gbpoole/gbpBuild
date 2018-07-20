@@ -32,7 +32,6 @@ def update_gbpBuild_docs(path_in_project):
     # and any needed API files as well
     docs.generate_project_rsts(project)
 
-
 # Permit script execution
 if __name__ == '__main__':
     status = update_gbpBuild_docs()
