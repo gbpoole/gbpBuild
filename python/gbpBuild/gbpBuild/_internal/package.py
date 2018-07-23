@@ -44,6 +44,9 @@ class package:
         # Assemble a list of data files to bundle with the package
         self.package_files = self.collect_package_files()
 
+        # Assemble a list of package scripts
+        self.scripts = self.collect_package_scripts()
+
     def collect_package_files(self):
         """Generate a list of non-code files to be included in the package.
 
