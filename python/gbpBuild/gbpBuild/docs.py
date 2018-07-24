@@ -628,9 +628,8 @@ def generate_Python_execs_rst(project):
 
             # Send output of executable to the output file
             outFile.write(underlined_text(exec_i, '`'))
-            #out = subprocess.check_output([exec_i, "-h"]).decode("utf-8")
-            #outFile.write(reformat_Click_help_to_rst(out))
-            outFile.write("Insert output from "+exec_i+" here.\n\n")
+            out = subprocess.check_output([exec_i, "-h"]).decode("utf-8")
+            outFile.write(reformat_Click_help_to_rst(out))
 
         # copy footer to output file
         if(flag_execs_present):
