@@ -514,27 +514,6 @@ def generate_Python_API_rst(project):
     """
     filename_root = "Python_API"
 
-    # Open the output file for writing
-    if(not os.path.isdir(project.params['dir_docs_api_src'])):
-        os.makedirs(project.params['dir_docs_api_src'])
-    outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
-
-    outFile.write(underlined_text("Python API", '-'))
-
-
-    # Close output file
-    outFile.close()
-
-def generate_Python_API_rst(project):
-    """
-    Generate the .rst files which describe the project's Python API (if present).
-
-    Files are written to the directory specified in project.params['dir_docs_api_src']
-    :param project: A project object providing a dictionary of project parameters
-    :return: None
-    """
-    filename_root = "Python_API"
-
     # Loop over all packages
     for i_package,package in enumerate(project.packages):
         if(i_package==0):
@@ -542,6 +521,8 @@ def generate_Python_API_rst(project):
             if(not os.path.isdir(project.params['dir_docs_api_src'])):
                 os.makedirs(project.params['dir_docs_api_src'])
             outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
+            # copy header to output file (if present)
+            cat_project_file(project, filename_root, ".header" , outFile)
             if(len(project.packages)>1):
                 if(i_package==0):
                     outFile.write(underlined_text("Python APIs", '='))
@@ -596,6 +577,8 @@ def generate_Python_execs_rst(project):
                 if(not os.path.isdir(project.params['dir_docs_api_src'])):
                     os.makedirs(project.params['dir_docs_api_src'])
                 outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
+                # copy header to output file (if present)
+                cat_project_file(project, filename_root, ".header" , outFile)
                 if(len(project.packages)>1):
                     if(i_package==0):
                         outFile.write(underlined_text("Python Executables", '='))
