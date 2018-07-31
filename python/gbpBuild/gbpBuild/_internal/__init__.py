@@ -6,7 +6,11 @@ package.  It provides three principle submodules for:
 3) _internal.log: for generating course logging information for the user
 """
 
-from future.utils import string_types
+PY2 = sys.version_info[0] == 2
+if not PY2:
+    string_types = (str,)
+else:
+    string_types = (str,unicode)
 
 def is_nonstring_iterable(object_in):
     """Determine if an object is a non-string iterable.
