@@ -21,7 +21,7 @@ import subprocess
 import sys
 import git
 import glob
-import breathe # This is here so that pigar will catch it when generating requirements.txt
+import breathe  # This is here so that pigar will catch it when generating requirements.txt
 
 from datetime import datetime
 from recommonmark.parser import CommonMarkParser
@@ -42,15 +42,15 @@ sys.path.append(breathe_directory)
 
 # If the is a Readthedocs build, then we need to run Doxygen
 if (os.environ.get('READTHEDOCS', None) == 'True'):
-    path_doxyfile=os.path.join(this_project.params['dir_docs'],"Doxyfile")
-    dir_doxy_xml=os.path.join(this_project.params['dir_docs'],"xml")
-    with open(path_doxyfile,"w") as fp_out:
+    path_doxyfile = os.path.join(this_project.params['dir_docs'], "Doxyfile")
+    dir_doxy_xml = os.path.join(this_project.params['dir_docs'], "xml")
+    with open(path_doxyfile, "w") as fp_out:
         fp_out.write("OUTPUT_DIRECTORY=docs\n")
         fp_out.write("GENERATE_XML=YES\n")
         fp_out.write("RECURSIVE=YES\n")
-    subprocess.call("cd ..; doxygen %s"%(path_doxyfile), shell=True)
+    subprocess.call("cd ..; doxygen %s" % (path_doxyfile), shell=True)
 else:
-    dir_doxy_xml=os.path.join(this_project.params['dir_docs_build'],"doxygen/xml")
+    dir_doxy_xml = os.path.join(this_project.params['dir_docs_build'], "doxygen/xml")
 
 # -- General configuration ------------------------------------------------
 
