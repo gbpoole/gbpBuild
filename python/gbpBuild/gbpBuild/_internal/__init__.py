@@ -6,13 +6,15 @@ package.  It provides three principle submodules for:
 3) _internal.log: for generating course logging information for the user
 """
 
+from future.utils import string_types
+
 def is_nonstring_iterable(object_in):
     """Determine if an object is a non-string iterable.
  
     :param object: An object of any type.
     :return: Boolean.  True if object is a non-string iterable.
     """
-    return hasattr(object_in, '__iter__') and not isinstance(object_in, (str))
+    return hasattr(object_in, '__iter__') and not isinstance(object_in, string_types)
 
 def ascii_encode_value(value):
     """Encode an object as ascii, if possible.
@@ -23,9 +25,7 @@ def ascii_encode_value(value):
 
     if(is_nonstring_iterable(value)):
         result = [ascii_encode_value(value_i) for value_i in value]
-    #elif(hasattr(value, 'encode')):
-    #    result = value.encode('ascii')
-    elif(hasattr(value, '__str__')):
+    elif(isinstance(value, string_types)):
         result = str(value)
     else:
         result = value

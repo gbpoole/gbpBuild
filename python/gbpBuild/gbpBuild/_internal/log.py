@@ -147,7 +147,6 @@ class log_stream(object):
             self._splice_line(splice, False)
 
         # Generate message
-        # print("TEST:",msg,n_lines)
         if(msg is not None):
             if(time_elapsed):
                 msg_time = " (%s)" % (format_time(dt))
