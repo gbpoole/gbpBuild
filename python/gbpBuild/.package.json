@@ -1,0 +1,14 @@
+[
+   {
+      "name": "gbpBuild"
+   },
+   {
+      "author": "Gregory B. Poole"
+   },
+   {
+      "author_email": "gbpoole@gmail.com"
+   },
+   {
+      "description": "Fast and easy configuration of a flexible, extensible, full-featured C/C++ &/or Python development project."
+   }
+]

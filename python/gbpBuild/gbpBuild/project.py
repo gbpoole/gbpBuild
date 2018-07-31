@@ -43,7 +43,7 @@ class project:
         self.filename_auxiliary_filename = '.project_aux.json'
 
         # Set the filename of the package copy of the project file
-        package_root = this_pkg.find_in_parent_path(self.path_call, self.filename_project_filename)
+        package_root = this_pkg.find_in_parent_path(self.path_call, 'setup.py')
         if(package_root is not None):
             self.filename_project_file = os.path.join(package_root, self.filename_project_filename)
             self.filename_auxiliary_file = os.path.abspath(
@@ -58,26 +58,20 @@ class project:
         # Determine if we are in a project repository.  Set to None if not.
         self.path_project_root = None
         self.filename_project_file_source = None
-        path_project_root = this_pkg.find_in_parent_path(self.path_call,'.git')
-        try:
-            if(not path_project_root):
-                raise Exception("No project file found.")
-        except BaseException:
-            this_pkg.log.error("Git repository could not be found for this package.")
-        finally:
+        path_project_root_test = this_pkg.find_in_parent_path(self.path_call,'.git',check=False)
+        if(not path_project_root_test):
+            this_pkg.log.comment("Installed environment will be assumed.")
+        # If we have found a repo, check that there is a .project.json file.  Fail if not.
+        else:
             try:
-                with git.Repo(os.path.realpath(self.path_call), search_parent_directories=True) as git_repo:
-                    path_project_root_test = git_repo.git.rev_parse("--show-toplevel")
-                    # Check that there is a .project.json file here.  Otherwise, we may be sitting in the path
-                    # of some other repo, and not a project repo
-                    if(not os.path.isfile(os.path.join(path_project_root_test, self.filename_project_filename))):
-                        raise Exception("No project file found.")
-                    else:
-                        self.path_project_root = path_project_root_test
-                        self.filename_project_file_source = os.path.normpath(
-                            os.path.join(self.path_project_root, self.filename_project_filename))
+                if(not os.path.isfile(os.path.join(path_project_root_test, self.filename_project_filename))):
+                    raise Exception("No project file found.")
+                else:
+                    self.path_project_root = path_project_root_test
+                    self.filename_project_file_source = os.path.normpath(
+                        os.path.join(self.path_project_root, self.filename_project_filename))
             except BaseException:
-                this_pkg.log.comment("Installed environment will be assumed.")
+                this_pkg.log.error("Fatal error.")
 
         # Read the project file
         with open_project_file(self) as file_in:
