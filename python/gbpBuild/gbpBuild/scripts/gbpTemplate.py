@@ -10,7 +10,6 @@ sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.join(os.path.abspath(_
 
 import gbpBuild as bld
 import gbpBuild.templates as tmp
-import gbpBuild.log as SID
 
 # Main function
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -26,7 +25,7 @@ def gbpTemplate(template_name,output_dir,template_path,flag_uninstall,flag_silen
 
     # Validate inputs
     if(not os.path.isdir(output_dir)):
-        SID.log.error("Given project directory (%s) is not a valid directory."%(output_dir))
+        bld.log.error("Given project directory (%s) is not a valid directory."%(output_dir))
 
     # Process inputs
     output_dir_abs = os.path.abspath(output_dir)
@@ -37,9 +36,9 @@ def gbpTemplate(template_name,output_dir,template_path,flag_uninstall,flag_silen
 
     ## End parsing of command line
     if(update_element==None):
-        SID.log.open("Creating new project (name=%s)..."%(project_name))
+        bld.log.open("Creating new project (name=%s)..."%(project_name))
     else:
-        SID.log.open("Updating element %s in %s..."%(update_element,project_name))
+        bld.log.open("Updating element %s in %s..."%(update_element,project_name))
 
     ## Load the template(s)
     template = tmp.template()
@@ -60,7 +59,7 @@ def gbpTemplate(template_name,output_dir,template_path,flag_uninstall,flag_silen
         ## Install template
         template.install(output_dir_abs, params_raw=params, silent=flag_silent,update=update_element,force=flag_force)
 
-    SID.log.close("Done")
+    bld.log.close("Done")
 
 # Permit script execution
 if __name__ == '__main__':

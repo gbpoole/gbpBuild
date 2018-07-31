@@ -9,7 +9,7 @@ import fnmatch
 # over an installed version of the project
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 
-import gbpBuild.log as SID
+import gbpBuild
 
 _regex_parameter_selector = "[^%/]*"
 
@@ -229,7 +229,7 @@ class template:
         # Check that all the needed template parameters can be resolved
         for param_i in user_params:
             if not self.resolve_directive(None,param_i,check=True):
-                SID.log.error("Required parameter {%s} is not present in template installation dictionary."%(param_i))
+                gbpBuild.log.error("Required parameter {%s} is not present in template installation dictionary."%(param_i))
 
     def resolve_directive(self, element, directive, check=False):
         """
@@ -249,12 +249,12 @@ class template:
             n_args=len(directive_args)
             if(command=='DIRNAME_LOCAL'):
                 if(n_args!=0):
-                    SID.log.error("Syntax error in directive {%s}; no arguments allowed."%(directive))
+                    gbpBuild.log.error("Syntax error in directive {%s}; no arguments allowed."%(directive))
                 if(check):
                     input_return = True
                 else:
                     if(element==None):
-                        SID.log.error("No element passed to 'resolve_directive()'.")
+                        gbpBuild.log.error("No element passed to 'resolve_directive()'.")
                     if(element.dir_host!=None):
                         dir_path_out = self.template_path_out(element.dir_host)
                     else:
@@ -263,14 +263,14 @@ class template:
                     input_return = {'name': '_DIRNAME_LOCAL', 'input': [dirname]}
             elif(command=="PARAMETERS.key"):
                 if(n_args!=0):
-                    SID.log.error("Syntax error in directive {%s}; no arguments allowed."%(directive))
+                    gbpBuild.log.error("Syntax error in directive {%s}; no arguments allowed."%(directive))
                 if(check):
                     input_return = True
                 else:
                     input_return = {'name': '_PARAMETERS.key',   'input':[key for key in self.params.keys()]} 
             elif(command=="PARAMETERS.value"):
                 if(n_args!=0):
-                    SID.log.error("Syntax error in directive {%s}; no arguments allowed."%(directive))
+                    gbpBuild.log.error("Syntax error in directive {%s}; no arguments allowed."%(directive))
                 if(check):
                     input_return = True
                 else:
@@ -288,9 +288,9 @@ class template:
                     elif(command_words[1]=='FILES'):
                         list_mode='files'
                     else:
-                        SID.log_error("Invalid directive syntax {%s}; word {%s} invalid."%(line,command_words[1]))
+                        gbpBuild.log_error("Invalid directive syntax {%s}; word {%s} invalid."%(line,command_words[1]))
                 else:
-                    SID.log_error("Invalid directive syntax {%s}; too many command words." % (line))
+                    gbpBuild.log_error("Invalid directive syntax {%s}; too many command words." % (line))
                 if(check):
                     input_return = True
                 else:
@@ -339,7 +339,7 @@ class template:
                                     flag_keep_list[i_file]=flag_wildcard
                         listing = [file_i for (file_i,flag) in zip(template_element_list,flag_keep_list) if flag]
                     else:
-                        SID.log.error("Syntax error in directive {%s}; too many arguments."%(directive))
+                        gbpBuild.log.error("Syntax error in directive {%s}; too many arguments."%(directive))
                     input_return = {'name':command,'input':listing}
 
         # ... else, look to see if it has been listed in the user parameters
@@ -398,13 +398,13 @@ class template:
                 if(n_lines<0):
                     n_lines=param_insert_size
                 elif(n_lines!=param_insert_size):
-                    SID.log.error("There is an input list size incompatibility (%d!=%d) in {%s}."%(n_lines,param_insert_size,line))
+                    gbpBuild.log.error("There is an input list size incompatibility (%d!=%d) in {%s}."%(n_lines,param_insert_size,line))
                 # Perform substitution
                 if(idx==None):
                     line_new = line_new[0:match.start()]+str(replace_with[0])+line_new[match.end():]
                 else:
                     if(idx>len(replace_with)):
-                        SID.log_error("Indexing error (%d>%d)for input line {%s}."%(idx,len(replace_with),line))
+                        gbpBuild.log_error("Indexing error (%d>%d)for input line {%s}."%(idx,len(replace_with),line))
                     line_new = line_new[0:match.start()]+str(replace_with[idx])+line_new[match.end():]
                 match = regex.search(line_new)
         # If n_lines<0, then no parameter substitution has occurred
@@ -454,7 +454,7 @@ class template:
 
         # Check that we haven't used an iterable for the substitution
         if(n_lines!=1):
-            SID.log.error("An invalid filename parameter substitution has occured for {%s} (n_lines=%d)."%(element.full_path_in(),n_lines))
+            gbpBuild.log.error("An invalid filename parameter substitution has occured for {%s} (n_lines=%d)."%(element.full_path_in(),n_lines))
     
         return filename_out
 
@@ -566,13 +566,13 @@ class template:
         self.name.append(template_name)
 
         # Walk the template directory structure, recursively processing sym-linked directories
-        SID.log.open( "Loading template {'%s' from %s}..." %(self.name[-1],self.path[-1]))
+        gbpBuild.log.open( "Loading template {'%s' from %s}..." %(self.name[-1],self.path[-1]))
         n_template_files = self._process_directory_recursive(self.dir[-1],self.dir[-1],'.',0)
 
         # Search all files to generate a list of needed parameters
         self.params_list = set()
         if(n_template_files>0):
-            SID.log.open("Scanning template files for parameters...")
+            gbpBuild.log.open("Scanning template files for parameters...")
             for dir_i in self.directories:
                 self.collect_parameter_references(dir_i.full_path_in(),delimiter="_var_")
                 for file_i in [f for f in dir_i.files if(f.is_template)]:
@@ -581,12 +581,12 @@ class template:
                         with open(file_i.full_path_in(),'r') as file_in:
                             for line in file_in:
                                 self.collect_parameter_references(line,delimiter="%%%")
-            SID.log.close("Done")
+            gbpBuild.log.close("Done")
 
         # Print the contents of the template
-        SID.log.comment(self)
+        gbpBuild.log.comment(self)
 
-        SID.log.close("Done")
+        gbpBuild.log.close("Done")
 
     def update_element(self,element,update):
         """
@@ -678,7 +678,7 @@ class template:
         # ... else, check for conflicts
         else:
             if(not filecmp.cmp(file_add.full_path_in(),file_check.full_path_in())):
-                SID.log.error("There is a file incompatibility between template files '%s' and '%s'."%(file_add.template_path_in(),file_check.template_path_in()))
+                gbpBuild.log.error("There is a file incompatibility between template files '%s' and '%s'."%(file_add.template_path_in(),file_check.template_path_in()))
 
     # Count the number of files in the template
     def n_files(self):
@@ -724,7 +724,7 @@ class template:
         :return:
         """
         if(not file_in.is_file):
-            SID.log.error("Something other than a file {%s} has been passed to the 'write_with_substitution' template method." % (self.name_in))
+            gbpBuild.log.error("Something other than a file {%s} has been passed to the 'write_with_substitution' template method." % (self.name_in))
         try:
             if(file_in.is_link):
                 os.symlink(os.path.relpath(self.full_path_in(file_in), os.path.dirname(self.full_path_out(file_in))),
@@ -738,7 +738,7 @@ class template:
             else:
                 shutil.copy2(file_in.full_path_in(), self.full_path_out(file_in))
         except:
-            SID.log.error("Failed write template file {%s}."%(element.template_path_in()))
+            gbpBuild.log.error("Failed write template file {%s}."%(element.template_path_in()))
 
     def __str__(self):
         """
@@ -773,16 +773,16 @@ class template:
         name_txt = format_template_names(self.name)
         if (not uninstall):
             if(len(self.name)>1):
-                SID.log.open("Installing templates {%s} to {%s}..."%(name_txt,self.dir_install))
+                gbpBuild.log.open("Installing templates {%s} to {%s}..."%(name_txt,self.dir_install))
             else:
-                SID.log.open("Installing template {%s} to {%s}..."%(name_txt,self.dir_install))
+                gbpBuild.log.open("Installing template {%s} to {%s}..."%(name_txt,self.dir_install))
             flag_reverse_sort = False
         else:
             flag_reverse_sort = True
             if(len(self.name)>1):
-                SID.log.open("Uninstalling templates {%s} from {%s}..."%(name_txt,self.dir_install))
+                gbpBuild.log.open("Uninstalling templates {%s} from {%s}..."%(name_txt,self.dir_install))
             else:
-                SID.log.open("Uninstalling template {%s} from {%s}..."%(name_txt,self.dir_install))
+                gbpBuild.log.open("Uninstalling template {%s} from {%s}..."%(name_txt,self.dir_install))
 
         # Process directories in sorted order to ensure that
         # the sub-directory structure is respected
@@ -793,7 +793,7 @@ class template:
             if (not uninstall and self.update_element(dir_i,update)):
                 self.install_directory(dir_i, silent=silent, force=force)
             elif(self.update_element(dir_i,update)):
-                SID.log.open("Uninstalling directory %s..." % (self.full_path_out(dir_i)))
+                gbpBuild.log.open("Uninstalling directory %s..." % (self.full_path_out(dir_i)))
 
             for file_i in dir_i.files:
                 self.current_element = file_i
@@ -806,9 +806,9 @@ class template:
             if(uninstall and self.update_element(dir_i,update)):
                 self.uninstall_directory(dir_i, silent=silent)
             elif(self.update_element(dir_i,update)):
-                SID.log.close()
+                gbpBuild.log.close()
 
-        SID.log.close("Done.")
+        gbpBuild.log.close("Done.")
 
     def install_directory(self, directory, silent=False, force=None):
         """
@@ -822,7 +822,7 @@ class template:
         try:
             if( not directory.is_root()):
                 if(os.path.isdir(full_path_out)):
-                    SID.log.open("Directory %s exists."%(full_path_out))
+                    gbpBuild.log.open("Directory %s exists."%(full_path_out))
                 else:
                     # Figure-out the relative path directly to the linked file
                     if(directory.is_link):
@@ -832,28 +832,28 @@ class template:
                             if(os.path.lexists(full_path_out)):
                                 os.unlink(full_path_out)
                                 os.symlink(symlink_path,full_path_out)
-                                SID.log.open("Directory %s link updated." % (full_path_out))
+                                gbpBuild.log.open("Directory %s link updated." % (full_path_out))
                             else:
                                 os.symlink(symlink_path,full_path_out)
-                                SID.log.open("Directory %s linked."%(full_path_out))
+                                gbpBuild.log.open("Directory %s linked."%(full_path_out))
                         else:
                             os.mkdir(full_path_out)
-                            SID.log.open("Directory %s created."%(full_path_out))
+                            gbpBuild.log.open("Directory %s created."%(full_path_out))
                     else:
                         if(directory.is_link):
                             if(os.path.lexists(full_path_out)):
-                                SID.log.open("Directory %s link updated silently."%(full_path_out))
+                                gbpBuild.log.open("Directory %s link updated silently."%(full_path_out))
                             else:
-                                SID.log.open("Directory %s linked silently."%(full_path_out))
+                                gbpBuild.log.open("Directory %s linked silently."%(full_path_out))
                         else:
-                            SID.log.open("Directory %s created silently."%(full_path_out))
+                            gbpBuild.log.open("Directory %s created silently."%(full_path_out))
             else:
                 if(os.path.isdir(full_path_out)):
-                    SID.log.open("Directory %s -- root valid." % (full_path_out))
+                    gbpBuild.log.open("Directory %s -- root valid." % (full_path_out))
                 else:
                     raise NotADirectoryError
         except:
-            SID.log.error("Failed to install directory {%s}."%(full_path_out))
+            gbpBuild.log.error("Failed to install directory {%s}."%(full_path_out))
 
     def uninstall_directory(self, directory, silent=False):
         """
@@ -866,24 +866,24 @@ class template:
         try:
             if( not directory.is_root()):
                 if( not os.path.isdir(full_path_out)):
-                    SID.log.close("Not found.")
+                    gbpBuild.log.close("Not found.")
                 else:
                     if(not silent):
                         if(directory.is_link):
                             os.unlink(full_path_out)
-                            SID.log.close("Unlinked.")
+                            gbpBuild.log.close("Unlinked.")
                         else:
                             os.rmdir(full_path_out)
-                            SID.log.close("Removed.")
+                            gbpBuild.log.close("Removed.")
                     else:
                         if(directory.is_link):
-                            SID.log.close("Unlinked silently.")
+                            gbpBuild.log.close("Unlinked silently.")
                         else:
-                            SID.log.close("Removed silently.")
+                            gbpBuild.log.close("Removed silently.")
             else:
-                SID.log.close("Root ignored.")
+                gbpBuild.log.close("Root ignored.")
         except:
-            SID.log.error("Failed to uninstall directory {%s}."%(directory.name_out))
+            gbpBuild.log.error("Failed to uninstall directory {%s}."%(directory.name_out))
 
     def install_file(self, file_install, silent=False, force=False):
         """
@@ -898,7 +898,7 @@ class template:
         try:
             flag_file_exists=os.path.isfile(self.full_path_out(file_install))
             if(flag_file_exists and not force):
-                SID.log.comment("--> %s exists."%(full_path_out))
+                gbpBuild.log.comment("--> %s exists."%(full_path_out))
             else:
                 if(file_install.is_link):
                     symlink_path=os.path.relpath(full_path_in, self.full_path_out(file_install.dir_in))
@@ -907,32 +907,32 @@ class template:
                         if(os.path.lexists(full_path_out)):
                             os.unlink(full_path_out)
                             os.symlink(symlink_path,full_path_out)
-                            SID.log.comment("--> %s link updated." % (full_path_out))
+                            gbpBuild.log.comment("--> %s link updated." % (full_path_out))
                         else:
                             os.symlink(symlink_path,full_path_out)
-                            SID.log.comment("--> %s linked."%(full_path_out))
+                            gbpBuild.log.comment("--> %s linked."%(full_path_out))
                     else:
                         if(flag_file_exists):
                             os.remove(full_path_out) 
-                            SID.log.comment("--> %s removed."%(full_path_out))
+                            gbpBuild.log.comment("--> %s removed."%(full_path_out))
                         self.write_with_substitution(file_install)
                         if(flag_file_exists):
-                            SID.log.comment("--> %s updated."%(full_path_out))
+                            gbpBuild.log.comment("--> %s updated."%(full_path_out))
                         else:
-                            SID.log.comment("--> %s created."%(full_path_out))
+                            gbpBuild.log.comment("--> %s created."%(full_path_out))
                 else:
                     if(file_install.is_link):
                         if(os.path.lexists(full_path_out)):
-                            SID.log.comment("--> %s link updated silently."%(full_path_out))
+                            gbpBuild.log.comment("--> %s link updated silently."%(full_path_out))
                         else:
-                            SID.log.comment("--> %s linked silently."%(full_path_out))
+                            gbpBuild.log.comment("--> %s linked silently."%(full_path_out))
                     else:
                         if(flag_file_exists):
-                            SID.log.comment("--> %s updated silently."%(full_path_out))
+                            gbpBuild.log.comment("--> %s updated silently."%(full_path_out))
                         else:
-                            SID.log.comment("--> %s created silently."%(full_path_out))
+                            gbpBuild.log.comment("--> %s created silently."%(full_path_out))
         except:
-            SID.log.error("Failed to install file {%s}."%(full_path_out))
+            gbpBuild.log.error("Failed to install file {%s}."%(full_path_out))
 
     def uninstall_file(self, file_install, silent=False):
         """
@@ -944,22 +944,22 @@ class template:
         full_path_out = self.full_path_out(file_install)
         try:
             if( not os.path.isfile(full_path_out)):
-                SID.log.comment("--> %s not found." % (full_path_out))
+                gbpBuild.log.comment("--> %s not found." % (full_path_out))
             else:
                 if(not silent):
                     if(file_install.is_link):
                         os.unlink(full_path_out)
-                        SID.log.comment("--> %s unlinked."%(full_path_out))
+                        gbpBuild.log.comment("--> %s unlinked."%(full_path_out))
                     else:
                         os.remove(full_path_out)
-                        SID.log.comment("--> %s removed."%(full_path_out))
+                        gbpBuild.log.comment("--> %s removed."%(full_path_out))
                 else:
                     if(file_install.is_link):
-                        SID.log.comment("--> %s unlinked silently."%(full_path_out))
+                        gbpBuild.log.comment("--> %s unlinked silently."%(full_path_out))
                     else:
-                        SID.log.comment("--> %s removed silently."%(full_path_out))
+                        gbpBuild.log.comment("--> %s removed silently."%(full_path_out))
         except:
-            SID.log.error("Failed to uninstall file {%s}."%(full_path_out))
+            gbpBuild.log.error("Failed to uninstall file {%s}."%(full_path_out))
 
 
     def install(self,dir_out,params_raw=None,silent=False,update=None,force=False):

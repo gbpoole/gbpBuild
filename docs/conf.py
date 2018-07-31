@@ -36,11 +36,11 @@ this_project = prj.project(os.path.abspath(__file__))
 # Add all python packages from this project to the path
 this_project.add_packages_to_path()
 
-# Add it to the project path
+# Add Breath build directory to path
 breathe_directory = "%s/breathe/" % (this_project.params['dir_docs_build'])
 sys.path.append(breathe_directory)
 
-# If the is a Readthedocs build, then we need to run Doxygen
+# If this is a Readthedocs build, then we need to run Doxygen
 if (os.environ.get('READTHEDOCS', None) == 'True'):
     path_doxyfile=os.path.join(this_project.params['dir_docs'],"Doxyfile")
     dir_doxy_xml=os.path.join(this_project.params['dir_docs'],"xml")
@@ -58,7 +58,7 @@ else:
 needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# Sphinx extensions (ie 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.doctest',
@@ -67,11 +67,16 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.ifconfig',
               'sphinx.ext.viewcode',
+              'sphinx_click.ext',
               'breathe']
 
 # Some things that Breathe needs
 breathe_projects = {this_project.params['name']: "%s/doxygen/xml/" % (this_project.params['dir_docs_build'])}
 breathe_default_project = this_project.params['name']
+
+# Instruct autodoc to present members in the order they are 
+# in the code (as opposed to the default: alphebetical order)
+autodoc_member_order = 'bysource'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['%s/templates' % (this_project.params['path_project_root'])]
@@ -144,7 +149,7 @@ html_sidebars = {'**': ['globaltoc.html', 'relations.html', 'sourcelink.html', '
 # documentation.
 html_theme_options = {'gbp_project_name': this_project.params['name']}
 
-extra_nav_links = {'Index': 'genindex.html'}
+extra_nav_links = {}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

@@ -6,7 +6,7 @@ This code has been rendered obsolute by Click.  Kept for legacy reasons.
 import optparse
 import os
 import sys
-import gbpBuild.log as SID
+import gbpBuild
 
 class parser:
     """
@@ -160,7 +160,7 @@ class parser:
         try:
             rval=self.settings[name]
         except KeyError:
-            SID.log.error('"%s" is not a valid command-line option.' % name)
+            gbpBuild.log.error('"%s" is not a valid command-line option.' % name)
         return rval
 
 def df_option(string):

@@ -42,10 +42,17 @@ class project:
         self.filename_project_filename = '.project.json'
         self.filename_auxiliary_filename = '.project_aux.json'
 
-        # Set the filename of the package copy of the project file
-        package_root = this_pkg.find_in_parent_path(self.path_call, 'setup.py')
-        if(package_root is not None):
-            self.filename_project_file = os.path.join(package_root, self.filename_project_filename)
+        # Set the paths to the project file(s)
+        path_project_file = this_pkg.find_in_parent_path(self.path_call, self.filename_project_filename, check=False)
+
+        # ... if not found, maybe we havn't make a copy in a package directory yet.
+        # Assume that path we have been passed is a package directory and look for
+        # 'setup.py' as the place where the project files should be.
+        if(not path_project_file):
+            path_project_file = this_pkg.find_in_parent_path(self.path_call, 'setup.py', check=False) 
+
+        if(path_project_file is not None):
+            self.filename_project_file = os.path.join(path_project_file, self.filename_project_filename)
             self.filename_auxiliary_file = os.path.abspath(
                 os.path.join(
                     os.path.dirname(

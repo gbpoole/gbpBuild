@@ -8,6 +8,7 @@ Table of Contents
    :maxdepth: 3
 
    install.rst
+   src/Python_execs.rst
    src/Python_API.rst
 
 * :ref:`genindex`
