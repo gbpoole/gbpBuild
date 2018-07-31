@@ -85,6 +85,7 @@ class project:
 
         # Load meta data of Python packages
         self.packages = []
+        print("TEST:",self.params)
         for package_name in self.params['python_packages']:
             package_setup_py = os.path.abspath(os.path.join(self.params['dir_python'], package_name, 'setup.py'))
             self.packages.append(_pkg.package(os.path.abspath(package_setup_py)))
