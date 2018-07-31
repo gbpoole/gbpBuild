@@ -1,10 +1,9 @@
-import shutil
-import filecmp
+"""This module provides a `package` class for polling the metadata describing a
+Python package."""
 import os
 import sys
 import importlib
-
-import yaml
+import json
 
 # Infer the name of this package from the path of __file__
 package_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -16,20 +15,23 @@ package_name = os.path.basename(package_root_dir)
 sys.path.insert(0, package_parent_dir)
 
 # Import needed internal modules
+_internal = importlib.import_module(package_name+'._internal')
 pkg = importlib.import_module(package_name)
 
 
 class package:
-    """This class provides a package object, storing package parameters which
+    """This class provides the package object, storing package parameters which
     describe the package.
-
-    Inputs: path_call; this needs to be the FULL (i.e. absolute) path to a file or directory living somewhere in the package
     """
 
     def __init__(self, path_call):
+        """
+        Generate an instance of the `package` class.
 
+        :param path_call: this needs to be the FULL (i.e. absolute) path to a file or directory living somewhere in the package
+        """
         # Scan upwards from the given path until 'setup.py' is found.  That will be the package parent directory.
-        self.path_package_parent = pkg.find_in_parent_path(path_call, ".package.yml")
+        self.path_package_parent = pkg.find_in_parent_path(path_call, ".package.json")
 
         # Assume that the tail of the root path is the package name
         self.package_name = os.path.basename(self.path_package_parent)
@@ -51,27 +53,37 @@ class package:
         """Generate a list of non-code files to be included in the package.
 
         By default, all files in the 'data' directory in the package root will be added.
+
         :return: a list of absolute paths.
         """
         paths = []
-        # Add the .project.yml and .package.yml files.  There are instances where these
+        # Add the .project.json and .package.json files.  There are instances where these
         # don't get installed by default (tox virtual envs, for example) and we need
         # to make sure they are present
-        paths.append(os.path.abspath(os.path.join(self.path_package_parent, ".project.yml")))
-        paths.append(os.path.abspath(os.path.join(self.path_package_parent, ".project_aux.yml")))
-        paths.append(os.path.abspath(os.path.join(self.path_package_parent, ".package.yml")))
+        paths.append(os.path.abspath(os.path.join(self.path_package_parent, ".project.json")))
+        paths.append(os.path.abspath(os.path.join(self.path_package_parent, ".project_aux.json")))
+        paths.append(os.path.abspath(os.path.join(self.path_package_parent, ".package.json")))
 
         # Add the data directory
         for (path, directories, filenames) in os.walk(os.path.join(self.path_package_parent, "data"), followlinks=True):
             if(path != "__pycache__"):
                 for filename in filenames:
                     paths.append(os.path.join('..', path, filename))
-        return paths
+
+        # Add any .docstring files
+        for (path, directories, filenames) in os.walk(self.path_package_root, followlinks=True):
+            for filename in filenames:
+                if(filename.endswith('.docstring')):
+                    paths.append(os.path.join('..', path, filename))
+
+        # setup() struggles when these filenames have unicode under python 2.7, so strip that here
+        return [str(path) for path in paths]
 
     def collect_package_scripts(self):
         """Generate a list of script files associated with this package.
 
         By default, all files in the 'scripts' directory in the package root will be added.
+
         :return: a list of absolute paths.
         """
         paths = []
@@ -108,17 +120,30 @@ class package:
 
 
 class package_file():
+    """
+    Class for reading and writing package .json files.  Intended to be used with the `open_package_file` context manager.
+    """
+
     def __init__(self, path_package_parent):
+        """Create an instance of the `package_file` class.
+
+        :param path_package_parent: The path to the directory hosting the package's `setup.py` file.
+        """
         # File pointer
         self.fp = None
 
         # Assume this filename for the package file
-        self.filename_package_filename = '.package.yml'
+        self.filename_package_filename = '.package.json'
 
         # Set the filename of the package copy of the package file
         self.filename_package_file = os.path.join(path_package_parent, self.filename_package_filename)
 
     def open(self):
+        """Open the package .json file.  Intended to be accessed through the
+        `open_package_file` class using a `with` block.
+
+        :return: None
+        """
         try:
             self.fp = open(self.filename_package_file)
         except BaseException:
@@ -126,6 +151,10 @@ class package_file():
             raise
 
     def close(self):
+        """Close the package .json file.
+
+        :return: None
+        """
         try:
             self.fp.close()
         except BaseException:
@@ -133,22 +162,34 @@ class package_file():
             raise
 
     def load(self):
+        """Load an opened project .json file.
+
+        :return: None
+        """
         try:
-            params_list = yaml.load(self.fp)
+            params_list = json.load(self.fp,object_hook=_internal.ascii_encode_dict)
         except BaseException:
             pkg.log.error("Could not load package file {%s}." % (self.filename))
             raise
         finally:
-            return {k: v for d in params_list for k, v in d.items()}
+            return params_list
 
 
 class open_package_file:
-    """Open package file."""
+    """Context manager for reading a package .json files.  Intended for use with a `with` block."""
 
     def __init__(self, path_call):
+        """Create an instance of the `open_package_file` context manager.
+
+        :param path_call: Context expression
+        """
         self.path_call = path_call
 
     def __enter__(self):
+        """Open the project .json file when entering the context.
+
+        :return: file pointer
+        """
         # Open the package's copy of the file
         pkg.log.open("Opening package...")
         try:
@@ -162,5 +203,10 @@ class open_package_file:
             return self.file_in
 
     def __exit__(self, *exc):
+        """Close the package .json file when exiting the context.
+
+        :param exc: Context expression arguments.
+        :return: False
+        """
         self.file_in.close()
         return False

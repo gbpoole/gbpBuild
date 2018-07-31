@@ -1,11 +1,10 @@
+"""This module provides a `project` class for polling the metadata describing a gbpBuild project."""
 import shutil
 import filecmp
 import os
 import sys
 import importlib
-
-import yaml
-import git
+import json
 
 # Infer the name of this package from the path of __file__
 package_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -20,31 +19,28 @@ sys.path.insert(0, package_parent_dir)
 this_pkg = importlib.import_module(package_name)
 
 # Import the internal package-helper package
+_internal = importlib.import_module(package_name + '._internal')
 _pkg = importlib.import_module(package_name + '._internal.package')
-
-def constructor(loader, node):
-    return node.value
-
-
-# This hack deals with a python2.7 error with PyYaml, See here:
-# https://stackoverflow.com/questions/27518976/how-can-i-get-pyyaml-safe-load-to-handle-python-unicode-tag
-yaml.SafeLoader.add_constructor("tag:yaml.org,2002:python/unicode", constructor)
 
 
 class project:
     """This class provides a project object, storing project parameters which
-    describe the project.
-
-    Inputs: path_call; this needs to be the path to a file or directory living somewhere in the project
+    describe a gbpBuild project.
     """
 
     def __init__(self, path_call):
+        """
+        Generate an instance of the `project` class.
+
+        :param path_call: this needs to be the FULL (i.e. absolute) path to a file or directory living somewhere in the package
+        """
+
         # Store the path_call
         self.path_call = path_call
 
         # Assume this filename for the project file
-        self.filename_project_filename = '.project.yml'
-        self.filename_auxiliary_filename = '.project_aux.yml'
+        self.filename_project_filename = '.project.json'
+        self.filename_auxiliary_filename = '.project_aux.json'
 
         # Set the filename of the package copy of the project file
         package_root = this_pkg.find_in_parent_path(self.path_call, self.filename_project_filename)
@@ -62,19 +58,26 @@ class project:
         # Determine if we are in a project repository.  Set to None if not.
         self.path_project_root = None
         self.filename_project_file_source = None
+        path_project_root = this_pkg.find_in_parent_path(self.path_call,'.git')
         try:
-            with git.Repo(os.path.realpath(self.path_call), search_parent_directories=True) as git_repo:
-                path_project_root_test = git_repo.git.rev_parse("--show-toplevel")
-                # Check that there is a .project.yml file here.  Otherwise, we may be sitting in the path
-                # of some other repo, and not a project repo
-                if(not os.path.isfile(os.path.join(path_project_root_test, self.filename_project_filename))):
-                    raise Exception("No project file found.")
-                else:
-                    self.path_project_root = path_project_root_test
-                    self.filename_project_file_source = os.path.normpath(
-                        os.path.join(self.path_project_root, self.filename_project_filename))
+            if(not path_project_root):
+                raise Exception("No project file found.")
         except BaseException:
-            this_pkg.log.comment("Installed environment will be assumed.")
+            this_pkg.log.error("Git repository could not be found for this package.")
+        finally:
+            try:
+                with git.Repo(os.path.realpath(self.path_call), search_parent_directories=True) as git_repo:
+                    path_project_root_test = git_repo.git.rev_parse("--show-toplevel")
+                    # Check that there is a .project.json file here.  Otherwise, we may be sitting in the path
+                    # of some other repo, and not a project repo
+                    if(not os.path.isfile(os.path.join(path_project_root_test, self.filename_project_filename))):
+                        raise Exception("No project file found.")
+                    else:
+                        self.path_project_root = path_project_root_test
+                        self.filename_project_file_source = os.path.normpath(
+                            os.path.join(self.path_project_root, self.filename_project_filename))
+            except BaseException:
+                this_pkg.log.comment("Installed environment will be assumed.")
 
         # Read the project file
         with open_project_file(self) as file_in:
@@ -83,11 +86,15 @@ class project:
         # Load meta data of Python packages
         self.packages = []
         for package_name in self.params['python_packages']:
-            package_setup_py = os.path.abspath(os.path.join(self.params['dir_python'],package_name,'setup.py'))
+            package_setup_py = os.path.abspath(os.path.join(self.params['dir_python'], package_name, 'setup.py'))
             self.packages.append(_pkg.package(os.path.abspath(package_setup_py)))
 
     def add_packages_to_path(self):
-        """Import all the python packages belonging to this project."""
+        """
+        Import all the python packages belonging to this project.
+
+        :return: None
+        """
         dir_file = os.path.abspath(self.path_project_root)
         count = 0
         for (directory, directories, filenames) in os.walk(dir_file):
@@ -115,7 +122,17 @@ class project:
 
 
 class project_file():
+    """
+    Class for reading and writing project .json files.  Intended to be used with the `open_project_file` context manager.
+    """
+
     def __init__(self, project):
+        """
+        Create an instance of the `project_file` class.
+
+        :param project: An instance of the `project` class
+        """
+
         # Keep a record of inputs
         self.project = project
 
@@ -127,6 +144,15 @@ class project_file():
         self.update()
 
     def update(self):
+        """
+        Update the project file stored in a Python package's path.
+
+        This needs to be done because when the package is installed in a virtual environment, for example, the
+        directory structure that the path is sitting in could be anywhere, and access to the original project
+        .json file can not be assured.  Hence, we make sure that every package has it's own up-to-date copy.
+
+        :return: None
+        """
 
         # Check if we are inside a project repository...
         if(self.project.path_project_root):
@@ -195,10 +221,15 @@ class project_file():
 
             # Write auxiliary parameters file
             with open(self.project.filename_auxiliary_file, 'w') as outfile:
-                # UTF-8 to ensure compatability between py27 and py3X
-                yaml.dump(aux_params, outfile, default_flow_style=False, encoding='utf-8')
+                json.dump(aux_params, outfile, indent=3)
 
     def open(self):
+        """
+        Open the project .json file.  Intended to be accessed through the
+        `open_project_file` class using a `with` block.
+
+        :return: None
+        """
         try:
             self.fp_prj = open(self.project.filename_project_file)
             self.fp_aux = open(self.project.filename_auxiliary_file)
@@ -207,6 +238,11 @@ class project_file():
             raise
 
     def close(self):
+        """
+        Close the project .json file.
+
+        :return: None
+        """
         try:
             if(self.fp_prj is not None):
                 self.fp_prj.close()
@@ -217,29 +253,41 @@ class project_file():
             raise
 
     def load(self):
+        """
+        Load the project .json file.
+
+        :return: None
+        """
+        params_list = []
+        params_list.extend(json.load(self.fp_prj, object_hook=_internal.ascii_encode_dict))
+        params_list.extend(json.load(self.fp_aux, object_hook=_internal.ascii_encode_dict))
         try:
-            params_list = []
-            params_list.append(yaml.safe_load(self.fp_prj))
-            params_list.append(yaml.safe_load(self.fp_aux))
             # Add a few extra things
-            params_list.append([{'path_project_root': self.project.path_project_root}])
-        except BaseException:
+            params_list.extend([{'path_project_root': self.project.path_project_root}])
+        except:
             this_pkg.log.error("Could not load project file {%s}." % (self.project.filename))
             raise
         finally:
-            result = dict()
-            for params in params_list:
-                result.update({k: v for d in params for k, v in d.items()})
-            return result
+            return {k:v for d in params_list for k, v in d.items()}
 
 
 class open_project_file:
-    """Open project file."""
+    """Context manager for reading a project .json files.  Intended for use with a `with` block."""
 
     def __init__(self, project):
+        """
+        Create an instance of the `open_project_file` context manager.
+
+        :param project: An instance of the `project` class.
+        """
         self.project = project
 
     def __enter__(self):
+        """
+        Open the project .json file when entering the context.
+
+        :return: file pointer
+        """
         # Open the package's copy of the file
         this_pkg.log.open("Opening project...")
         try:
@@ -253,5 +301,12 @@ class open_project_file:
             return self.file_in
 
     def __exit__(self, *exc):
-        self.file_in.close()
+        """
+        Close the project .json file when exiting the context.
+
+        :param exc: Context expression arguments.
+        :return: False
+        """
+        if(self.file_in):
+            self.file_in.close()
         return False

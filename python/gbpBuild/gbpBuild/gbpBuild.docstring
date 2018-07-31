@@ -1,0 +1,3 @@
+"""
+gbpBuild is a package for supporting Python and C/C++ build environments.
+"""
