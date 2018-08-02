@@ -4,7 +4,7 @@ import sys
 
 import click
 
-# Make sure that what's in this path takes precidence
+# Make sure that what's in this path takes precedence
 # over an installed version of the project
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.join(os.path.abspath(__file__), '..', '..'))))
 

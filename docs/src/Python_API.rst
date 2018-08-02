@@ -1,3 +1,5 @@
+.. _Python_API:
+
 gbpBuild Python API
 ===================
 .. automodule:: gbpBuild

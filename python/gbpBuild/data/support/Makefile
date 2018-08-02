@@ -13,7 +13,7 @@ export ECHO_N
 
 # Extract the project name from the parent directory
 PRJ_DIR=$(PWD)
-PRJ_NAME=`grep "\- name:" .project.yml | awk '{print $$3}'`
+PRJ_NAME=`grep "name" .project.json | awk '{print $$2}' | sed -e 's/^"//' -e 's/"$$//'`
 
 # Get git hash
 GIT_HASH=$(shell git rev-parse --short HEAD)
@@ -95,11 +95,21 @@ endif
 
 # Help
 help:
+	@$(ECHO) "Usage: make [TARGETS]"
 	@$(ECHO) 
-	@$(ECHO) "The following targets are available:"
-	@$(ECHO) "	build   - build all software for this project"
-	@$(ECHO) "	install - install all software for this project"
-	@$(ECHO) "	etc.  ... finish this help"
+	@$(ECHO) "Available targets:"
+	@$(ECHO) "	init    - perform project initialization [run once before anything else]"
+	@$(ECHO) "	build   - build all project software"
+	@$(ECHO) "	install - install all project software"
+	@$(ECHO) "	docs    - build documentation"
+	@$(ECHO) "	clean   - clean-out unneeded build/development/etc files"
+	@$(ECHO) 
+	@$(ECHO) "Additional targets for development:"
+	@$(ECHO) "	tests      - run all project tests"
+#	@$(ECHO) "	coverage   - build code coverage reports for tests"
+	@$(ECHO) "	lint-check - check the project linting standards"
+	@$(ECHO) "	lint-fix   - apply the project linting standards"
+	@$(ECHO) "	requirements-update - rebuild the project's '.requirements.txt' file"
 	@$(ECHO) 
 
 # One-time initialization
@@ -150,16 +160,16 @@ endif
 # Build the project documentation
 .PHONY: docs
 docs: $(DOCS_LIST) docs-update
-	@$(ECHO_NNL) "Building documenation..."
+	@$(ECHO_NNL) "Building documentation..."
 	@cd docs;sphinx-build . _build
 	@$(ECHO) "Done."
 
 # Update API documentation
-# n.b.: 'build' is a dependancy because a build needs to be in place
+# n.b.: 'build' is a dependency because a build needs to be in place
 #       in order to generate executable syntax documentation.
 .PHONY: docs-update
 docs-update: build $(BUILD_DIR_DOCS)
-	@$(ECHO_NNL) "Updating API documenation..."
+	@$(ECHO_NNL) "Updating API documentation..."
 	@update_gbpBuild_docs $(PWD)
 	@$(ECHO) "Done."
 
@@ -179,7 +189,7 @@ project-clean-stop:
 	@$(ECHO) "Done."
 project-clean: project-clean-start docs-clean tests-clean project-clean-stop
 
-# Remove the documenation build directory
+# Remove the documentation build directory
 .PHONY: docs-clean
 docs-clean:
 	@rm -rf docs/__pycache__
@@ -195,12 +205,12 @@ tests-clean:
 ##################################
 
 # Run tests
-tests:	.print_status build $(TEST_LIST)
+tests:	.print_status $(TEST_LIST)
 
 # Generate code coverage reports
 coverage:	.print_status build $(COVERAGE_LIST)
 
-# Make liniting suggestions
+# Make linting suggestions
 lint-check:	.print_status $(LINT_CHECK_LIST)
 
 # Apply all linting suggestions

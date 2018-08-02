@@ -1,6 +1,6 @@
 """Code for parsing cmd-line arguments.
 
-This code has been rendered obsolute by Click.  Kept for legacy reasons.
+This code has been rendered obsolete by Click.  Kept for legacy reasons.
 """
 
 import optparse
@@ -29,7 +29,8 @@ class parser:
         n_positional_arguments can be specified instead of positional_arguments
         to initialize a set of n_positional_arguments generic required arguments instead
         Positional arguments with default=None are required
-        Optional positional arguments will be assigned values in the order they arge given
+        Optional positional arguments will be assigned values in the order they are given
+
         """
         if argv is None:
             argv = sys.argv[1:]

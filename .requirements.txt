@@ -2,10 +2,6 @@
 # https://github.com/damnever/pigar
 
 # docs/conf.py: 22
-# python/gbpBuild/build/lib/data/support/docs/conf.py: 22
-# python/gbpBuild/build/lib/data/templates/project-C/docs/conf.py: 22
-# python/gbpBuild/build/lib/data/templates/project-Python/docs/conf.py: 22
-# python/gbpBuild/build/lib/gbpBuild/scripts/update_gbpBuild_docs.py: 3
 # python/gbpBuild/data/support/docs/conf.py: 22
 # python/gbpBuild/data/templates/project-C/docs/conf.py: 22
 # python/gbpBuild/data/templates/project-Python/docs/conf.py: 22
@@ -13,45 +9,31 @@
 GitPython == 2.1.8
 
 # docs/conf.py: 24
-# python/gbpBuild/build/lib/data/support/docs/conf.py: 24
-# python/gbpBuild/build/lib/data/templates/project-C/docs/conf.py: 24
-# python/gbpBuild/build/lib/data/templates/project-Python/docs/conf.py: 24
 # python/gbpBuild/data/support/docs/conf.py: 24
 # python/gbpBuild/data/templates/project-C/docs/conf.py: 24
 # python/gbpBuild/data/templates/project-Python/docs/conf.py: 24
 breathe == 4.7.3
 
-# python/gbpBuild/.eggs/click-6.7-py2.7.egg/click/_winconsole.py: 18
-# python/gbpBuild/build/lib/gbpBuild/scripts/gbpBuild_info.py: 4
-# python/gbpBuild/build/lib/gbpBuild/scripts/gbpTemplate.py: 5
-# python/gbpBuild/build/lib/gbpBuild/scripts/update_gbpBuild_docs.py: 5
 # python/gbpBuild/gbpBuild/scripts/gbpBuild_info.py: 4
 # python/gbpBuild/gbpBuild/scripts/gbpTemplate.py: 5
 # python/gbpBuild/gbpBuild/scripts/update_gbpBuild_docs.py: 5
 click == 6.7
 
-# python/gbpBuild/.eggs/click-6.7-py2.7.egg/click/_compat.py: 552
-colorama == 0.3.9
+# docs/conf.py: 230
+# python/gbpBuild/data/support/docs/conf.py: 230
+# python/gbpBuild/data/templates/project-C/docs/conf.py: 230
+# python/gbpBuild/data/templates/project-Python/docs/conf.py: 230
+matplotlib == 2.0.2
 
-# python/gbpBuild/build/lib/gbpBuild/_internal/__init__.py: 9
-# python/gbpBuild/gbpBuild/_internal/__init__.py: 9
-future == 0.16.0
+# python/gbpBuild/gbpBuild/__init__.py: 8
+mock == 2.0.0
 
 # docs/conf.py: 27
-# python/gbpBuild/build/lib/data/support/docs/conf.py: 27
-# python/gbpBuild/build/lib/data/templates/project-C/docs/conf.py: 27
-# python/gbpBuild/build/lib/data/templates/project-Python/docs/conf.py: 27
 # python/gbpBuild/data/support/docs/conf.py: 27
 # python/gbpBuild/data/templates/project-C/docs/conf.py: 27
 # python/gbpBuild/data/templates/project-Python/docs/conf.py: 27
 recommonmark == 0.4.0
 
-# python/gbpBuild/.eggs/click-6.7-py2.7.egg/click/decorators.py: 252
-# python/gbpBuild/.eggs/pytest_runner-4.2-py2.7.egg/ptr.py: 18,19,20,42,76
-# python/gbpBuild/.eggs/pytest_runner-4.2-py3.6.egg/ptr.py: 18,19,20,42,76
-# python/gbpBuild/build/lib/data/support/python/package/setup.py: 3
-# python/gbpBuild/build/lib/data/templates/package-Python/_var_name_var_/setup.py: 3
-# python/gbpBuild/build/lib/data/templates/project-Python/python/_var_name_var_/setup.py: 3
 # python/gbpBuild/data/support/python/package/setup.py: 3
 # python/gbpBuild/data/templates/package-Python/_var_name_var_/setup.py: 3
 # python/gbpBuild/data/templates/project-Python/python/_var_name_var_/setup.py: 3

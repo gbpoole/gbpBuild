@@ -716,10 +716,10 @@ def generate_project_rsts(project, include_private=True):
     """
     # Generate documentation for C code
     if(project.params['is_C_project']):
-        # Generate C API documenation
+        # Generate C API documentation
         generate_C_API_rst(project)
 
-        # Generate documenation for C executables.  Note
+        # Generate documentation for C executables.  Note
         # that the executables will be run with '-h' and
         # the output parsed to do this ... so the C executables
         # need to be built and in the path do do this.  Also,
@@ -736,7 +736,7 @@ def generate_project_rsts(project, include_private=True):
             python_pkg_path = os.path.abspath(os.path.join(project.params['dir_python'], python_pkg))
 
             # Run 'sphinx-apidoc' to auto-generate the Python submodule API documentation
-            # Arguments follwoing the source path (the first argument) will be ignored;
+            # Arguments following the source path (the first argument) will be ignored;
             # make sure to ignore 'setup.py' and the scripts,_internal and tests directories
             cmd_list = []
             cmd_list.append("sphinx-apidoc")
@@ -759,7 +759,7 @@ def generate_project_rsts(project, include_private=True):
         # Generate the .rst file that binds all the Python documentation together
         generate_Python_API_rst(project)
 
-        # Generate documenation for all Click-based python executables
+        # Generate documentation for all Click-based python executables
         generate_Python_execs_rst(project)
 
     # Generate the main project .rst index file

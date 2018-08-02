@@ -1,3 +1,5 @@
+.. _Python_execs:
+
 gbpBuild Executables
 ====================
 .. click:: gbpBuild.scripts.update_gbpBuild_docs:update_gbpBuild_docs

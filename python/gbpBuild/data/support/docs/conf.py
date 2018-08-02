@@ -21,7 +21,7 @@ import subprocess
 import sys
 import git
 import glob
-import breathe  # This is here so that pigar will catch it when generating requirements.txt
+import breathe # This is here so that pigar will catch it when generating requirements.txt
 
 from datetime import datetime
 from recommonmark.parser import CommonMarkParser
@@ -36,21 +36,21 @@ this_project = prj.project(os.path.abspath(__file__))
 # Add all python packages from this project to the path
 this_project.add_packages_to_path()
 
-# Add it to the project path
+# Add Breath build directory to path
 breathe_directory = "%s/breathe/" % (this_project.params['dir_docs_build'])
 sys.path.append(breathe_directory)
 
-# If the is a Readthedocs build, then we need to run Doxygen
+# If this is a Readthedocs build, then we need to run Doxygen
 if (os.environ.get('READTHEDOCS', None) == 'True'):
-    path_doxyfile = os.path.join(this_project.params['dir_docs'], "Doxyfile")
-    dir_doxy_xml = os.path.join(this_project.params['dir_docs'], "xml")
-    with open(path_doxyfile, "w") as fp_out:
+    path_doxyfile=os.path.join(this_project.params['dir_docs'],"Doxyfile")
+    dir_doxy_xml=os.path.join(this_project.params['dir_docs'],"xml")
+    with open(path_doxyfile,"w") as fp_out:
         fp_out.write("OUTPUT_DIRECTORY=docs\n")
         fp_out.write("GENERATE_XML=YES\n")
         fp_out.write("RECURSIVE=YES\n")
-    subprocess.call("cd ..; doxygen %s" % (path_doxyfile), shell=True)
+    subprocess.call("cd ..; doxygen %s"%(path_doxyfile), shell=True)
 else:
-    dir_doxy_xml = os.path.join(this_project.params['dir_docs_build'], "doxygen/xml")
+    dir_doxy_xml=os.path.join(this_project.params['dir_docs_build'],"doxygen/xml")
 
 # -- General configuration ------------------------------------------------
 
@@ -58,7 +58,7 @@ else:
 needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# Sphinx extensions (ie 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.doctest',
@@ -67,11 +67,20 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.ifconfig',
               'sphinx.ext.viewcode',
+              'sphinx_click.ext',
               'breathe']
 
 # Some things that Breathe needs
 breathe_projects = {this_project.params['name']: "%s/doxygen/xml/" % (this_project.params['dir_docs_build'])}
 breathe_default_project = this_project.params['name']
+
+# Instruct autodoc to present members in the order they are 
+# in the code (as opposed to the default: alphabetical order)
+autodoc_member_order = 'bysource'
+
+# Instruct autodoc to display both a class' 
+# docstring, and it's '__init__' method's.
+autoclass_content = 'both'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['%s/templates' % (this_project.params['path_project_root'])]
@@ -90,7 +99,7 @@ master_doc = 'index'
 
 # Exclude the source files in the docs directory
 # (we've copied them to the build directory and
-#  dont want to double count them.)
+#  don't want to double count them.)
 #exclude_patterns = '*.rst'
 
 # General information about the project.
@@ -144,7 +153,7 @@ html_sidebars = {'**': ['globaltoc.html', 'relations.html', 'sourcelink.html', '
 # documentation.
 html_theme_options = {'gbp_project_name': this_project.params['name']}
 
-extra_nav_links = {'Index': 'genindex.html'}
+extra_nav_links = {}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -213,3 +222,10 @@ texinfo_documents = [
      author, this_project.params['name'], this_project.params['description'],
      'Miscellaneous'),
 ]
+
+# Do this to avoid an import error
+# See: https://stackoverflow.com/questions/45484077/sphinx-autodoc-on-readthedocs-importerror-no-module-named-tkinter
+# Unfortunately, the 'autodoc_mock_imports' solution does not always work,
+# because it does not fix the same problem occurring within sphinx_click.ext
+import matplotlib
+matplotlib.use('agg')

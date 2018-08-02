@@ -5,7 +5,7 @@ import re
 import shutil
 import fnmatch
 
-# Make sure that what's in this path takes precidence
+# Make sure that what's in this path takes precedence
 # over an installed version of the project
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -31,16 +31,16 @@ def rreplace(s, old, new, occurrence):
     return new.join(li)
 
 
-def check_and_remove_trailing_occurance(txt_in, occurance):
+def check_and_remove_trailing_occurrence(txt_in, occurrence):
     """Check if a string ends with a given substring.  Remove it if so.
 
     :param txt_in: Input string
-    :param occurance: Substring to search for
+    :param occurrence: Substring to search for
     :return: Tuple of modified string and bool indicating if occurrence was found
     """
-    n_occurance = len(occurance)
-    if (txt_in[-n_occurance:] == occurance):
-        txt_out = txt_in[0:-n_occurance]
+    n_occurrence = len(occurrence)
+    if (txt_in[-n_occurrence:] == occurrence):
+        txt_out = txt_in[0:-n_occurrence]
         flag_found = True
     else:
         txt_out = txt_in
@@ -132,7 +132,7 @@ class template_element(object):
         self.name_out = self.name_in.replace("_dot_", ".", 1)
 
         # Check if the file is a link (and remove any trailing '.link's)
-        self.name_out, self.is_link = check_and_remove_trailing_occurance(self.name_out, '.link')
+        self.name_out, self.is_link = check_and_remove_trailing_occurrence(self.name_out, '.link')
 
     def full_path_in(self):
         """
@@ -206,7 +206,7 @@ class template_file(template_element):
             is_file=True)
 
         # Check if the file is a template (and remove any trailing '.template's)
-        self.name_out, self.is_template = check_and_remove_trailing_occurance(self.name_out, '.template')
+        self.name_out, self.is_template = check_and_remove_trailing_occurrence(self.name_out, '.template')
 
 
 class template:
@@ -331,7 +331,7 @@ class template:
                     # Because we can't be sure that all the files are present
                     # either in the full input or output path, we need to
                     # generate the list from the elements in the template.  We
-                    # may also have some files/directories preexisiting this
+                    # may also have some files/directories preexisting this
                     # template run, and we want to add those as well, so we have
                     # listings which actually represent the current state
                     template_element_list = []
@@ -461,8 +461,8 @@ class template:
         :param line:
         :return:
         """
-        # As a first attempt, assume all subsitutions are of scalars.
-        # If in the course of trying to do this, >=1 subsitution(s)
+        # As a first attempt, assume all substitutions are of scalars.
+        # If in the course of trying to do this, >=1 substitution(s)
         # is/are a list, then subsequently deal with that.  If the
         # assumption is correct, we will have a string at the end
         # that we can sue.
@@ -495,7 +495,7 @@ class template:
         # Check that we haven't used an iterable for the substitution
         if(n_lines != 1):
             gbpBuild.log.error(
-                "An invalid filename parameter substitution has occured for {%s} (n_lines=%d)." %
+                "An invalid filename parameter substitution has occurred for {%s} (n_lines=%d)." %
                 (element.full_path_in(), n_lines))
 
         return filename_out
@@ -533,7 +533,7 @@ class template:
                 template_path_dir,
                 self.get_directory(template_path_parent))
 
-            # Ignore '__pycache__' direcories that can get annoyingly created
+            # Ignore '__pycache__' directories that can get annoyingly created
             # automatically when templates are installed by setuptools.
             if(os.path.basename(full_path_element) != "__pycache__"):
                 # Add directory to the list
@@ -545,8 +545,8 @@ class template:
                 # walk the tree with them and weed-out everything under
                 # them which we may not (often don't) want to consider at all.
                 for test_dir_i in os.listdir(root):
-                    # Ignore '__pycache__' direcories that can get annoyingly created
-                    # automatically when templatess are installed by setuptools.
+                    # Ignore '__pycache__' directories that can get annoyingly created
+                    # automatically when templates are installed by setuptools.
                     if(os.path.basename(test_dir_i) != "__pycache__"):
                         full_path_element = os.path.join(dir_new.full_path_in(), test_dir_i)
                         if(os.path.islink(full_path_element) and os.path.isdir(full_path_element)):
@@ -596,7 +596,7 @@ class template:
         for path_i in [p for p in path if p is not None]:
             path_list.append(path_i)
 
-        # Then prioritize anyhting in the environment path
+        # Then prioritize anything in the environment path
         path_env = os.environ.get('GBPPY_TEMPLATE_PATH')
         if(path_env is not None):
             for path_i in [p for p in path_env.split(':') if p is not None]:
