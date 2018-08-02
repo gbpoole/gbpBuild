@@ -243,7 +243,7 @@ def generate_C_API_rst(project):
     harvest_doxygen_groups(header_file_list, group_list)
 
     # Give the file a reference handle
-    outFile.write(".. _%s:"%(filename_root))
+    outFile.write(".. _%s:\n\n"%(filename_root))
 
     # copy header to output file
     cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("C/C++ API", '='))
@@ -442,7 +442,7 @@ def generate_C_execs_rst(project):
     harvest_doxygen_groups(header_file_list, group_list)
 
     # Give the file a reference handle
-    outFile.write(".. _%s:"%(filename_root))
+    outFile.write(".. _%s:\n\n"%(filename_root))
 
     # copy header to output file
     cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("Applications", '='))
@@ -533,7 +533,7 @@ def generate_Python_API_rst(project):
                 os.makedirs(project.params['dir_docs_api_src'])
             outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
             # Give the file a reference handle
-            outFile.write(".. _%s:"%(filename_root))
+            outFile.write(".. _%s:\n\n"%(filename_root))
             # Copy header to output file (if present)
             cat_project_file(project, filename_root, ".header", outFile)
             if(len(project.packages) > 1):
@@ -593,7 +593,7 @@ def generate_Python_execs_rst(project):
                     os.makedirs(project.params['dir_docs_api_src'])
                 outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
                 # Give the file a reference handle
-                outFile.write(".. _%s:"%(filename_root))
+                outFile.write(".. _%s:\n\n"%(filename_root))
                 # Copy header to output file (if present)
                 cat_project_file(project, filename_root, ".header", outFile)
                 if(len(project.packages) > 1):
