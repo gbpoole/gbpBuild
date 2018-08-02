@@ -242,6 +242,9 @@ def generate_C_API_rst(project):
     group_list = []
     harvest_doxygen_groups(header_file_list, group_list)
 
+    # Give the file a reference handle
+    outFile.write(".. _%s:"%(filename_root))
+
     # copy header to output file
     cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("C/C++ API", '='))
 
@@ -438,6 +441,9 @@ def generate_C_execs_rst(project):
     group_list = []
     harvest_doxygen_groups(header_file_list, group_list)
 
+    # Give the file a reference handle
+    outFile.write(".. _%s:"%(filename_root))
+
     # copy header to output file
     cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("Applications", '='))
 
@@ -526,7 +532,9 @@ def generate_Python_API_rst(project):
             if(not os.path.isdir(project.params['dir_docs_api_src'])):
                 os.makedirs(project.params['dir_docs_api_src'])
             outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
-            # copy header to output file (if present)
+            # Give the file a reference handle
+            outFile.write(".. _%s:"%(filename_root))
+            # Copy header to output file (if present)
             cat_project_file(project, filename_root, ".header", outFile)
             if(len(project.packages) > 1):
                 if(i_package == 0):
@@ -584,7 +592,9 @@ def generate_Python_execs_rst(project):
                 if(not os.path.isdir(project.params['dir_docs_api_src'])):
                     os.makedirs(project.params['dir_docs_api_src'])
                 outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
-                # copy header to output file (if present)
+                # Give the file a reference handle
+                outFile.write(".. _%s:"%(filename_root))
+                # Copy header to output file (if present)
                 cat_project_file(project, filename_root, ".header", outFile)
                 if(len(project.packages) > 1):
                     if(i_package == 0):
