@@ -39,5 +39,5 @@ def gbpBuild_info():
 
 # Permit script execution
 if __name__ == '__main__':
-    status = lal_cuda_params()
+    status = gbpBuild_info()
     sys.exit(status)

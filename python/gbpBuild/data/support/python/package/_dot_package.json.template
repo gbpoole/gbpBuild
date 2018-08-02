@@ -1,0 +1,8 @@
+[
+   %%%ITERABLE_START%%%
+   {
+      "%%%_PARAMETERS.key%%%": %%%_PARAMETERS.value%%%
+   },
+   %%%ITERABLE_STOP%%%
+   {}
+]

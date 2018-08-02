@@ -57,6 +57,8 @@ def gbpTemplate(template_name, output_dir, template_path, flag_uninstall, flag_s
         params['author'] = 'Gregory B. Poole'
         params['author_email'] = 'gbpoole@gmail.com'
         params['description'] = 'One line description of project.'
+        params['url'] = 'http://project.homepage.xyz'
+        params['license'] = 'MIT'
 
         # Install template
         template.install(output_dir_abs, params_raw=params, silent=flag_silent, update=update_element, force=flag_force)
