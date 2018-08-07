@@ -1,71 +1,21 @@
+.. _Installation:
+
 Installation
 ============
 
-To acquire and build this library, you will need to have :code:`git` and :code:`cmake` installed.  You may also want one-or-more of the following optional 3rd-party libraries:
+This section describes how to download and install this project.
 
-* an MPI distribution (eg. OpenMPI)
+To install the packages associated with this project, they need to be downloaded and installed as follows:
 
-* CUDA (if you have an NVidia GPGPU installed).
+.. code-block:: console
 
-With these installed, you will need to:
+    $ cd /path/to/src/dir
+    $ git clone https://github.com/GIT_USER/REPO_NAME
+    $ cd REPO_NAME
+    $ make init
+    $ make install
 
-1) acquire the code from `GitHub`;
+.. note:: A makefile is provided in the project directory to ease the use of this software project.  Type `make help` for a list of options.
+.. warning:: Make sure that the `make init` line is run first-thing before installing.  It will ensure that all needed dependencies are present in your current Python environment.
+    Make sure to re-run this line before re-installing, if you change Python environments.
 
-2) configure it with :code:`cmake`; and 
-
-3) build it with :code:`make` 
-
-Alternatively (an perhaps more-often-than-not), you may want to add *gbpSID* as a submodule to another project.  In either case, each of these steps is described in more detail below.
-
-Acquiring the code
--------------------
-
-It is intended that the latest commit on the 'master' branch will always be the best version to develop with.  To acquire it, simply clone it from *GitHub*::
-
-    git clone https://github.com/gbpoole/gbpSID.git
-
-However, if you want to download the latest version specifically tagged as a standardized release, try this::
-
-    git clone --branch "`git ls-remote --tags https://github.com/gbpoole/gbpSID.git | sed 's|.*/\(.*\)$|\1|' | grep -v '\^' | sort -t. -k1,1nr -k2,2nr -k3,3nr`" https://github.com/gbpoole/gbpSID.git
-
-Configuring the library
------------------------
-
-Once cloned, create a build directory (for example)::
-
-    cd gbpSID
-    mkdir build
-
-Then move to that directory and run :code:`cmake` on the project directory (i.e. the directory where the file `CMakeLists.txt` is located)::
-
-    cd build
-    cmake ..
-
-Several options can be passed to :code:`cmake` to tailor *gbpSID* to your needs.  These are as follows:
-
-ADD TABLE HERE.
-
-Building the library
---------------------
-
-Once configured with :code:`cmake`, the project can be built by moving to the build directory and running the following:: 
-
-    make
-
-To install the project, specify the installation directory as follows::
-
-    make DESTDIR=<full-path-to_installation-location> install
-
-Building the documentation
---------------------------
-
-Once :code:`cmake` has been run, documentation can be built by running the following from the build directory::
-
-    make docs
-
-This will place a `.pdf` version of the documentation in the directory `docs` and an `html` version in `docs/html/docs`.
-
-Installing as a submodule
--------------------------
-
-ADD TEXT HERE.
