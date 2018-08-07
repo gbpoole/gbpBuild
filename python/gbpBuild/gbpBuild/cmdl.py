@@ -14,6 +14,7 @@ class parser:
     passed on the command line."""
 
     def __init__(self, argv, positional_arguments=None, optional_arguments=None, n_positional_arguments=None):
+
         """Parser constructor `argv` is a list of arguments, or `None` for
         ``sys.argv[1:]``.
 
@@ -32,6 +33,7 @@ class parser:
         Optional positional arguments will be assigned values in the order they are given
 
         """
+
         if argv is None:
             argv = sys.argv[1:]
 
