@@ -23,11 +23,16 @@ class package:
     """This class provides the package object, storing package parameters which
     describe the package."""
 
-    def __init__(self, path_call):
+    def __init__(self, path_call, verbosity=True):
         """Generate an instance of the `package` class.
 
         :param path_call: this needs to be the FULL (i.e. absolute) path to a file or directory living somewhere in the package
+        :param verbosity: Optionally, set the log stream verbosity for this function (defaults to True)
         """
+
+        # Set verbosity of log for this function call
+        pkg.log.set_verbosity(verbosity=verbosity)
+
         # Scan upwards from the given path until 'setup.py' is found.  That will be the package parent directory.
         self.path_package_parent = pkg.find_in_parent_path(path_call, ".package.json")
 
@@ -46,6 +51,9 @@ class package:
 
         # Assemble a list of package scripts
         self.scripts = self.collect_package_scripts()
+
+        # Return the stream verbosity to its previous state
+        pkg.log.unset_verbosity()
 
     def collect_package_files(self):
         """Generate a list of non-code files to be included in the package.

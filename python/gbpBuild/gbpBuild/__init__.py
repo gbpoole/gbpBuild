@@ -73,14 +73,15 @@ def full_path_datafile(path):
     return os.path.join(_PACKAGE_ROOT, 'data', path)
 
 
-def find_in_parent_path(path_start, filename_search, check=True):
+def find_in_parent_path(path_start, filename_search, check=True, failure=None):
     """Find the path to a given filename, scanning up the directory tree from
     the given path_start.  Optionally throw an error (if check=True) if not
     found.
 
     :param path_start: The path from which to start the search.
     :param filename: The filename to search for.
-    :return: Path to the file if found, None if not found.
+    :param failure: Value to return on failure.
+    :return: Path to the file if found, None (default) or `failure` if not found.
     """
     path_result = None
     if(os.path.isdir(path_start)):
@@ -102,5 +103,9 @@ def find_in_parent_path(path_start, filename_search, check=True):
     # Check if the file has been found
     if(check and path_result is None):
         log.error("Could not find {%s} in parent directories of path {%s}." % (filename_search, path_start))
+
+    # On failure, set to failure default
+    if(path_result is None):
+        path_result = failure
 
     return path_result

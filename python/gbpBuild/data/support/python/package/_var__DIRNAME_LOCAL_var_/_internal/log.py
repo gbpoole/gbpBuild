@@ -74,10 +74,11 @@ class log_stream(object):
     """This class provides a file pointer for logging user feedback and methods
     for writing to it."""
 
-    def __init__(self, fp_out=None):
+    def __init__(self, fp_out=None,verbosity=True,n_indent_max=10):
         """Generate an instance of the log_stream class.
 
         :param fp_out: An optional file pointer to use for the log.
+        :param verbosity: An optional parameter that sets the default verbosity of the stream.
         """
         # File pointer where the stream will write to
         self.set_fp(fp_out)
@@ -85,10 +86,18 @@ class log_stream(object):
         # Number of spaces to indent for each indent-level
         self.indent_size = 3
 
+        # Set the maximum number of indent levels to render
+        self.n_indent_max = n_indent_max
+
         # These lists will have one entry per indent-level
         self.t_last = [time.time()]
         self.n_lines = [0]
         self.splice = [None]
+
+        # This list will be a stack with one entry per verbosity state.  Initialize with the given default.
+        self.verbosity = []
+        self.verbosity_default = verbosity
+        self.set_verbosity(self.verbosity_default)
 
         # Indicates whether the last-written line
         # ended with a new line
@@ -106,6 +115,80 @@ class log_stream(object):
         else:
             self.fp = fp_out
 
+    def set_verbosity(self,verbosity=True):
+        """
+        Add a new (and make it current) verbosity state to the stream's stack of verbosity states.
+
+        This method takes either a boolean flag indicating whether logging is active, or an integer indicating
+        the maximum indenting level that will be rendered.  It can be removed using the
+        :py:meth:`~.log.log_stream.unset_verbosity` method.  See the
+        :py:meth:`~.log.log_stream.check_verbosity` method for an account of how the verbosity passed to this
+        method is interpreted.
+
+        :param verbosity: A boolean flag indicating if logging is active, or an integer indicating the verbosity level
+        :return: None
+        """
+
+        # Check validity of the given verbosity
+        if(not isinstance(verbosity,(bool,int))):
+            self.error("Invalid datatype {%s} being added to log stream's verbosity state."%(type(verbosity)))
+
+        # Add a state to the stack
+        self.verbosity.append(verbosity)
+
+    def unset_verbosity(self):
+        """
+        Revert stream to a previous verbosity state if one exists; the default state otherwise.
+
+        :return: None
+        """
+        if(len(self.verbosity)>0):
+            self.verbosity.pop()
+
+    def verbosity_level(self,verbosity):
+        """
+        Convert a verbosity state value to a corresponding verbosity level.
+
+        :param verbosity: Verbosity state value
+        :return: Integer indent level
+        """
+
+        # Default result
+        result = self.n_indent_max
+
+        # If state is a bool and evaluates to false, return -1 (i.e. a value always > self._n_indent()
+        if (isinstance(verbosity, bool)):
+            if(not verbosity):
+                result = -1
+
+        # ... else, if it's an integer, return it or n_indent_max
+        elif (isinstance(verbosity,int)):
+            result = max([verbosity,self.n_indent_max])
+
+        # ... else, unsupported data type ... throw an error
+        else:
+            self.error("Can not interpret verbosity level of a verbosity state with unsupported type {%s}."%(type(verbosity)))
+
+        return result
+
+    def check_verbosity(self):
+        """
+        Check if the stream is active.
+
+        :return: A boolean indicating if rendering is active on the stream
+        """
+
+        # If the verbosity stack is empty, use the default
+        if(len(self.verbosity)<1):
+            max_active_level = self.verbosity_level(self.verbosity_default)
+        else:
+            max_active_level = self.n_indent_max
+            for state in self.verbosity:
+                max_active_level = min([max_active_level,self.verbosity_level(state)])
+
+        return max_active_level>=self._n_indent()
+
+
     def open(self, msg, splice=None):
         """Open a new indent bracket for the log.
 
@@ -122,8 +205,7 @@ class log_stream(object):
     def close(self, msg=None, time_elapsed=False):
         """Close a new indent bracket for the log.
 
-        Add an elapsed time since the last open to the end if
-        time_elapsed=True
+        Add an elapsed time since the last open to the end if time_elapsed=True
 
         :param msg: An object with a __str__ method, or a list thereof
         :param time_elapsed: Boolean flag indicating whether to report the time elapsed for this indent level
@@ -131,8 +213,8 @@ class log_stream(object):
         """
 
         # Sanity checks
-        if(self._n_indent() == 0):
-            self.error("Invalid log closure.  t_last entries have been exhausted.")
+        if(self._n_indent() < 1):
+            self.error("Invalid log closure.")
 
         # Decrement the indent level and fetch the info about the level we are closing
         t_last = self.t_last.pop()
@@ -288,39 +370,41 @@ class log_stream(object):
         :param kwargs: keyword arguments to be passed to the print function
         :return: None
         """
+        # Check if rendering is active on the stream
+        if(self.check_verbosity()):
 
-        # Optionally unhang the stream
-        if(unhang):
-            self._unhang()
+            # Optionally unhang the stream
+            if(unhang):
+                self._unhang()
 
-        # This will fail for strings but pass for lists, etc.
-        if(_internal.is_nonstring_iterable(msg)):
-            if(overwrite):
-                self.error("Log stream overwriting not permitted for iterables.")
-            if(not iterables_allowed):
-                self.error("An iterable was passed to a log stream method which does not accept them.")
-            for line in msg:
-                self._print(line, indent=indent, overwrite=overwrite, **kwargs)
-        # ... render a non-iterable object ...
-        else:
-            # If msg is a string (or converts to one) with newline characters, break-it-up
-            # and recall this method with the result to treat it as an iterable
-            msg_split = str(msg).splitlines(True)
-            if(len(msg_split) > 1):
-                self._print(msg_split, indent=indent, overwrite=overwrite,
-                            iterables_allowed=iterables_allowed, **kwargs)
-            # ... else, render a single line
+            # This will fail for strings but pass for lists, etc.
+            if(_internal.is_nonstring_iterable(msg)):
+                if(overwrite):
+                    self.error("Log stream overwriting not permitted for iterables.")
+                if(not iterables_allowed):
+                    self.error("An iterable was passed to a log stream method which does not accept them.")
+                for line in msg:
+                    self._print(line, indent=indent, overwrite=overwrite, **kwargs)
+            # ... render a non-iterable object ...
             else:
-                if(not self.hanging and len(msg) > 0):
-                    self.n_lines[-1] += 1
-                if(overwrite or (not self.hanging and indent)):
-                    self._indent(overwrite=overwrite)
-                print(msg, end='', file=self.fp, **kwargs)
-                self.fp.flush()
-                if(msg.endswith('\n')):
-                    self.hanging = False
+                # If msg is a string (or converts to one) with newline characters, break-it-up
+                # and recall this method with the result to treat it as an iterable
+                msg_split = str(msg).splitlines(True)
+                if(len(msg_split) > 1):
+                    self._print(msg_split, indent=indent, overwrite=overwrite,
+                                iterables_allowed=iterables_allowed, **kwargs)
+                # ... else, render a single line
                 else:
-                    self.hanging = True
+                    if(not self.hanging and len(msg) > 0):
+                        self.n_lines[-1] += 1
+                    if(overwrite or (not self.hanging and indent)):
+                        self._indent(overwrite=overwrite)
+                    print(msg, end='', file=self.fp, **kwargs)
+                    self.fp.flush()
+                    if(msg.endswith('\n')):
+                        self.hanging = False
+                    else:
+                        self.hanging = True
 
     def _unhang(self):
         """If the log did not previously end with a newline, add one.

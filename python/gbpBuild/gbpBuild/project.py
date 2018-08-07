@@ -25,14 +25,16 @@ _pkg = importlib.import_module(package_name + '._internal.package')
 
 
 class project:
-    """This class provides a project object, storing project parameters which
-    describe a gbpBuild project."""
+    """This class provides a project object, exposing parameters which describe a project."""
 
-    def __init__(self, path_call):
+    def __init__(self, path_call, verbosity=True):
         """Generate an instance of the `project` class.
 
         :param path_call: this needs to be the FULL (i.e. absolute) path to a file or directory living somewhere in the package
         """
+
+        # Set verbosity of log for this function call
+        this_pkg.log.set_verbosity(verbosity=verbosity)
 
         # Store the path_call
         self.path_call = path_call
@@ -41,43 +43,35 @@ class project:
         self.filename_project_filename = '.project.json'
         self.filename_auxiliary_filename = '.project_aux.json'
 
-        # Set the paths to the project file(s)
-        path_project_file = this_pkg.find_in_parent_path(self.path_call, self.filename_project_filename, check=False)
-
-        # ... if not found, maybe we haven't make a copy in a package directory yet.
-        # Assume that path we have been passed is a package directory and look for
+        # First, assume the path we have been passed is a package directory and look for
         # 'setup.py' as the place where the project files should be.
-        if(not path_project_file):
-            path_project_file = this_pkg.find_in_parent_path(self.path_call, 'setup.py', check=False)
+        path_package = this_pkg.find_in_parent_path(self.path_call, 'setup.py', check=False)
+        # ... else, scan for the project's copy.  Fail if not found.
+        if(not path_package):
+            path_package = this_pkg.find_in_parent_path(self.path_call, self.filename_project_filename)
 
-        if(path_project_file is not None):
-            self.filename_project_file = os.path.join(path_project_file, self.filename_project_filename)
-            self.filename_auxiliary_file = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(
-                        self.filename_project_file),
-                    self.filename_auxiliary_filename))
+        # With the path found, set the project filenames
+        self.filename_project_file = os.path.join(path_package, self.filename_project_filename)
+        self.filename_auxiliary_file = os.path.abspath(
+            os.path.join(
+                os.path.dirname(
+                    self.filename_project_file),
+                self.filename_auxiliary_filename))
+
+        # Determine if we are in a project repository.  If we are, check that there is a .project.json file.
+        # Assume we are in an installed environment if a project file is not found with the
+        # repository.  This can happen for an executable installed in a Python environment installed
+        # in the path of a git repository, for example.
+        path_project = this_pkg.find_in_parent_path(self.path_call, '.git', check=False)
+        if(path_project and os.path.exists(os.path.join(path_project, self.filename_project_filename))):
+            self.path_project_root = path_project
+            self.filename_project_file_source = os.path.normpath(
+                os.path.join(self.path_project_root, self.filename_project_filename))
+        # ... else set to None.  Assume we are in an installed environment.
         else:
-            self.filename_project_file = ''
-            self.filename_auxiliary_file = ''
-
-        # Determine if we are in a project repository.  Set to None if not.
-        self.path_project_root = None
-        self.filename_project_file_source = None
-        path_project_root_test = this_pkg.find_in_parent_path(self.path_call, '.git', check=False)
-        if(not path_project_root_test):
+            self.path_project_root = None
+            self.filename_project_file_source = None
             this_pkg.log.comment("Installed environment will be assumed.")
-        # If we have found a repo, check that there is a .project.json file.  Fail if not.
-        else:
-            try:
-                if(not os.path.isfile(os.path.join(path_project_root_test, self.filename_project_filename))):
-                    raise Exception("No project file found.")
-                else:
-                    self.path_project_root = path_project_root_test
-                    self.filename_project_file_source = os.path.normpath(
-                        os.path.join(self.path_project_root, self.filename_project_filename))
-            except BaseException:
-                this_pkg.log.error("Fatal error.")
 
         # Read the project file
         with open_project_file(self) as file_in:
@@ -89,6 +83,9 @@ class project:
             package_setup_py = os.path.abspath(os.path.join(self.params['dir_python'], package_name, 'setup.py'))
             self.packages.append(_pkg.package(os.path.abspath(package_setup_py)))
 
+        # Return the stream verbosity to its previous state
+        this_pkg.log.unset_verbosity()
+
     def add_packages_to_path(self):
         """Import all the python packages belonging to this project.
 
@@ -98,8 +95,6 @@ class project:
         count = 0
         for (directory, directories, filenames) in os.walk(dir_file):
             for filename in filenames:
-                # Exclude gbpBuild (load it independently) for the case
-                # that we're running this within that package.
                 if(filename == "setup.py"):
                     path_package = os.path.abspath(directory)
                     sys.path.insert(0, path_package)

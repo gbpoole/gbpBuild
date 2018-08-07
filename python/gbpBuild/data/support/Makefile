@@ -16,7 +16,11 @@ PRJ_DIR=$(PWD)
 PRJ_NAME=`grep "name" .project.json | awk '{print $$2}' | sed -e 's/^"//' -e 's/"$$//'`
 
 # Get git hash
-GIT_HASH=$(shell git rev-parse --short HEAD)
+ifeq ($(shell git log --oneline -5 2>/dev/null | wc -l ),0)
+	GIT_HASH="No commits"
+else
+	GIT_HASH=$(shell git rev-parse --short HEAD)
+endif
 
 # Fetch the version from the .version file
 ifneq ($(wildcard .version),)
@@ -25,6 +29,13 @@ ifneq ($(wildcard .version),)
 else
 	PRJ_VERSION:=unset
 endif
+
+# Set targets to check for needed executables
+list_of_checks = pigar
+.PHONY: $(list_of_checks)
+$(list_of_checks): % : check-%-in-path
+check-%-in-path:
+	@$(if $(shell which $* >& /dev/null ; if [ $$? -ne 0 ] ; then echo fail ; fi),$(error '$*' not in path.  Please (re)install and try command again if you want this Makefile target's support))
 
 # Determine what sort of environment we're in (eg. OSX or Linux)
 OSTYPE := $(word 1,$(shell uname -msr))
@@ -218,13 +229,9 @@ lint-fix:	.print_status $(LINT_FIX_LIST)
 
 # Update the pip python requirements files for the project.
 .PHONY: requirements-update
-requirements-update: .print_status
+requirements-update: .print_status check-pigar-in-path
 	@$(ECHO_NNL) "Updating project Python requirements..."
-ifeq ($(shell which pigar),)
-	@$(error "'pigar' not in path.  Please install it with 'pip install pigar' and try again.)
-else
 	@pigar -p .requirements.txt
-endif
 	@$(ECHO) "Done."
 
 # Download kcov

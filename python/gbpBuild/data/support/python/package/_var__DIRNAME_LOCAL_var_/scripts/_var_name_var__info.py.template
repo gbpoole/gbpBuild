@@ -4,6 +4,7 @@ import importlib
 import click
 
 # Infer the name of this package from the path of __file__
+
 package_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 package_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 package_name = os.path.basename(package_root_dir)
@@ -21,13 +22,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 def %%%name%%%_info():
-    """Print the dictionary of project parameters stored in the project
-    (.project.yml) and package (.package.yml) files.
+    """Print the dictionary of project parameters stored in the project and package .json files.
 
     :return: None
     """
     # Set/fetch all the project details we need
-    project = prj.project(__file__)
+    project = prj.project(__file__,verbosity=False)
 
     # Print project information
     print(project)

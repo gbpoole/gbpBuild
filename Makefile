@@ -16,7 +16,11 @@ PRJ_DIR=$(PWD)
 PRJ_NAME=`grep "name" .project.json | awk '{print $$2}' | sed -e 's/^"//' -e 's/"$$//'`
 
 # Get git hash
-GIT_HASH=$(shell git rev-parse --short HEAD)
+ifeq ($(shell git log --oneline -5 2>/dev/null | wc -l ),0)
+	GIT_HASH="No commits"
+else
+	GIT_HASH=$(shell git rev-parse --short HEAD)
+endif
 
 # Fetch the version from the .version file
 ifneq ($(wildcard .version),)

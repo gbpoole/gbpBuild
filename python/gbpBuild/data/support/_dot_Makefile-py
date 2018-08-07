@@ -13,6 +13,13 @@ PKGS:=$(shell find python -maxdepth 2 -name 'setup.py' -exec dirname {} \;)
 # Set the build directory
 BUILD_DIR_PY:=$(PRJ_DIR)/python/build
 
+# Set targets to check for needed executables
+list_of_checks = tox autopep8 docformatter $(KCOV_EXE)
+.PHONY: $(list_of_checks)
+$(list_of_checks): % : check-%-in-path
+check-%-in-path:
+	@$(if $(shell which $* >& /dev/null ; if [ $$? -ne 0 ] ; then echo fail ; fi),$(error '$*' not in path.  Please (re)install and try command again if you want this Makefile target's support))
+
 ############################################
 # Python build, install, docs, etc targets #
 ############################################
@@ -41,7 +48,7 @@ $(addsuffix .INSTALL,$(PKGS)):
 ifeq ($(config),release)
 	@cd $(basename $@);python setup.py install
 else ifeq ($(config),develop)
-	@cd $(basename $@);python setup.py install develop
+	@cd $(basename $@);python setup.py develop
 else
     $(error Invalid python build 'config' {$(config)} specified for installation.)
 endif
@@ -63,6 +70,7 @@ clean-py:
 	@cd python;find . -name '.pytest_cache' -exec rm -rf {} +
 	@cd python;find . -name '.coverage' -exec rm -rf {} +
 	@cd python;find . -name 'htmlcov' -exec rm -rf {} +
+	@rm -rf .src +
 	@$(ECHO) "Done."
 
 ##################################
@@ -72,56 +80,35 @@ clean-py:
 # Run Python tests
 .PHONY: tests-py
 tests-py: $(addsuffix .TEST,$(PKGS))
-$(addsuffix .TEST,$(PKGS)):
+$(addsuffix .TEST,$(PKGS)): check-tox-in-path
 	@$(ECHO) "Running tests for python package..."
-ifeq ($(shell which tox),)
-	@$(warning 'tox' not in path.  Please (re)install and try command again if you want it's support.)
-	@cd $(basename $@);python setup.py test
-else
 	@cd $(basename $@);tox
-endif
 	@$(ECHO) "Done."
 
 #Compute Python test coverage
 .PHONY: coverage-py
 coverage-py: tests-py $(addsuffix .COV,$(PKGS))
-$(addsuffix .COV,$(PKGS)):
+$(addsuffix .COV,$(PKGS)): check-$(KCOV_EXE)-in-path
 	@$(ECHO_NNL) "Generating Python test coverage report for package {"$(basename $@)"}..."
-ifeq ($(shell which tox),)
-	@$(error 'coverage' not in path.  Please (re)install coverage.py and try command again if you want it's support.)
-else
 	@cd $(basename $@);$(KCOV_EXE) python setup.py test
 	@cd $(basename $@);$(KCOV_EXE) report -m
 	@cd $(basename $@);$(KCOV_EXE) html
-endif
 	@$(ECHO) "Done."
 
 # Check Python formatting against PEP8 (exception: max line lengths are 120)
 .PHONY: lint-check-py
 lint-check-py: $(addsuffix .LINT-CHECK,$(PKGS))
-$(addsuffix .LINT-CHECK,$(PKGS)):
+$(addsuffix .LINT-CHECK,$(PKGS)): check-autopep8-in-path check-docformatter-in-path
 	@$(ECHO_NNL) "Linting python package {"$(basename $@)"}..."
-ifeq ($(shell which autopep8),)
-	@$(error 'autopep8' not in path.  Please (re)install with 'pip install autopep8' and try command again.)
-else ifeq ($(shell which docformatter),)
-	@$(error 'docformatter' not in path.  Please (re)install with 'pip install docformatter' and try command again.)
-else
 	@cd $(basename $@);autopep8 -a -a --max-line-length 120 --diff --exclude=*.tox -r . 
 	@cd $(basename $@);docformatter -r . 
-endif
 	@$(ECHO) "Done."
 
 # Apply Python PEP8 formatting (exception: max line lengths are 120) suggestions in-place
 .PHONY: lint-fix-py
 lint-fix-py: $(addsuffix .LINT-FIX,$(PKGS))
-$(addsuffix .LINT-FIX,$(PKGS)):
+$(addsuffix .LINT-FIX,$(PKGS)): check-autopep8-in-path check-docformatter-in-path
 	@$(ECHO_NNL) "Applying linting suggestions to python package {"$(basename $@)"}..."
-ifeq ($(shell which autopep8),)
-	@$(error 'autopep8' not in path.  Please (re)install with 'pip install autopep8' and try command again.)
-else ifeq ($(shell which docformatter),)
-	@$(error 'docformatter' not in path.  Please (re)install with 'pip install docformatter' and try command again.)
-else
 	@cd $(basename $@);autopep8 -i -a -a --max-line-length 120 --exclude=*.tox -r . 
 	@cd $(basename $@);docformatter -i -r . 
-endif
 	@$(ECHO) "Done."

@@ -16,6 +16,13 @@ else
     $(error Invalid build 'config' {$(config)} specified.)
 endif
 
+# Set targets to check for needed executables
+list_of_checks = cmake
+.PHONY: $(list_of_checks)
+$(list_of_checks): % : check-%-in-path
+check-%-in-path:
+	@$(if $(shell which $* >& /dev/null ; if [ $$? -ne 0 ] ; then echo fail ; fi),$(error '$*' not in path.  Please (re)install and try command again if you want this Makefile target's support))
+
 ###########################################
 # cmake build, install, docs, etc targets #
 ###########################################
@@ -29,10 +36,8 @@ build-c: cmake
 
 # Run cmake
 .PHONY: cmake
-cmake:  $(BUILD_DIR_C).DIR
+cmake:  $(BUILD_DIR_C).DIR check-cmake-in-path
 	@$(ECHO) "Running 'cmake'..."
-# TODO: Check if this works
-#	@cd $(BUILD_DIR_C);cmake --config config ..
 	@cd $(BUILD_DIR_C);cmake ..
 	@$(ECHO) "Done."
 
