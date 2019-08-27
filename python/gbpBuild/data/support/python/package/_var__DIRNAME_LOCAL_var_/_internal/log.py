@@ -7,14 +7,19 @@ Formatting is organized by indenting levels which can be
 increased/decreased by calling the open/close methods of the stream
 respectively.
 """
+
 # For legacy-Python compatibility
 from __future__ import print_function
+from functools import update_wrapper
 
 import os
 import sys
 import importlib
 import time
 import datetime
+
+import inspect
+from functools import wraps
 
 # Infer the name of this package from the path of __file__
 package_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -26,6 +31,7 @@ package_name = os.path.basename(package_root_dir)
 sys.path.insert(0, package_parent_dir)
 
 # Import needed internal modules
+pkg = importlib.import_module(package_name)
 _internal = importlib.import_module(package_name + '._internal')
 
 intervals = (
@@ -62,7 +68,7 @@ def format_time(seconds, granularity=None):
     else:
         result = ', '.join(result)
 
-    # Replace the last ',' with 'and'
+    # Replace the last ',' with ' and'
     result_split = result.rsplit(',', 1)
     if(len(result_split) > 1):
         result = ' and'.join(result_split)
@@ -74,11 +80,11 @@ class log_stream(object):
     """This class provides a file pointer for logging user feedback and methods
     for writing to it."""
 
-    def __init__(self, fp_out=None,verbosity=True,n_indent_max=10):
-        """Generate an instance of the log_stream class.
-
+    def __init__(self, fp_out=None, verbosity=True, n_indent_max=10):
+        """
         :param fp_out: An optional file pointer to use for the log.
         :param verbosity: An optional parameter that sets the default verbosity of the stream.
+        :param n_indent_max: maximum number of logging levels to keep track of.  Anything exceeding this is not printed.
         """
         # File pointer where the stream will write to
         self.set_fp(fp_out)
@@ -102,92 +108,6 @@ class log_stream(object):
         # Indicates whether the last-written line
         # ended with a new line
         self.hanging = False
-
-    def set_fp(self, fp_out=None):
-        """Set the file pointer to be used for logging.  Default is
-        `sys.stderr`.
-
-        :param fp_out: File pointer
-        :return: None
-        """
-        if(fp_out is None):
-            self.fp = sys.stderr
-        else:
-            self.fp = fp_out
-
-    def set_verbosity(self,verbosity=True):
-        """
-        Add a new (and make it current) verbosity state to the stream's stack of verbosity states.
-
-        This method takes either a boolean flag indicating whether logging is active, or an integer indicating
-        the maximum indenting level that will be rendered.  It can be removed using the
-        :py:meth:`~.log.log_stream.unset_verbosity` method.  See the
-        :py:meth:`~.log.log_stream.check_verbosity` method for an account of how the verbosity passed to this
-        method is interpreted.
-
-        :param verbosity: A boolean flag indicating if logging is active, or an integer indicating the verbosity level
-        :return: None
-        """
-
-        # Check validity of the given verbosity
-        if(not isinstance(verbosity,(bool,int))):
-            self.error("Invalid datatype {%s} being added to log stream's verbosity state."%(type(verbosity)))
-
-        # Add a state to the stack
-        self.verbosity.append(verbosity)
-
-    def unset_verbosity(self):
-        """
-        Revert stream to a previous verbosity state if one exists; the default state otherwise.
-
-        :return: None
-        """
-        if(len(self.verbosity)>0):
-            self.verbosity.pop()
-
-    def verbosity_level(self,verbosity):
-        """
-        Convert a verbosity state value to a corresponding verbosity level.
-
-        :param verbosity: Verbosity state value
-        :return: Integer indent level
-        """
-
-        # Default result
-        result = self.n_indent_max
-
-        # If state is a bool and evaluates to false, return -1 (i.e. a value always > self._n_indent()
-        if (isinstance(verbosity, bool)):
-            if(not verbosity):
-                result = -1
-
-        # ... else, if it's an integer, return it or n_indent_max
-        elif (isinstance(verbosity,int)):
-            result = max([verbosity,self.n_indent_max])
-
-        # ... else, unsupported data type ... throw an error
-        else:
-            self.error("Can not interpret verbosity level of a verbosity state with unsupported type {%s}."%(type(verbosity)))
-
-        return result
-
-    def check_verbosity(self):
-        """
-        Check if the stream is active.
-
-        :return: A boolean indicating if rendering is active on the stream
-        """
-
-        # If the verbosity stack is empty, use the default
-        if(len(self.verbosity)<1):
-            max_active_level = self.verbosity_level(self.verbosity_default)
-        else:
-            max_active_level = self.n_indent_max
-            for state in self.verbosity:
-                max_active_level = min([max_active_level,self.verbosity_level(state)])
-
-        return max_active_level>=self._n_indent()
-
 
     def open(self, msg, splice=None):
         """Open a new indent bracket for the log.
@@ -214,7 +134,7 @@ class log_stream(object):
 
         # Sanity checks
         if(self._n_indent() < 1):
-            self.error("Invalid log closure.")
+            self.error(Exception("Invalid log closure."))
 
         # Decrement the indent level and fetch the info about the level we are closing
         t_last = self.t_last.pop()
@@ -230,12 +150,271 @@ class log_stream(object):
 
         # Generate message
         if(msg is not None):
+            msg_time = ''
             if(time_elapsed):
-                msg_time = " (%s)" % (format_time(dt))
-            else:
-                msg_time = ''
+                dt_txt = format_time(dt)
+                if(len(dt_txt) > 0):
+                    msg_time = " (%s)" % (dt_txt)
             self._print(msg + msg_time, unhang=(n_lines > 1))
         self._unhang()
+
+    def callable(self, msg=None, dump_args=False, dump_returns=False, time_elapsed=False, default_verbosity='unset'):
+        """Decorator to add in-bound and out-bound logging to a callable.
+
+        :param msg: string describing in-bound logging message
+        :param dump_args: log calling arguments if True
+        :param dump_returns: log returned values if True
+        :param time_elapsed: log ellapsed time if True
+        :param default_verbosity: default verbosity
+        :return: decorated callable
+        """
+
+        def decorated_callable(func):
+            if default_verbosity != 'unset':
+                func = self.add_verbosity(default=default_verbosity)(func)
+
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                elapsed_printed = False
+
+                # Print function call
+                if msg:
+                    self.open(msg)
+                else:
+                    self.open("Calling %s.%s()..." % (func.__module__, func.__qualname__))
+
+                # Report arguments
+                if (dump_args):
+                    self.open("Inputs:")
+                    func_args = inspect.signature(func).bind(*args, **kwargs).arguments
+                    if (len(func_args) > 1):
+                        for i, item in enumerate(func_args.items()):
+                            self.comment('{} = {!r}'.format(*item))
+                    else:
+                        self.comment("None")
+                    self.close()
+
+                # Run method
+                if (dump_args or dump_returns):
+                    self.open('Running...')
+                r = func(*args, **kwargs)
+                if (dump_args or dump_returns):
+                    self.close('Done.', time_elapsed=time_elapsed)
+                    # Can't just change time_elapsed useing 'nonlocal' in Python 2, so we do things this way
+                    elapsed_printed = True
+
+                # Report returns
+                if (dump_returns and r is not None):
+                    if (len(r) > 1):
+                        for i, r_i in enumerate(r):
+                            self.comment("Return[%d]: %s" % (i, r_i))
+                    else:
+                        self.comment("Return: " + r)
+
+                # We don't need to display time elapsed twice ...
+                if elapsed_printed:
+                    self.close('Done.')
+                else:
+                    self.close('Done.', time_elapsed=time_elapsed)
+                return r
+
+            return update_wrapper(wrapper, func)
+
+        return decorated_callable
+
+    def test(self, msg=None, dump_args=False, dump_returns=False, time_elapsed=False, default_verbosity='unset'):
+        """Decorator to add in-bound and out-bound logging to a test.
+
+        :param msg: string describing in-bound logging message
+        :param dump_args: log calling arguments if True
+        :param dump_returns: log returned values if True
+        :param time_elapsed: log ellapsed time if True
+        :param default_verbosity: default verbosity
+        :return: decorated test
+        """
+        self.__init__(fp_out=sys.stdout)
+        self.blankline()
+        return self.callable(msg=msg, dump_args=dump_args, dump_returns=dump_returns, time_elapsed=time_elapsed,
+                             default_verbosity=default_verbosity)
+
+    def methods(self, dump_args=True, dump_returns=True, time_elapsed=True, default_verbosity='unset'):
+        """Decorator for automating the logging of all method calls of a class.
+
+        :param dump_args: log calling arguments if True
+        :param dump_returns: log returned values if True
+        :param time_elapsed: log ellapsed time if True
+        :param default_verbosity: default verbosity
+        :return: decorated method
+        """
+
+        def decorated_class_declaration(Cls):
+            class NewCls(object):
+                def __init__(new_self, *args, **kwargs):
+                    new_self.oInstance = Cls(*args, **kwargs)
+
+                def __getattribute__(new_self, s):
+                    """this is called whenever any attribute of a NewCls object
+                    is accessed.
+
+                    This function first tries to get the attribute off
+                    NewCls. If it fails then it tries to fetch the
+                    attribute from self.oInstance (an instance of the
+                    decorated class). If it manages to fetch the
+                    attribute from self.oInstance, and the attribute is
+                    an instance method then the method decorator is
+                    applied.
+                    """
+                    try:
+                        x = super(NewCls, new_self).__getattribute__(s)
+                    except AttributeError:
+                        pass
+                    else:
+                        return x
+                    x = new_self.oInstance.__getattribute__(s)
+                    if isinstance(x, type(new_self.__init__)):
+                        return self.callable(
+                            dump_args=dump_args,
+                            dump_returns=dump_returns,
+                            time_elapsed=time_elapsed,
+                            default_verbosity=default_verbosity)(x)
+                    else:
+                        return x
+
+            return NewCls
+
+        return decorated_class_declaration
+
+    def set_fp(self, fp_out=None):
+        """Set the file pointer to be used for logging.  Default is
+        `sys.stderr`.
+
+        :param fp_out: File pointer
+        :return: None
+        """
+        if(fp_out is None):
+            self.fp = sys.stderr
+        else:
+            self.fp = fp_out
+
+    def set_verbosity(self, verbosity=True):
+        """Add a new (and make it current) verbosity state to the stream's
+        stack of verbosity states.
+
+        This method takes either a boolean flag indicating whether logging is active, or an integer indicating
+        the maximum indenting level that will be rendered.  It can be removed using the
+        :py:meth:`~.log.log_stream.unset_verbosity` method.  See the
+        :py:meth:`~.log.log_stream.check_verbosity` method for an account of how the verbosity passed to this
+        method is interpreted.
+
+        :param verbosity: A boolean flag indicating if logging is active, or an integer indicating the verbosity level
+        :return: None
+        """
+
+        # Check validity of the given verbosity
+        if not type(verbosity) in (bool, int):
+            self.error(
+                TypeError(
+                    "Invalid datatype {%s} being added to log stream's verbosity state." %
+                    (type(verbosity))))
+
+        if not isinstance(verbosity, bool):
+            verbosity += (self._n_indent() - 1)
+
+        # Add a state to the stack
+        self.verbosity.append(verbosity)
+
+    def unset_verbosity(self):
+        """Revert stream to a previous verbosity state if one exists; the
+        default state otherwise.
+
+        :return: None
+        """
+        if(len(self.verbosity) > 0):
+            self.verbosity.pop()
+
+    def verbosity_level(self, verbosity):
+        """Convert a verbosity state value to a corresponding verbosity level.
+
+        :param verbosity: Verbosity state value
+        :return: Integer indent level
+        """
+
+        # Default result
+        result = self.n_indent_max
+
+        # If state is a bool and evaluates to false, return -1 (i.e. a value always > self._n_indent()
+        if (isinstance(verbosity, bool)):
+            if(not verbosity):
+                result = -1
+
+        # ... else, if it's an integer, return it or n_indent_max
+        elif (isinstance(verbosity, int)):
+            result = min([verbosity, self.n_indent_max])
+
+        # ... else, unsupported data type ... throw an error
+        else:
+            self.error(
+                Exception(
+                    "Can not interpret verbosity level of a verbosity state with unsupported type {%s}." %
+                    (type(verbosity))))
+
+        return result
+
+    def check_verbosity(self):
+        """Check if the stream is active.
+
+        :return: A boolean indicating if rendering is active on the stream
+        """
+        # If the verbosity stack is empty, use the default
+        if(len(self.verbosity) < 1):
+            max_active_level = self.verbosity_level(self.verbosity_default)
+        else:
+            max_active_level = self.n_indent_max
+            for state in self.verbosity:
+                max_active_level = min([max_active_level, self.verbosity_level(state)])
+
+        return max_active_level >= self._n_indent()
+
+    def add_verbosity(self, default=True):
+        """Decorator to add a 'verbosity' parameter - and the functions to implement it - to a callable.
+
+        :param default: default verbosity
+        :return: decorated callable
+        """
+
+        def decorated_callable(func):
+            if default == 'unset':
+                return func
+            else:
+                @wraps(func)
+                def wrapper(*args, **kwargs):
+                    # Fetch callable's verbosity; emit a TypeError if not present
+                    if 'verbosity' not in kwargs:
+                        verbosity = default
+                    else:
+                        # Check the signature to make sure that we aren't passing
+                        # verbosity to a function that does not declare it and
+                        # does not support kwargs
+                        func_args, func_varargs, func_keywords, func_defaults = inspect.getargspec(func)
+                        if 'verbosity' not in func_args and not func_keywords:
+                            verbosity = kwargs.pop('verbosity')
+                        else:
+                            verbosity = kwargs.get('verbosity')
+
+                    # Set callable's verbosity
+                    self.set_verbosity(verbosity)
+
+                    # Run callable
+                    r = func(*args, **kwargs)
+
+                    # Unset callable's verbosity
+                    self.unset_verbosity()
+
+                    return r
+
+                return update_wrapper(wrapper, func)
+
+        return decorated_callable
 
     def comment(self, msg, unhang=True, overwrite=False, blankline_before=False, blankline_after=False):
         """Add a one-line comment to the log.
@@ -301,19 +480,17 @@ class log_stream(object):
             msg += ' ' * (msg_len_last - msg_len)
         self.comment(msg, unhang=False, overwrite=True)
 
-    def error(self, err_msg, code=None):
+    def error(self, error):
         """Raise an exception.
 
         :param err_msg: Error message
         :param code: Optional error code to report
         :return: None
         """
-        self._unhang()
-        if(code):
-            message = err_msg + " [code=" + code + "]"
-        else:
-            message = err_msg
-        raise Exception(message)
+        self.comment('ERROR: ' + str(error), unhang=True, overwrite=True)
+        import traceback
+        self.comment(traceback.format_exc())
+        raise error
 
     def blankline(self):
         """Print a blank line to the stream.
@@ -378,30 +555,32 @@ class log_stream(object):
                 self._unhang()
 
             # This will fail for strings but pass for lists, etc.
+            # print("X:",type(msg),type(str(msg)),_internal.is_nonstring_iterable(msg),hasattr(msg, '__iter__'),isinstance(msg, _internal.string_types),msg)
             if(_internal.is_nonstring_iterable(msg)):
                 if(overwrite):
-                    self.error("Log stream overwriting not permitted for iterables.")
+                    self.error(Exception("Log stream overwriting not permitted for iterables."))
                 if(not iterables_allowed):
-                    self.error("An iterable was passed to a log stream method which does not accept them.")
+                    self.error(Exception("An iterable was passed to a log stream method which does not accept them."))
                 for line in msg:
                     self._print(line, indent=indent, overwrite=overwrite, **kwargs)
             # ... render a non-iterable object ...
             else:
                 # If msg is a string (or converts to one) with newline characters, break-it-up
                 # and recall this method with the result to treat it as an iterable
-                msg_split = str(msg).splitlines(True)
+                str_msg = str(msg)
+                msg_split = str_msg.splitlines(True)
                 if(len(msg_split) > 1):
                     self._print(msg_split, indent=indent, overwrite=overwrite,
                                 iterables_allowed=iterables_allowed, **kwargs)
                 # ... else, render a single line
                 else:
-                    if(not self.hanging and len(msg) > 0):
+                    if(not self.hanging and len(str_msg) > 0):
                         self.n_lines[-1] += 1
                     if(overwrite or (not self.hanging and indent)):
                         self._indent(overwrite=overwrite)
-                    print(msg, end='', file=self.fp, **kwargs)
+                    print(str_msg, end='', file=self.fp, **kwargs)
                     self.fp.flush()
-                    if(msg.endswith('\n')):
+                    if(str_msg.endswith('\n')):
                         self.hanging = False
                     else:
                         self.hanging = True
@@ -412,7 +591,7 @@ class log_stream(object):
         :return: None
         """
         if(self.hanging):
-            print ('', file=self.fp)
+            print('', file=self.fp)
             self.n_lines[-1] += 1
             self.hanging = False
 
@@ -424,8 +603,8 @@ class log_stream(object):
         :return: None
         """
         if(overwrite):
-            print ('\r', end='', file=self.fp)
-        print (self.indent_size * self._n_indent() * ' ', end='', file=self.fp)
+            print('\r', end='', file=self.fp)
+        print(self.indent_size * self._n_indent() * ' ', end='', file=self.fp)
 
     def _n_indent(self):
         """Return the current indent level of the stream.

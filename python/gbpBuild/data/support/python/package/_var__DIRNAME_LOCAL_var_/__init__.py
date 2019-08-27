@@ -1,6 +1,7 @@
 import os
 import sys
 import importlib
+import pkgutil
 
 if sys.version_info >= (3, 3):
     from unittest.mock import MagicMock
@@ -22,11 +23,13 @@ path_package_docstring = os.path.join(package_root_dir, "%s.docstring" % (packag
 with open(path_package_docstring, "r") as fp_docstring:
     __doc__ = ''.join(fp_docstring.readlines())
 
+
 # Make sure that what's in this path takes precedence
 # over an installed version of the project
 sys.path.insert(0, package_parent_dir)
 
 # Import needed internal modules
+validation = importlib.import_module(package_name + '._internal.validation')
 _log = importlib.import_module(package_name + '._internal.log')
 
 #: The library log stream (see the :py:mod:`._internal.log` module for more details)
@@ -34,6 +37,34 @@ log = _log.log_stream()
 
 #: The absolute path to the module root path
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# List the string-like classes
+PY2 = sys.version_info[0] == 2
+if not PY2:
+    string_types = (str,)
+else:
+    string_types = (str, unicode)
+
+
+def import_submodules(package=package_name, recursive=True):
+    """Import all submodules of this module, recursively, including
+    subpackages.
+
+    :param package: package (name or actual module)
+    :type package: str | module
+    :rtype: dict[str, types.ModuleType]
+    """
+
+    if isinstance(package, str):
+        package = importlib.import_module(package)
+    results = {}
+    for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
+        full_name = package.__name__ + '.' + name
+        results[full_name] = importlib.import_module(full_name)
+        if is_pkg:
+            if recursive:
+                results.update(import_submodules(full_name))
+    return results
 
 
 class _mock_module(MagicMock):
@@ -102,7 +133,7 @@ def find_in_parent_path(path_start, filename_search, check=True, failure=None):
 
     # Check if the file has been found
     if(check and path_result is None):
-        log.error("Could not find {%s} in parent directories of path {%s}." % (filename_search, path_start))
+        log.error(Exception("Could not find {%s} in parent directories of path {%s}." % (filename_search, path_start)))
 
     # On failure, set to failure default
     if(path_result is None):

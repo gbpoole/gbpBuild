@@ -1,16 +1,21 @@
-"""This module provides three principle submodules for: package.  It provides
-three principle submodules for:
+"""This module is generally only of use to developers of this codebase.  It
+provides several submodules for:
 
-   1) _internal.package: for examining meta data relating to this python package
-   2) _internal.project: for examining meta data relating to the project this package belongs to
-   3) _internal.log: for generating course logging information for the user
-
-It is generally only of use to developers of this module.
+#) ``_internal.docs``:       generating API documentation files #)
+``_internal.log``:        generating course logging information for the
+user #) ``_internal.package``:    examining meta data relating to this
+python package #) ``_internal.project``:    examining meta data relating
+to the project this package belongs to #) ``_internal.validation``: easy
+configuration of tests (primarily, regression tests) on package classes
 """
 
 import sys
 
 PY2 = sys.version_info[0] == 2
+
+if PY2:
+    raise Exception("Package not compatible with Python 2.")
+
 if not PY2:
     string_types = (str,)
 else:

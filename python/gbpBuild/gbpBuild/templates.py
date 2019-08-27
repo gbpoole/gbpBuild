@@ -1,13 +1,26 @@
 import filecmp
 import os
+import importlib
 import sys
 import re
 import shutil
 import fnmatch
+import json
+
+from datetime import datetime
+
+# Infer the name of this package from the path of __file__
+package_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+package_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+package_name = os.path.basename(package_root_dir)
 
 # Make sure that what's in this path takes precedence
 # over an installed version of the project
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, package_parent_dir)
+
+# Import needed internal modules
+_internal = importlib.import_module(package_name + '._internal')
+pkg = importlib.import_module(package_name)
 
 import gbpBuild
 
@@ -79,7 +92,7 @@ def format_template_names(name_list):
 
 
 class template_element(object):
-    """This is the base class for template objects (directories or files).
+    """This is the base class for template objects (generally, directories or files).
 
     :param full_path_in_template_root: Full input path to the root of the template
     :param full_path_in: Full input path to the template element
@@ -128,7 +141,7 @@ class template_element(object):
         """
         self.name_in = os.path.basename(template_path_in)
 
-        # Remove any leading '_dot_'s from the output file name
+        # Remove one leading '_dot_' from the output file name, if present
         self.name_out = self.name_in.replace("_dot_", ".", 1)
 
         # Check if the file is a link (and remove any trailing '.link's)
@@ -221,7 +234,7 @@ class template:
         self.dir = []
         self.name = []
         self.directories = []
-        self.params = []
+        self.params = self.init_parameters()
         self.params_list = []
         self.current_element = None
         self.dir_install = "."
@@ -247,21 +260,57 @@ class template:
             if(not self.resolve_directive(None, directive, check=True)):
                 self.params_list.add(directive)
 
-    def init_inputs(self, user_params):
+    def init_parameters(self):
         """
 
         :param user_params:
         :return:
         """
 
-        self.params = user_params
+        result = {}
 
-        # Check that all the needed template parameters can be resolved
-        for param_i in user_params:
+        # Look for a user config file.  First check for an environment variable pointing to it ...
+        path_config = os.environ.get('GBPTEMPLATE_CONFIG_PATH')
+        if(path_config is None):
+            path_config = os.environ.get('HOME')+'/.gbpTemplate.json'
+
+        # Then try to load it
+        if(os.path.isfile(path_config)):
+            with open(path_config) as fp_config:
+                result.update(json.load(fp_config, object_hook=_internal.ascii_encode_dict))
+
+        # Add some stock parameters
+        result['today']=datetime.today()
+
+        return result
+
+
+    def add_parameters(self, user_params):
+        """
+
+        :param user_params:
+        :return:
+        """
+
+        self.params.extend(user_params)
+
+    def validate_parameters(self,interactive=False):
+        """
+
+        :param user_params:
+        :return:
+        """
+        # Check all the template parameters needing to be resolved
+        for param_i in self.params_list:
             if not self.resolve_directive(None, param_i, check=True):
-                gbpBuild.log.error(
-                    "Required parameter {%s} is not present in template installation dictionary." %
-                    (param_i))
+                # If interactive is 'True', poll the user for the parameter value
+                if(interactive):
+                    self.params[param_i]=input("Provide a value for %s: "%(param_i))
+                # ... else, throw an error
+                else:
+                    gbpBuild.log.error(
+                        "Required parameter {%s} is not present in template installation dictionary." %
+                        (param_i))
 
     def resolve_directive(self, element, directive, check=False):
         """
@@ -1050,7 +1099,7 @@ class template:
         self.dir_install = dir_out
 
         # Create a list of project parameters
-        self.init_inputs(params_raw)
+        self.validate_parameters(params_raw)
 
         # Perform install
         self._process_template(silent=silent, update=update, force=force)
@@ -1071,7 +1120,7 @@ class template:
         self.dir_install = dir_out
 
         # Create a list of project parameters
-        self.init_inputs(params_raw)
+        self.validate_parameters()
 
         # Perform uninstall
         self._process_template(uninstall=True, silent=silent, update=update)

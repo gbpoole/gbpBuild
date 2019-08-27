@@ -1,3 +1,8 @@
 include .package.json .project_aux.json .project.json setup.cfg
-graft data/
+
+graft data
+
 recursive-include * *.txt *.py *.docstring
+
+global-exclude __pycache__
+global-exclude *.py[cod]

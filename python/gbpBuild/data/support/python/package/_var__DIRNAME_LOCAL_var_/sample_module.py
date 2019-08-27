@@ -3,11 +3,11 @@ class sample_class(object):
     This is a sample class.
     """
 
-    def __init__(self):
+    def __init__(self,inputs):
         """
-        This is a sample class's constructor.
+        :param inputs: constructor inputs for the sample class
         """
-        self.sample_member = None
+        self.sample_inputs = None
 
     def sample_method(self):
         """

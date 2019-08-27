@@ -109,17 +109,21 @@ help:
 	@$(ECHO) "Usage: make [TARGETS]"
 	@$(ECHO) 
 	@$(ECHO) "Available targets:"
-	@$(ECHO) "	init    - perform project initialization [run once before anything else]"
-	@$(ECHO) "	build   - build all project software"
-	@$(ECHO) "	install - install all project software"
-	@$(ECHO) "	docs    - build documentation"
-	@$(ECHO) "	clean   - clean-out unneeded build/development/etc files"
+	@$(ECHO) "	init      - perform project initialization [run once before anything else]"
+	@$(ECHO) "	build     - build all project software"
+	@$(ECHO) "	install   - install all project software"
+	@$(ECHO) "	docs      - build documentation"
+	@$(ECHO) "	docs-open - open documentation in the browser"
+	@$(ECHO) "	docs      - build documentation"
+	@$(ECHO) "	clean     - clean-out unneeded build/development/etc files"
 	@$(ECHO) 
 	@$(ECHO) "Additional targets for development:"
-	@$(ECHO) "	tests      - run all project tests"
-#	@$(ECHO) "	coverage   - build code coverage reports for tests"
-	@$(ECHO) "	lint-check - check the project linting standards"
-	@$(ECHO) "	lint-fix   - apply the project linting standards"
+	@$(ECHO) "	tests               - run all project tests"
+	@$(ECHO) "	tests-py-tox        - run all python tests under tox"
+#	@$(ECHO) "	coverage            - build code coverage reports for tests"
+	@$(ECHO) "	lint-check          - check the project linting standards"
+	@$(ECHO) "	lint-fix            - apply the project linting standards"
+	@$(ECHO) "	docs-update         - update API documentation"
 	@$(ECHO) "	requirements-update - rebuild the project's '.requirements.txt' file"
 	@$(ECHO) 
 
@@ -181,7 +185,14 @@ docs: $(DOCS_LIST) docs-update
 .PHONY: docs-update
 docs-update: build $(BUILD_DIR_DOCS)
 	@$(ECHO_NNL) "Updating API documentation..."
-	@update_gbpBuild_docs $(PWD)
+	@$(PRJ_NAME)_helper update_docs
+	@$(ECHO) "Done."
+
+# Open the documentation
+.PHONY: docs-update
+docs-open:
+	@$(ECHO_NNL) "Opening documentation in browser..."
+	@open ${BUILD_DIR_DOCS}/index.html
 	@$(ECHO) "Done."
 
 # Make the documentation build directory

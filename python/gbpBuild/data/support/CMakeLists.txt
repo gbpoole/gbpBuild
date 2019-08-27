@@ -31,9 +31,17 @@ init_compilers()
 # Declare the project name
 project (${_PROJECT_NAME})
 
-# Clear default install directory (user should use
-# DESTDIR with make to set installation directory)
-set( CMAKE_INSTALL_PREFIX "./" )
+# Set install directory
+# change on the command line with the project Makefile like this: CMAKE_INSTALL_PREFIX=<path> make install
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    if(DEFINED ENV{CMAKE_INSTALL_PREFIX})
+        set(CMAKE_INSTALL_PREFIX "$ENV{CMAKE_INSTALL_PREFIX}" CACHE PATH "set from environment" FORCE)
+        message(STATUS "Install directory set from environment to:" ${CMAKE_INSTALL_PREFIX})
+    else()
+        set(CMAKE_INSTALL_PREFIX "./" CACHE PATH "set from default" FORCE)
+        message(STATUS "Install directory set from default to:" ${CMAKE_INSTALL_PREFIX})
+    endif()
+endif()
 
 # Validate compilers (minimum versions, etc)
 validate_compilers()

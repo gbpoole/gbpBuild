@@ -39,7 +39,7 @@ div.body h1
     line-height: 250%;
     background-repeat: no-repeat;
     font-weight: bold;
-    color: #8A9ACE;
+    color: {{ theme_sectionbgcolorh2 }};
     font-size: 200%;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -59,10 +59,12 @@ div.related li.right a:hover
 }
 
 /* Stop consecutive code blocks from running into each other */
+/*
 div.highlight
 {
     padding: 1px 0px;
 }
+*/
 
 /* Fix borders on code blocks */
 div.highlight pre

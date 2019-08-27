@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import os
+import importlib
 import sys
 
 import click
@@ -25,13 +26,20 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-u', 'update_element', help='Update single element only', type=str, default=None)
 def gbpTemplate(template_name, output_dir, template_path, flag_uninstall, flag_silent, flag_force, update_element):
 
-    # Validate inputs
+    # Initialize a dictionary to hold all template paramters
+    params = {}
+
+    # ======== Start processing of CMDL ========
+
+    # Validate output directory
     if(not os.path.isdir(output_dir)):
         bld.log.error("Given project directory (%s) is not a valid directory." % (output_dir))
-
-    # Process inputs
     output_dir_abs = os.path.abspath(output_dir)
+
+    # Try to infer a project name from the output directory
+    # and add it to the parameter dictionary if sucessful
     project_name = tmp.get_base_name(output_dir_abs).replace("-", "_")
+    params['name'] = project_name
 
     # Create list of input templates
     template_list = template_name.split(',')
@@ -42,6 +50,8 @@ def gbpTemplate(template_name, output_dir, template_path, flag_uninstall, flag_s
     else:
         bld.log.open("Updating element %s in %s..." % (update_element, project_name))
 
+    # ========= End processing of CMDL =========
+
     # Load the template(s)
     template = tmp.template()
     for template_name in template_list:
@@ -51,14 +61,9 @@ def gbpTemplate(template_name, output_dir, template_path, flag_uninstall, flag_s
     if(flag_uninstall):
         template.uninstall(output_dir_abs, params_raw=params, silent=flag_silent, update=update_element)
     else:
-        # Generate parameter dictionary
-        params = {}
-        params['name'] = project_name
-        params['author'] = 'Gregory B. Poole'
-        params['author_email'] = 'gbpoole@gmail.com'
-        params['description'] = 'One line description of project.'
-        params['url'] = 'http://project.homepage.xyz'
-        params['license'] = 'MIT'
+
+        # Validate parameters; interactively ask for any missing ones
+        template.validate_parameters(interactive=True)
 
         # Install template
         template.install(output_dir_abs, params_raw=params, silent=flag_silent, update=update_element, force=flag_force)

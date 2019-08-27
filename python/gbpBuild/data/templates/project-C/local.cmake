@@ -1,1 +1,1 @@
-../../support/local.cmake
+../../support/cmake/local.cmake
