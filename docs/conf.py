@@ -21,14 +21,25 @@ import subprocess
 import sys
 import git
 import glob
+import json
+import importlib
 import breathe # This is here so that pigar will catch it when generating requirements.txt
 
 from datetime import datetime
 from recommonmark.parser import CommonMarkParser
 
-# Include the project development module
-import gbpBuild.project as prj
-import gbpBuild.docs as docs
+# Read the project .json file and fetch the project name from it
+#filename_project = os.path.join(os.path.dirname(__file__),'../.project.json')
+#with open(filename_project, 'r') as fp:
+#    project_list = json.load(fp)
+#for item in iter(project_list):
+#    if item.keys()[0]=='name':
+#        package_name = item.values()[0]
+#        break
+package_name = "prism_adacs"
+
+# Import internal modules
+prj = importlib.import_module(package_name + '._internal.project')
 
 # Parse the project directory to learn what we need about the project
 this_project = prj.project(os.path.abspath(__file__))
@@ -68,6 +79,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.ifconfig',
               'sphinx.ext.viewcode',
               'sphinx_click.ext',
+              'sphinx_copybutton',
               'breathe']
 
 # Some things that Breathe needs
@@ -78,8 +90,7 @@ breathe_default_project = this_project.params['name']
 # in the code (as opposed to the default: alphabetical order)
 autodoc_member_order = 'bysource'
 
-# Instruct autodoc to display both a class' 
-# docstring, and it's '__init__' method's.
+# Instruct autodoc to display both the docstrings of a class and its constructor
 autoclass_content = 'both'
 
 # Add any paths that contain templates here, relative to this directory.

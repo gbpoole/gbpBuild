@@ -1,7 +1,27 @@
+"""This submodule provides all the functionality needed by this project for
+generating API documentation (either/both C and Python, if present)."""
+
 import os
+import sys
+import importlib
 import pkgutil
 import subprocess
 
+# Infer the name of this package from the path of __file__
+package_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+package_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+package_name = os.path.basename(package_root_dir)
+
+# Make sure that what's in this path takes precedence
+# over an installed version of the project
+sys.path.insert(0, package_parent_dir)
+
+# Import the current package
+this_pkg = importlib.import_module(package_name)
+
+# Import the internal package-helper package
+_internal = importlib.import_module(package_name + '._internal')
+_pkg = importlib.import_module(package_name + '._internal.package')
 
 def _parse_cmake_local(
         cur_dir,
@@ -75,6 +95,7 @@ def parse_cmake_project(
 
     Optionally, an API module can be specified and a list of files obtained only for it.
     Additionally, a list of project modules can be returned if module_list is given.
+
     :param cur_dir: The directory from which to start the search
     :param search_string: The type of build element to search for
     :param result_list: The list to append to
@@ -159,12 +180,13 @@ def cat_project_file(project, filename_root, filename_modifier, outFile, default
 
     This checks for an .rst file with a given filename root and suffix modifier.
     If it is found, it concatenates it to the given output file.
+
     :param project: A project object providing a dictionary of project parameters
     :param filename_root: The root of the file name
     :param filename_modifier: the filename suffix modifier to
     :param outFile: A file pointer to the output file
     :param default_text: Text to write to the output file if the file is not found
-    :return: None
+    :return: True if project file found, False otherwise
     """
     filename_in = project.params['dir_docs'] + "/" + filename_root + '.rst'
     if(filename_modifier):
@@ -173,8 +195,10 @@ def cat_project_file(project, filename_root, filename_modifier, outFile, default
         with open(filename_in, 'r') as inFile:
             for line in inFile:
                 outFile.write(line)
+        return True
     elif(default_text is not None):
         outFile.write(default_text)
+        return False
 
 
 def underlined_text(text_to_underline, underline_character):
@@ -216,6 +240,7 @@ def generate_C_API_rst(project):
     present).
 
     Files are written to the directory specified in project.params['dir_docs_api_src']
+
     :param project: A project object providing a dictionary of project parameters
     :return: None
     """
@@ -243,7 +268,7 @@ def generate_C_API_rst(project):
     harvest_doxygen_groups(header_file_list, group_list)
 
     # Give the file a reference handle
-    outFile.write(".. _%s:\n\n"%(filename_root))
+    outFile.write(".. _%s:\n\n" % (filename_root))
 
     # copy header to output file
     cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("C/C++ API", '='))
@@ -442,7 +467,7 @@ def generate_C_execs_rst(project):
     harvest_doxygen_groups(header_file_list, group_list)
 
     # Give the file a reference handle
-    outFile.write(".. _%s:\n\n"%(filename_root))
+    outFile.write(".. _%s:\n\n" % (filename_root))
 
     # copy header to output file
     cat_project_file(project, filename_root, ".header", outFile, default_text=underlined_text("Applications", '='))
@@ -520,6 +545,7 @@ def generate_Python_API_rst(project):
     present).
 
     Files are written to the directory specified in project.params['dir_docs_api_src']
+
     :param project: A project object providing a dictionary of project parameters
     :return: None
     """
@@ -533,7 +559,7 @@ def generate_Python_API_rst(project):
                 os.makedirs(project.params['dir_docs_api_src'])
             outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
             # Give the file a reference handle
-            outFile.write(".. _%s:\n\n"%(filename_root))
+            outFile.write(".. _%s:\n\n" % (filename_root))
             # Copy header to output file (if present)
             cat_project_file(project, filename_root, ".header", outFile)
             if(len(project.packages) > 1):
@@ -593,15 +619,17 @@ def generate_Python_execs_rst(project):
                     os.makedirs(project.params['dir_docs_api_src'])
                 outFile = open(project.params['dir_docs_api_src'] + "/" + filename_root + '.rst', "w")
                 # Give the file a reference handle
-                outFile.write(".. _%s:\n\n"%(filename_root))
-                # Copy header to output file (if present)
-                cat_project_file(project, filename_root, ".header", outFile)
+                outFile.write(".. _%s:\n\n" % (filename_root))
+                # Title
                 if(len(project.packages) > 1):
                     if(i_package == 0):
                         outFile.write(underlined_text("Python Executables", '='))
                     outFile.write(underlined_text(package.package_name, '-'))
                 else:
                     outFile.write(underlined_text(package.package_name + " Executables", '='))
+                # Copy header to output file (if present)
+                if cat_project_file(project, filename_root, ".header", outFile):
+                    outFile.write("\n")
                 flag_execs_present = True
 
             # Send output of executable to the output file
@@ -682,6 +710,7 @@ def generate_index_rst(project):
     elif(project.params['is_C_project']):
         doc_order.append('src/C_execs.rst')
         doc_order.append('src/C_API.rst')
+    doc_order.append('development.rst')
 
     # Check if there is a 'docs_order.txt' file and over-write the defaults with it if so
     filename_in = os.path.join(project.params['dir_docs'], "docs_order.txt")
@@ -714,6 +743,17 @@ def generate_project_rsts(project, include_private=True):
     :param project: A project object providing a dictionary of project parameters
     :return: None
     """
+    this_pkg.log.open("Generating project rsts...")
+
+    # First, clear-out old rsts.  This needs to be done now to
+    #  avoid this build getting confused if any modules have been
+    #  removed since the last build
+    path_clean = project.params['dir_docs_api_src']
+    for file_i in os.listdir(path_clean):
+        file_path = os.path.join(path_clean, file_i)
+        if os.path.isfile(file_path):
+            os.unlink(file_path)
+
     # Generate documentation for C code
     if(project.params['is_C_project']):
         # Generate C API documentation
@@ -730,6 +770,7 @@ def generate_project_rsts(project, include_private=True):
     # Generate documentation for Python code
     if(project.params['is_Python_project']):
 
+        this_pkg.log.open("Running sphinx-apidoc...",splice="sphinx-apidoc output")
         for python_pkg in project.params['python_packages']:
 
             # Set the path to the package
@@ -752,18 +793,24 @@ def generate_project_rsts(project, include_private=True):
             cmd_list.append("-M")
             cmd_list.append("-f")
             subprocess.check_call(cmd_list)
+        this_pkg.log.close("Done")
 
         # Remove an unneeded .rst file generated by 'sphinx-apidoc'
         os.remove(os.path.join(project.params['dir_docs_api_src'], project.params['name'] + ".rst"))
 
         # Generate the .rst file that binds all the Python documentation together
+        this_pkg.log.open("Generating python API rsts...")
         generate_Python_API_rst(project)
+        this_pkg.log.close("Done")
 
         # Generate documentation for all Click-based python executables
+        this_pkg.log.open("Generating python execs rsts...")
         generate_Python_execs_rst(project)
+        this_pkg.log.close("Done")
 
     # Generate the main project .rst index file
     # Do this last because a check will be done on
     # files to include in the index before adding them.
     # Hence, we need to build them first before doing this.
     generate_index_rst(project)
+    this_pkg.log.close("Done")

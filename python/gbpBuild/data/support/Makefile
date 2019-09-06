@@ -174,7 +174,7 @@ endif
 
 # Build the project documentation
 .PHONY: docs
-docs: $(DOCS_LIST) docs-update
+docs: $(DOCS_LIST) install docs-update
 	@$(ECHO_NNL) "Building documentation..."
 	@cd docs;sphinx-build . _build
 	@$(ECHO) "Done."

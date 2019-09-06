@@ -30,6 +30,13 @@ else
 	PRJ_VERSION:=unset
 endif
 
+# Set targets to check for needed executables
+list_of_checks = pigar
+.PHONY: $(list_of_checks)
+$(list_of_checks): % : check-%-in-path
+check-%-in-path:
+	@$(if $(shell which $* >& /dev/null ; if [ $$? -ne 0 ] ; then echo fail ; fi),$(error '$*' not in path.  Please (re)install and try command again if you want this Makefile target's support))
+
 # Determine what sort of environment we're in (eg. OSX or Linux)
 OSTYPE := $(word 1,$(shell uname -msr))
 _MAC_BUILD=0
@@ -102,17 +109,21 @@ help:
 	@$(ECHO) "Usage: make [TARGETS]"
 	@$(ECHO) 
 	@$(ECHO) "Available targets:"
-	@$(ECHO) "	init    - perform project initialization [run once before anything else]"
-	@$(ECHO) "	build   - build all project software"
-	@$(ECHO) "	install - install all project software"
-	@$(ECHO) "	docs    - build documentation"
-	@$(ECHO) "	clean   - clean-out unneeded build/development/etc files"
+	@$(ECHO) "	init      - perform project initialization [run once before anything else]"
+	@$(ECHO) "	build     - build all project software"
+	@$(ECHO) "	install   - install all project software"
+	@$(ECHO) "	docs      - build documentation"
+	@$(ECHO) "	docs-open - open documentation in the browser"
+	@$(ECHO) "	docs      - build documentation"
+	@$(ECHO) "	clean     - clean-out unneeded build/development/etc files"
 	@$(ECHO) 
 	@$(ECHO) "Additional targets for development:"
-	@$(ECHO) "	tests      - run all project tests"
-#	@$(ECHO) "	coverage   - build code coverage reports for tests"
-	@$(ECHO) "	lint-check - check the project linting standards"
-	@$(ECHO) "	lint-fix   - apply the project linting standards"
+	@$(ECHO) "	tests               - run all project tests"
+	@$(ECHO) "	tests-py-tox        - run all python tests under tox"
+#	@$(ECHO) "	coverage            - build code coverage reports for tests"
+	@$(ECHO) "	lint-check          - check the project linting standards"
+	@$(ECHO) "	lint-fix            - apply the project linting standards"
+	@$(ECHO) "	docs-update         - update API documentation"
 	@$(ECHO) "	requirements-update - rebuild the project's '.requirements.txt' file"
 	@$(ECHO) 
 
@@ -163,7 +174,7 @@ endif
 
 # Build the project documentation
 .PHONY: docs
-docs: $(DOCS_LIST) docs-update
+docs: $(DOCS_LIST) install docs-update
 	@$(ECHO_NNL) "Building documentation..."
 	@cd docs;sphinx-build . _build
 	@$(ECHO) "Done."
@@ -174,7 +185,14 @@ docs: $(DOCS_LIST) docs-update
 .PHONY: docs-update
 docs-update: build $(BUILD_DIR_DOCS)
 	@$(ECHO_NNL) "Updating API documentation..."
-	@update_gbpBuild_docs $(PWD)
+	@$(PRJ_NAME)_helper update_docs
+	@$(ECHO) "Done."
+
+# Open the documentation
+.PHONY: docs-update
+docs-open:
+	@$(ECHO_NNL) "Opening documentation in browser..."
+	@open ${BUILD_DIR_DOCS}/index.html
 	@$(ECHO) "Done."
 
 # Make the documentation build directory
@@ -222,13 +240,9 @@ lint-fix:	.print_status $(LINT_FIX_LIST)
 
 # Update the pip python requirements files for the project.
 .PHONY: requirements-update
-requirements-update: .print_status
+requirements-update: .print_status check-pigar-in-path
 	@$(ECHO_NNL) "Updating project Python requirements..."
-ifeq ($(shell which pigar),)
-	@$(error "'pigar' not in path.  Please install it with 'pip install pigar' and try again.)
-else
 	@pigar -p .requirements.txt
-endif
 	@$(ECHO) "Done."
 
 # Download kcov

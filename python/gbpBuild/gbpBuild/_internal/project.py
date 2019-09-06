@@ -1,5 +1,5 @@
-"""This module provides a `project` class for polling the meta data describing a
-gbpBuild project."""
+"""This module provides several classes which are used to expose meta data
+describing this project."""
 import shutil
 import filecmp
 import os
@@ -25,11 +25,11 @@ _pkg = importlib.import_module(package_name + '._internal.package')
 
 
 class project:
-    """This class provides a project object, exposing parameters which describe a project."""
+    """This class yields an object which exposes the parameters describing this
+    project."""
 
     def __init__(self, path_call, verbosity=True):
-        """Generate an instance of the `project` class.
-
+        """
         :param path_call: this needs to be the FULL (i.e. absolute) path to a file or directory living somewhere in the package
         """
 
@@ -122,8 +122,7 @@ class project_file():
     """
 
     def __init__(self, project):
-        """Create an instance of the `project_file` class.
-
+        """
         :param project: An instance of the `project` class
         """
 
@@ -166,7 +165,7 @@ class project_file():
                 else:
                     this_pkg.log.close("Up-to-date.")
             except BaseException:
-                this_pkg.log.error("Could not update package's project file.")
+                this_pkg.log.error(Exception("Could not update package's project file."))
 
             # Create a dictionary of a bunch of auxiliary project information
 
@@ -226,7 +225,7 @@ class project_file():
             self.fp_prj = open(self.project.filename_project_file)
             self.fp_aux = open(self.project.filename_auxiliary_file)
         except BaseException:
-            this_pkg.log.error("Could not open project file {%s}." % (self.project.filename))
+            this_pkg.log.error(Exception("Could not open project file {%s}." % (self.project.filename)))
             raise
 
     def close(self):
@@ -240,7 +239,7 @@ class project_file():
             if(self.fp_aux is not None):
                 self.fp_aux.close()
         except BaseException:
-            this_pkg.log.error("Could not close project file {%s}." % (self.project.filename))
+            this_pkg.log.error(Exception("Could not close project file {%s}." % (self.project.filename)))
             raise
 
     def load(self):
@@ -255,7 +254,7 @@ class project_file():
             # Add a few extra things
             params_list.extend([{'path_project_root': self.project.path_project_root}])
         except BaseException:
-            this_pkg.log.error("Could not load project file {%s}." % (self.project.filename))
+            this_pkg.log.error(Exception("Could not load project file {%s}." % (self.project.filename)))
             raise
         finally:
             return {k: v for d in params_list for k, v in d.items()}
@@ -285,7 +284,7 @@ class open_project_file:
             self.file_in = project_file(self.project)
             self.file_in.open()
         except BaseException:
-            this_pkg.log.error("Could not open project file.")
+            this_pkg.log.error(Exception("Could not open project file."))
             raise
         finally:
             this_pkg.log.close("Done.")

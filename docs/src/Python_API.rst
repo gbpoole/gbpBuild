@@ -13,8 +13,6 @@ Modules
 .. toctree::
 
    gbpBuild._internal
-   gbpBuild.cmdl
-   gbpBuild.docs
    gbpBuild.package
    gbpBuild.project
    gbpBuild.templates

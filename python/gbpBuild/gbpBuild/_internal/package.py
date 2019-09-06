@@ -1,5 +1,5 @@
-"""This module provides a `package` class for polling the meta data describing a
-Python package."""
+"""This module provides a `package` class for polling the meta data describing
+a Python package."""
 import os
 import sys
 import importlib
@@ -20,12 +20,11 @@ pkg = importlib.import_module(package_name)
 
 
 class package:
-    """This class provides the package object, storing package parameters which
-    describe the package."""
+    """This class yields an object which exposes the parameters describing a
+    Python package which is part of this project."""
 
     def __init__(self, path_call, verbosity=True):
-        """Generate an instance of the `package` class.
-
+        """
         :param path_call: this needs to be the FULL (i.e. absolute) path to a file or directory living somewhere in the package
         :param verbosity: Optionally, set the log stream verbosity for this function (defaults to True)
         """
@@ -132,8 +131,7 @@ class package_file():
     """
 
     def __init__(self, path_package_parent):
-        """Create an instance of the `package_file` class.
-
+        """
         :param path_package_parent: The path to the directory hosting the package's `setup.py` file.
         """
         # File pointer
@@ -154,7 +152,7 @@ class package_file():
         try:
             self.fp = open(self.filename_package_file)
         except BaseException:
-            pkg.log.error("Could not open package file {%s}." % (self.filename))
+            pkg.log.error(Exception("Could not open package file {%s}." % (self.filename)))
             raise
 
     def close(self):
@@ -165,7 +163,7 @@ class package_file():
         try:
             self.fp.close()
         except BaseException:
-            pkg.log.error("Could not close package file {%s}." % (self.filename))
+            pkg.log.error(Exception("Could not close package file {%s}." % (self.filename)))
             raise
 
     def load(self):
@@ -176,7 +174,7 @@ class package_file():
         try:
             params_list = json.load(self.fp, object_hook=_internal.ascii_encode_dict)
         except BaseException:
-            pkg.log.error("Could not load package file {%s}." % (self.filename))
+            pkg.log.error(Exception("Could not load package file {%s}." % (self.filename)))
             raise
         finally:
             return {k: v for d in params_list for k, v in d.items()}
@@ -189,8 +187,7 @@ class open_package_file:
     """
 
     def __init__(self, path_call):
-        """Create an instance of the `open_package_file` context manager.
-
+        """
         :param path_call: Context expression
         """
         self.path_call = path_call
@@ -206,7 +203,7 @@ class open_package_file:
             self.file_in = package_file(self.path_call)
             self.file_in.open()
         except BaseException:
-            pkg.log.error("Could not open package file.")
+            pkg.log.error(Exception("Could not open package file."))
             raise
         finally:
             pkg.log.close("Done.")
