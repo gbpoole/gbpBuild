@@ -29,14 +29,15 @@ from datetime import datetime
 from recommonmark.parser import CommonMarkParser
 
 # Read the project .json file and fetch the project name from it
-#filename_project = os.path.join(os.path.dirname(__file__),'../.project.json')
-#with open(filename_project, 'r') as fp:
-#    project_list = json.load(fp)
-#for item in iter(project_list):
-#    if item.keys()[0]=='name':
-#        package_name = item.values()[0]
-#        break
-package_name = "prism_adacs"
+filename_project = os.path.join(os.path.dirname(__file__),'../.project.json')
+with open(filename_project, 'r') as fp:
+    project_list = json.load(fp)
+for item in iter(project_list):
+    package_name = item.get('name')
+    if package_name:
+        break
+if not package_name:
+    raise Exception("Failed to set the project name from the project file.") 
 
 # Import internal modules
 prj = importlib.import_module(package_name + '._internal.project')

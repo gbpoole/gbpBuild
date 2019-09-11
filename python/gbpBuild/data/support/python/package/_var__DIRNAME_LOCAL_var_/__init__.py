@@ -115,10 +115,18 @@ def find_in_parent_path(path_start, filename_search, check=True, failure=None):
     :return: Path to the file if found, None (default) or `failure` if not found.
     """
     path_result = None
+
+    path_start_norm = os.path.normpath(path_start)
+
+    # For some strange reason, os.path.normpath does not cleans leading '//'!
+    while path_start_norm[0] == os.sep and path_start_norm[1] == os.sep:
+        path_start_norm = path_start_norm[1:]
+
+    print(path_start_norm)
     if(os.path.isdir(path_start)):
-        cur_dir = path_start
+        cur_dir = path_start_norm
     else:
-        cur_dir = os.path.dirname(path_start)
+        cur_dir = os.path.dirname(path_start_norm)
 
     # Scan upwards until we find the file or run out of path
     while(True):

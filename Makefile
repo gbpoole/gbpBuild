@@ -243,6 +243,8 @@ lint-fix:	.print_status $(LINT_FIX_LIST)
 requirements-update: .print_status check-pigar-in-path
 	@$(ECHO_NNL) "Updating project Python requirements..."
 	@pigar -p .requirements.txt
+# Build requirements file for Read the Docs
+	@cat .requirements.txt .requirements_dev.txt > .requirements_rtd.txt
 	@$(ECHO) "Done."
 
 # Download kcov

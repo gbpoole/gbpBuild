@@ -1,5 +1,5 @@
-# Development requirements
 
+# Some development requirements, in addition to what is in .requirements.txt
 tox==3.0.0
 autopep8==1.3.5
 docformatter==1.0
