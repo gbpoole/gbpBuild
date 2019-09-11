@@ -63,15 +63,11 @@ def update_docs(ctx):
     update" target of the project makefile.
     """
     # Set/fetch all the project details we need
-    print("test1",__file__)
     project = prj.project(__file__)
-    print("test2")
 
     # Generate the main project .rst index file
     # and any needed API files as well
-    print("test3")
     docs.generate_project_rsts(project)
-    print("test4")
 
 
 @gbpBuild_helper.group(context_settings=CONTEXT_SETTINGS)
